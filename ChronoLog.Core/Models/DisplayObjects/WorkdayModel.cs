@@ -1,8 +1,6 @@
-using ChronoLog.Core.Models;
+namespace ChronoLog.Core.Models.DisplayObjects;
 
-namespace ChronoLog.SqlDatabase.Models;
-
-public class WorkdayEntity
+public class WorkdayModel
 {
     public Guid WorkdayId { get; set; }
     public DateOnly Date { get; set; }

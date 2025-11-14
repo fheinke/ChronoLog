@@ -24,11 +24,6 @@ public static class SwaggerExtension
                     },
                     License = new OpenApiLicense { Name = "Propritary" }
                 });
-
-            var filePath = Path.Combine(
-                AppContext.BaseDirectory,
-                "ChronoLog.ChronoLogService.xml");
-            swaggerGenOptions.IncludeXmlComments(filePath);
         });
         return services;
     }
