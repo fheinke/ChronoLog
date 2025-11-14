@@ -23,5 +23,9 @@ public class SqlDbContext(DbContextOptions<SqlDbContext> options) : DbContext(op
         
         modelBuilder.Entity<ProjectEntity>()
             .HasKey(x => x.ProjectId);
+        modelBuilder.Entity<ProjectEntity>()
+            .HasIndex(x => x.IsDefault)
+            .IsUnique()
+            .HasFilter("IsDefault = 1");
     }
 }

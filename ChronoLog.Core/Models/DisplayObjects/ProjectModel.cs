@@ -1,6 +1,6 @@
-namespace ChronoLog.SqlDatabase.Models;
+namespace ChronoLog.Core.Models.DisplayObjects;
 
-public class ProjectEntity
+public class ProjectModel
 {
     public Guid ProjectId { get; set; }
     public bool IsDefault { get; set; }
