@@ -1,5 +1,5 @@
-using ChronoLog.SqlDatabase.Models;
 using Microsoft.EntityFrameworkCore;
+using ChronoLog.SqlDatabase.Models;
 
 namespace ChronoLog.SqlDatabase.Context;
 
