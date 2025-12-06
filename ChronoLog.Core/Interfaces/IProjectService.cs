@@ -9,6 +9,7 @@ public interface IProjectService
     Task<bool> DeleteProjectAsync(Guid projectId);
     Task<bool> UpdateProjectAsync(Guid projectId, string? description, string? responseObject, string? defaultResponseText, bool? isDefault);
     Task<List<ProjectModel>> ListProjectsAsync();
-    Task<List<ProjectModel>> ListProjectsAsync(List<Guid> projectIds);
+    Task<List<ProjectModel>> ListProjectsByIdAsync(List<Guid> projectIds);
+    Task<ProjectModel?> GetProjectByIdAsync(Guid projectId);
     Task<bool> SetDefaultProjectAsync(Guid projectId, CancellationToken cancellationToken = default);
 }

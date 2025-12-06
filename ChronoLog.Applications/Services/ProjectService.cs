@@ -87,14 +87,27 @@ public class ProjectService : IProjectService
         return projects;
     }
     
-    public async Task<List<ProjectModel>> ListProjectsAsync(List<Guid> projectIds)
+    public async Task<List<ProjectModel>> ListProjectsByIdAsync(List<Guid> projectIds)
     {
+        if (projectIds.Count == 0)
+            return [];
+        
         var projects = await _sqlDbContext.Projects
             .AsNoTracking()
             .Where(p => projectIds.Contains(p.ProjectId))
             .Select(p => p.ToModel())
             .ToListAsync();
         return projects;
+    }
+
+    public async Task<ProjectModel?> GetProjectByIdAsync(Guid projectId)
+    {
+        var project = await _sqlDbContext.Projects
+            .AsNoTracking()
+            .Where(p => p.ProjectId == projectId)
+            .Select(p => p.ToModel())
+            .FirstOrDefaultAsync();
+        return project ?? null;
     }
 
     public async Task<bool> SetDefaultProjectAsync(Guid projectId, CancellationToken cancellationToken = default)

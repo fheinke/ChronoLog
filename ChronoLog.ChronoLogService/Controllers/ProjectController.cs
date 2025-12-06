@@ -18,20 +18,47 @@ public class ProjectController : ControllerBase
     }
     
     [HttpGet]
-    public async Task<List<ProjectModel>> Get()
+    [ProducesResponseType(typeof(List<ProjectModel>), 200)]
+    public async Task<ActionResult<List<ProjectModel>>> GetAllProjects()
     {
-        return await _projectService.ListProjectsAsync();
+        var projects = await _projectService.ListProjectsAsync();
+        return Ok(projects);
     }
 
-    [HttpGet("{id}")]
-    public string Get(int id)
+    [HttpGet("{projectId:guid}")]
+    [ProducesResponseType(typeof(ProjectModel), 200)]
+    [ProducesResponseType(404)]
+    public async Task<ActionResult<ProjectModel>> GetProjectById(Guid projectId)
     {
-        return "value";
+        var project = await _projectService.GetProjectByIdAsync(projectId);
+        if (project is null)
+            return NotFound($"Project with ID {projectId} not found.");
+        return Ok(project);
     }
     
     [HttpPost]
-    public void Post([FromBody] string value)
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    public async Task<ActionResult> PostNewProject([FromBody] ProjectPostViewModel value)
     {
+        var project = new ProjectModel
+        {
+            ProjectId = Guid.NewGuid(),
+            Name = value.Name,
+            Description = value.Description ?? string.Empty,
+            ResponseObject = value.ResponseObject,
+            DefaultResponseText = value.DefaultResponseText ?? string.Empty,
+            IsDefault = value.IsDefault ?? false
+        };
+        var result = await _projectService.CreateProjectAsync(
+            project.Name,
+            project.Description,
+            project.ResponseObject,
+            project.DefaultResponseText,
+            project.IsDefault);
+        if (result)
+            return Ok("Project created successfully.");
+        return BadRequest("Failed to create project.");
     }
     
     [HttpPut("{id}")]
@@ -39,8 +66,14 @@ public class ProjectController : ControllerBase
     {
     }
     
-    [HttpDelete("{id}")]
-    public void Delete(int id)
+    [HttpDelete("{projectId:guid}")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    public async Task<ActionResult> DeleteProject(Guid projectId)
     {
+        var result = await _projectService.DeleteProjectAsync(projectId);
+        if (result)
+            return Ok("Project deleted successfully.");
+        return BadRequest("Failed to delete project.");
     }
 }
