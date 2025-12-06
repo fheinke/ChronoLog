@@ -15,19 +15,67 @@ public class ProjectService : IProjectService
         _sqlDbContext = sqlDbContext;
     }
     
-    public async Task<bool> CreateProjectAsync()
+    public async Task<bool> CreateProjectAsync(string name, string? description, string responseObject, string? defaultResponseText, bool? isDefault = false)
     {
-        throw new NotImplementedException();
+        var project = new ProjectModel
+        {
+            ProjectId = Guid.NewGuid(),
+            Name = name,
+            Description = description ?? string.Empty,
+            ResponseObject = responseObject,
+            DefaultResponseText = defaultResponseText ?? string.Empty,
+            IsDefault = isDefault ?? false
+        };
+        
+        if (project.IsDefault)
+            await _sqlDbContext.Projects
+                .Where(p => p.IsDefault)
+                .ExecuteUpdateAsync(p => p.SetProperty(x => x.IsDefault, false));
+        
+        await _sqlDbContext.Projects.AddAsync(project.ToEntity());
+        var affectedRows = await _sqlDbContext.SaveChangesAsync();
+        return affectedRows > 0;
     }
     
-    public async Task<bool> DeleteProjectAsync()
+    public async Task<bool> DeleteProjectAsync(Guid projectId)
     {
-        throw new NotImplementedException();
+        var project = await _sqlDbContext.Projects
+            .FirstOrDefaultAsync(p => p.ProjectId == projectId);
+        
+        if (project is null)
+            return false;
+        if (project.IsDefault)
+            return false;
+        
+        _sqlDbContext.Projects.Remove(project);
+        var affectedRows = await _sqlDbContext.SaveChangesAsync();
+        return affectedRows > 0;
     }
     
-    public async Task<bool> UpdateProjectAsync()
+    public async Task<bool> UpdateProjectAsync(Guid projectId, string? description, string? responseObject, string? defaultResponseText, bool? isDefault)
     {
-        throw new NotImplementedException();
+        var project = await _sqlDbContext.Projects
+            .FirstOrDefaultAsync(p => p.ProjectId == projectId);
+        if (project is null)
+            return false;
+        
+        if (description is not null)
+            project.Description = description;
+        if (responseObject is not null)
+            project.ResponseObject = responseObject;
+        if (defaultResponseText is not null)
+            project.DefaultResponseText = defaultResponseText;
+        if (isDefault is not null)
+            project.IsDefault = isDefault.Value;
+        
+        if (project.IsDefault)
+            await _sqlDbContext.Projects
+                .Where(p => p.IsDefault && p.ProjectId != projectId)
+                .ExecuteUpdateAsync(p => p.SetProperty(x => x.IsDefault, false));
+        
+        _sqlDbContext.Projects.Update(project);
+        var affectedRows = await _sqlDbContext.SaveChangesAsync();
+        return affectedRows > 0;
     }
 
     public async Task<List<ProjectModel>> ListProjectsAsync()

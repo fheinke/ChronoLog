@@ -4,9 +4,10 @@ namespace ChronoLog.Core.Interfaces;
 
 public interface IProjectService
 {
-    Task<bool> CreateProjectAsync();
-    Task<bool> DeleteProjectAsync();
-    Task<bool> UpdateProjectAsync();
+    Task<bool> CreateProjectAsync(string name, string description, string responseObject, string defaultResponseText,
+        bool? isDefault = false);
+    Task<bool> DeleteProjectAsync(Guid projectId);
+    Task<bool> UpdateProjectAsync(Guid projectId, string? description, string? responseObject, string? defaultResponseText, bool? isDefault);
     Task<List<ProjectModel>> ListProjectsAsync();
     Task<List<ProjectModel>> ListProjectsAsync(List<Guid> projectIds);
     Task<bool> SetDefaultProjectAsync(Guid projectId, CancellationToken cancellationToken = default);
