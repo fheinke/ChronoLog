@@ -11,6 +11,7 @@ public static class AddApplications
         IConfiguration config)
     {
         serviceCollection.AddScoped<ITimeService, TimeService>();
+        serviceCollection.AddScoped<IProjectService, ProjectService>();
         
         return serviceCollection;
     }
