@@ -61,9 +61,31 @@ public class ProjectController : ControllerBase
         return BadRequest("Failed to create project.");
     }
     
-    [HttpPut("{id}")]
-    public void Put(int id, [FromBody] string value)
+    [HttpPut("{projectId:guid}")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    public async Task<ActionResult> Put(Guid projectId, [FromBody] ProjectPostViewModel value)
     {
+        var result = await _projectService.UpdateProjectAsync(
+            projectId,
+            value.Description ?? null,
+            value.ResponseObject,
+            value.DefaultResponseText ?? null,
+            value.IsDefault ?? false);
+        if (result)
+            return Ok("Project updated successfully.");
+        return BadRequest("Failed to update project.");
+    }
+    
+    [HttpPatch("{projectId:guid}")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    public async Task<ActionResult> PatchDefaultProject(Guid projectId)
+    {
+        var result = await _projectService.SetDefaultProjectAsync(projectId);
+        if (result)
+            return Ok("Project set as default successfully.");
+        return BadRequest("Failed to set project as default.");
     }
     
     [HttpDelete("{projectId:guid}")]
