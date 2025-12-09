@@ -30,13 +30,15 @@ public static class EntitiesToModels
     
     public static WorkdayViewModel ToViewModel(this WorkdayEntity entity)
     {
+        ArgumentNullException.ThrowIfNull(entity);
+
         return new WorkdayViewModel
         {
             WorkdayId = entity.WorkdayId,
             Date = entity.Date,
             Type = entity.Type,
-            Worktimes = entity.Worktimes.Select(wt => wt.ToModel()).ToList(),
-            Projecttimes = entity.Projecttimes.Select(pt => pt.ToModel()).ToList()
+            Worktimes = entity.Worktimes?.Select(wt => wt.ToModel()).ToList() ?? [],
+            Projecttimes = entity.Projecttimes?.Select(pt => pt.ToModel()).ToList() ?? []
         };
     }
 

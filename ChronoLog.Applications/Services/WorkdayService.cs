@@ -16,9 +16,17 @@ public class WorkdayService : IWorkdayService
         _sqlDbContext = sqlDbContext;
     }
 
-    public async Task<bool> CreateWorkdayAsync()
+    public async Task<bool> CreateWorkdayAsync(WorkdayPostViewModel workday)
     {
-        throw new NotImplementedException();
+        var model = new WorkdayModel
+        {
+            WorkdayId = Guid.NewGuid(),
+            Date = workday.Date ?? DateOnly.FromDateTime(DateTime.Now),
+            Type = workday.Type
+        };
+        await _sqlDbContext.Workdays.AddAsync(model.ToEntity());
+        var affectedRows = await _sqlDbContext.SaveChangesAsync();
+        return affectedRows > 0;
     }
     
     public async Task<List<WorkdayViewModel>> GetWorkdaysAsync()
@@ -27,16 +35,15 @@ public class WorkdayService : IWorkdayService
             .AsNoTracking()
             .Select(w => w.ToViewModel())
             .ToListAsync();
-        
         return workdays;
     }
 
-    public async Task<WorkdayModel?> GetWorkdayByIdAsync(Guid workdayId)
+    public async Task<WorkdayViewModel?> GetWorkdayByIdAsync(Guid workdayId)
     {
         var workday = await _sqlDbContext.Workdays
             .AsNoTracking()
             .Where(w => w.WorkdayId == workdayId)
-            .Select(w => w.ToModel())
+            .Select(w => w.ToViewModel())
             .FirstOrDefaultAsync();
         return workday ?? null;
     }

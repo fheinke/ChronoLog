@@ -24,4 +24,23 @@ public class WorkdayController : ControllerBase
         var workdays = await _workdayService.GetWorkdaysAsync();
         return Ok(workdays);
     }
+    
+    [HttpGet("{workdayId}")]
+    [ProducesResponseType(typeof(WorkdayViewModel), 200)]
+    [ProducesResponseType(404)]
+    public async Task<ActionResult<WorkdayViewModel>> GetWorkdayById(Guid workdayId)
+    {
+        var workday = await _workdayService.GetWorkdayByIdAsync(workdayId);
+        if (workday == null)
+            return NotFound("Workday not found");
+        return Ok(workday);
+    }
+
+    [HttpPost]
+    [ProducesResponseType(typeof(WorkdayModel), 201)]
+    public async Task<ActionResult<WorkdayViewModel>> CreateWorkday([FromBody] WorkdayPostViewModel workday)
+    {
+        var createdWorkday = await _workdayService.CreateWorkdayAsync(workday);
+        return CreatedAtAction(nameof(GetWorkdayById), new { workdayId = createdWorkday }, createdWorkday);
+    }
 }

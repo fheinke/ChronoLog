@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using ChronoLog.SqlDatabase.Models;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace ChronoLog.SqlDatabase.Context;
 
@@ -12,6 +13,23 @@ public class SqlDbContext(DbContextOptions<SqlDbContext> options) : DbContext(op
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        var dateOnlyConverter = new ValueConverter<DateOnly, DateTime>(
+            d => d.ToDateTime(TimeOnly.MinValue),
+            dt => DateOnly.FromDateTime(dt));
+
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            var clrType = entityType.ClrType;
+            var dateProperties = clrType.GetProperties()
+                .Where(p => p.PropertyType == typeof(DateOnly));
+            foreach (var property in dateProperties)
+            {
+                modelBuilder.Entity(entityType.ClrType)
+                    .Property(property.PropertyType, property.Name)
+                    .HasConversion(dateOnlyConverter);
+            }
+        }
+        
         // Workday
         modelBuilder.Entity<WorkdayEntity>()
             .HasKey(x => x.WorkdayId);

@@ -17,4 +17,14 @@ public static class ModelsToEntities
             DefaultResponseText = model.DefaultResponseText
         };
     }
+    
+    public static WorkdayEntity ToEntity(this WorkdayModel model)
+    {
+        return new WorkdayEntity
+        {
+            WorkdayId = model.WorkdayId,
+            Date = model.Date,
+            Type = model.Type
+        };
+    }
 }
