@@ -12,6 +12,7 @@ public static class AddApplications
     {
         serviceCollection.AddScoped<ITimeService, TimeService>();
         serviceCollection.AddScoped<IProjectService, ProjectService>();
+        serviceCollection.AddScoped<IWorkdayService, WorkdayService>();
         
         return serviceCollection;
     }
