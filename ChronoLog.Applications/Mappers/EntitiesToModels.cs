@@ -7,7 +7,7 @@ public static class EntitiesToModels
 {
     public static ProjectModel ToModel(this ProjectEntity entity)
     {
-        return new ProjectModel()
+        return new ProjectModel
         {
             ProjectId = entity.ProjectId,
             IsDefault = entity.IsDefault,

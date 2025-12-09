@@ -37,19 +37,23 @@ public class ProjectService : IProjectService
         return affectedRows > 0;
     }
     
-    public async Task<bool> DeleteProjectAsync(Guid projectId)
+    public async Task<List<ProjectModel>> GetProjectsAsync()
+    {
+        var projects = await _sqlDbContext.Projects
+            .AsNoTracking()
+            .Select(p => p.ToModel())
+            .ToListAsync();
+        return projects;
+    }
+
+    public async Task<ProjectModel?> GetProjectByIdAsync(Guid projectId)
     {
         var project = await _sqlDbContext.Projects
-            .FirstOrDefaultAsync(p => p.ProjectId == projectId);
-        
-        if (project is null)
-            return false;
-        if (project.IsDefault)
-            return false;
-        
-        _sqlDbContext.Projects.Remove(project);
-        var affectedRows = await _sqlDbContext.SaveChangesAsync();
-        return affectedRows > 0;
+            .AsNoTracking()
+            .Where(p => p.ProjectId == projectId)
+            .Select(p => p.ToModel())
+            .FirstOrDefaultAsync();
+        return project ?? null;
     }
     
     public async Task<bool> UpdateProjectAsync(Guid projectId, string? description, string? responseObject, string? defaultResponseText, bool? isDefault)
@@ -77,37 +81,20 @@ public class ProjectService : IProjectService
         var affectedRows = await _sqlDbContext.SaveChangesAsync();
         return affectedRows > 0;
     }
-
-    public async Task<List<ProjectModel>> ListProjectsAsync()
-    {
-        var projects = await _sqlDbContext.Projects
-            .AsNoTracking()
-            .Select(p => p.ToModel())
-            .ToListAsync();
-        return projects;
-    }
     
-    public async Task<List<ProjectModel>> ListProjectsByIdAsync(List<Guid> projectIds)
-    {
-        if (projectIds.Count == 0)
-            return [];
-        
-        var projects = await _sqlDbContext.Projects
-            .AsNoTracking()
-            .Where(p => projectIds.Contains(p.ProjectId))
-            .Select(p => p.ToModel())
-            .ToListAsync();
-        return projects;
-    }
-
-    public async Task<ProjectModel?> GetProjectByIdAsync(Guid projectId)
+    public async Task<bool> DeleteProjectAsync(Guid projectId)
     {
         var project = await _sqlDbContext.Projects
-            .AsNoTracking()
-            .Where(p => p.ProjectId == projectId)
-            .Select(p => p.ToModel())
-            .FirstOrDefaultAsync();
-        return project ?? null;
+            .FirstOrDefaultAsync(p => p.ProjectId == projectId);
+        
+        if (project is null)
+            return false;
+        if (project.IsDefault)
+            return false;
+        
+        _sqlDbContext.Projects.Remove(project);
+        var affectedRows = await _sqlDbContext.SaveChangesAsync();
+        return affectedRows > 0;
     }
 
     public async Task<bool> SetDefaultProjectAsync(Guid projectId, CancellationToken cancellationToken = default)

@@ -21,7 +21,7 @@ public class ProjectController : ControllerBase
     [ProducesResponseType(typeof(List<ProjectModel>), 200)]
     public async Task<ActionResult<List<ProjectModel>>> GetAllProjects()
     {
-        var projects = await _projectService.ListProjectsAsync();
+        var projects = await _projectService.GetProjectsAsync();
         return Ok(projects);
     }
 
