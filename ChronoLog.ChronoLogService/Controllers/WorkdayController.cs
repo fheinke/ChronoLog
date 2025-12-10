@@ -37,8 +37,8 @@ public class WorkdayController : ControllerBase
     }
 
     [HttpPost]
-    [ProducesResponseType(typeof(WorkdayModel), 201)]
-    public async Task<ActionResult<WorkdayViewModel>> CreateWorkday([FromBody] WorkdayPostViewModel workday)
+    [ProducesResponseType(typeof(WorkdayPostModel), 201)]
+    public async Task<ActionResult<WorkdayViewModel>> CreateWorkday([FromBody] WorkdayPostModel workday)
     {
         var createdWorkday = await _workdayService.CreateWorkdayAsync(workday);
         return CreatedAtAction(nameof(GetWorkdayById), new { workdayId = createdWorkday }, createdWorkday);

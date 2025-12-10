@@ -84,8 +84,8 @@ namespace ChronoLog.SqlDatabase.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
-                    b.Property<DateOnly>("Date")
-                        .HasColumnType("date");
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<int>("Type")
                         .HasColumnType("int");
@@ -101,10 +101,10 @@ namespace ChronoLog.SqlDatabase.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
-                    b.Property<TimeSpan>("BreakTime")
+                    b.Property<TimeSpan?>("BreakTime")
                         .HasColumnType("time(6)");
 
-                    b.Property<TimeOnly>("EndTime")
+                    b.Property<TimeOnly?>("EndTime")
                         .HasColumnType("time");
 
                     b.Property<TimeOnly>("StartTime")

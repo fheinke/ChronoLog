@@ -27,4 +27,16 @@ public static class ModelsToEntities
             Type = model.Type
         };
     }
+
+    public static WorktimeEntity ToEntity(this WorktimeModel model)
+    {
+        return new WorktimeEntity
+        {
+            WorktimeId = model.WorktimeId,
+            WorkdayId = model.WorkdayId,
+            StartTime = model.StartTime,
+            EndTime = model.EndTime,
+            BreakTime = model.BreakTime
+        };
+    }
 }

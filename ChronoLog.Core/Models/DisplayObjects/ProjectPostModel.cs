@@ -1,6 +1,6 @@
 namespace ChronoLog.Core.Models.DisplayObjects;
 
-public class ProjectPostViewModel
+public class ProjectPostModel
 {
     public bool? IsDefault { get; set; }
     public string Name { get; set; }

@@ -8,6 +8,6 @@ public class WorktimeEntity
     public WorkdayEntity Workday { get; set; }
     
     public TimeOnly StartTime { get; set; }
-    public TimeOnly EndTime { get; set; }
-    public TimeSpan BreakTime { get; set; }
+    public TimeOnly? EndTime { get; set; }
+    public TimeSpan? BreakTime { get; set; }
 }

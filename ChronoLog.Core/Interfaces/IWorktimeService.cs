@@ -1,0 +1,12 @@
+using ChronoLog.Core.Models.DisplayObjects;
+
+namespace ChronoLog.Core.Interfaces;
+
+public interface IWorktimeService
+{
+    Task<bool> CreateWorktimeAsync(WorktimePostModel worktime);
+    Task<List<WorktimeModel>> GetWorktimesAsync();
+    Task<WorktimeModel?> GetWorktimeByIdAsync(Guid worktimeId);
+    Task<bool> UpdateWorktimeAsync();
+    Task<bool> DeleteWorktimeAsync(Guid worktimeId);
+}

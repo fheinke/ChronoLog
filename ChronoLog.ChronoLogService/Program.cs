@@ -16,7 +16,12 @@ builder.Services.AddRazorComponents()
 builder.Services.AddSqlServices();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddApplicationsToServiceCollection(builder.Configuration);
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+        options.JsonSerializerOptions.Converters.Add(new ChronoLog.Applications.Converters.TimeOnlyJsonConverter());
+    });
 builder.Services.AddSwaggerExtension();
 
 builder.Services.AddHealthChecks()

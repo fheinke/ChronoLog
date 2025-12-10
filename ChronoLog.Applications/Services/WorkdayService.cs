@@ -16,7 +16,7 @@ public class WorkdayService : IWorkdayService
         _sqlDbContext = sqlDbContext;
     }
 
-    public async Task<bool> CreateWorkdayAsync(WorkdayPostViewModel workday)
+    public async Task<bool> CreateWorkdayAsync(WorkdayPostModel workday)
     {
         var model = new WorkdayModel
         {
@@ -55,6 +55,13 @@ public class WorkdayService : IWorkdayService
 
     public async Task<bool> DeleteWorkdayAsync(Guid workdayId)
     {
-        throw new NotImplementedException();
+        var workday = await _sqlDbContext.Workdays
+            .FirstOrDefaultAsync(w => w.WorkdayId == workdayId);
+        if (workday == null)
+            return false;
+        
+        _sqlDbContext.Workdays.Remove(workday);
+        var affectedRows = await _sqlDbContext.SaveChangesAsync();
+        return affectedRows > 0;
     }
 }

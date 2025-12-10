@@ -39,7 +39,7 @@ public class ProjectController : ControllerBase
     [HttpPost]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
-    public async Task<ActionResult> PostNewProject([FromBody] ProjectPostViewModel value)
+    public async Task<ActionResult> PostNewProject([FromBody] ProjectPostModel value)
     {
         var project = new ProjectModel
         {
@@ -64,7 +64,7 @@ public class ProjectController : ControllerBase
     [HttpPut("{projectId:guid}")]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
-    public async Task<ActionResult> Put(Guid projectId, [FromBody] ProjectPostViewModel value)
+    public async Task<ActionResult> Put(Guid projectId, [FromBody] ProjectPostModel value)
     {
         var result = await _projectService.UpdateProjectAsync(
             projectId,
