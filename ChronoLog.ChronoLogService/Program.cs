@@ -8,6 +8,7 @@ using ChronoLog.SqlDatabase;
 using ChronoLog.SqlDatabase.Context;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
+using Radzen;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,6 +33,7 @@ builder.Services.AddLogging(options =>
 });
 
 builder.Services.AddHeaderPropagation(o => { o.Headers.Add("x-auth-request-access-token"); });
+builder.Services.AddRadzenComponents();
 
 var app = builder.Build();
 
