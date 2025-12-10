@@ -49,9 +49,21 @@ public class WorktimeService : IWorktimeService
         return worktime;
     }
     
-    public async Task<bool> UpdateWorktimeAsync()
+    public async Task<bool> UpdateWorktimeAsync(WorktimeModel worktime)
     {
-        throw new NotImplementedException();
+        var existingWorktime = await _sqlDbContext.Worktimes
+            .FirstOrDefaultAsync(w => w.WorktimeId == worktime.WorktimeId);
+        if (existingWorktime == null)
+            return false;
+        
+        existingWorktime.WorkdayId = worktime.WorkdayId;
+        existingWorktime.StartTime = worktime.StartTime;
+        existingWorktime.EndTime = worktime.EndTime ?? null;
+        existingWorktime.BreakTime = worktime.BreakTime ?? null;
+        
+        _sqlDbContext.Worktimes.Update(existingWorktime);
+        var affectedRows = await _sqlDbContext.SaveChangesAsync();
+        return affectedRows > 0;
     }
     
     public async Task<bool> DeleteWorktimeAsync(Guid worktimeId)

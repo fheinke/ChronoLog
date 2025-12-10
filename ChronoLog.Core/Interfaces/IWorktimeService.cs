@@ -7,6 +7,6 @@ public interface IWorktimeService
     Task<bool> CreateWorktimeAsync(WorktimePostModel worktime);
     Task<List<WorktimeModel>> GetWorktimesAsync();
     Task<WorktimeModel?> GetWorktimeByIdAsync(Guid worktimeId);
-    Task<bool> UpdateWorktimeAsync();
+    Task<bool> UpdateWorktimeAsync(WorktimeModel worktime);
     Task<bool> DeleteWorktimeAsync(Guid worktimeId);
 }

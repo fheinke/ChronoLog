@@ -28,7 +28,7 @@ public class WorktimeController : ControllerBase
     [HttpGet("{worktimeId}")]
     [ProducesResponseType(typeof(WorktimeModel), 200)]
     [ProducesResponseType(404)]
-    public async Task<ActionResult<WorktimeModel>> GetWorktimesById(Guid worktimeId)
+    public async Task<ActionResult<WorktimeModel>> GetWorktimeById(Guid worktimeId)
     {
         var worktime = await _worktimeService.GetWorktimeByIdAsync(worktimeId);
         if (worktime == null)
@@ -41,6 +41,30 @@ public class WorktimeController : ControllerBase
     public async Task<ActionResult<WorktimeModel>> CreateWorktime([FromBody] WorktimePostModel worktime)
     {
         var createdWorktime = await _worktimeService.CreateWorktimeAsync(worktime);
-        return CreatedAtAction(nameof(GetWorktimesById), new { worktimeId = createdWorktime }, createdWorktime);
+        return CreatedAtAction(nameof(GetWorktimeById), new { worktimeId = createdWorktime }, createdWorktime);
+    }
+
+    [HttpPut("{worktimeId}")]
+    [ProducesResponseType(204)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> UpdateWorktime(Guid worktimeId, [FromBody] WorktimeModel worktime)
+    {
+        if (worktimeId != worktime.WorktimeId)
+            return BadRequest("Worktime ID mismatch");
+        var updated = await _worktimeService.UpdateWorktimeAsync(worktime);
+        if (!updated)
+            return NotFound("Worktime not found");
+        return NoContent();
+    }
+
+    [HttpDelete("{worktimeId}")]
+    [ProducesResponseType(204)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> DeleteWorktime(Guid worktimeId)
+    {
+        var deleted = await _worktimeService.DeleteWorktimeAsync(worktimeId);
+        if (!deleted)
+            return NotFound("Worktime not found");
+        return NoContent();
     }
 }

@@ -16,10 +16,19 @@ public class SqlDbContext(DbContextOptions<SqlDbContext> options) : DbContext(op
         var dateOnlyConverter = new ValueConverter<DateOnly, DateTime>(
             d => d.ToDateTime(TimeOnly.MinValue),
             dt => DateOnly.FromDateTime(dt));
+        
+        var timeOnlyConverter = new ValueConverter<TimeOnly, TimeSpan>(
+            t => t.ToTimeSpan(),
+            ts => TimeOnly.FromTimeSpan(ts));
+
+        var nullableTimeOnlyConverter = new ValueConverter<TimeOnly?, TimeSpan?>(
+            t => t.HasValue ? t.Value.ToTimeSpan() : null,
+            ts => ts.HasValue ? TimeOnly.FromTimeSpan(ts.Value) : (TimeOnly?)null);
 
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
             var clrType = entityType.ClrType;
+            
             var dateProperties = clrType.GetProperties()
                 .Where(p => p.PropertyType == typeof(DateOnly));
             foreach (var property in dateProperties)
@@ -27,6 +36,20 @@ public class SqlDbContext(DbContextOptions<SqlDbContext> options) : DbContext(op
                 modelBuilder.Entity(entityType.ClrType)
                     .Property(property.PropertyType, property.Name)
                     .HasConversion(dateOnlyConverter);
+            }
+            
+            var timeProperties = clrType.GetProperties()
+                .Where(p => p.PropertyType == typeof(TimeOnly) || p.PropertyType == typeof(TimeOnly?));
+            foreach (var property in timeProperties)
+            {
+                var propBuilder = modelBuilder.Entity(entityType.ClrType)
+                    .Property(property.PropertyType, property.Name)
+                    .HasColumnType("time");
+
+                if (property.PropertyType == typeof(TimeOnly))
+                    propBuilder.HasConversion(timeOnlyConverter);
+                else
+                    propBuilder.HasConversion(nullableTimeOnlyConverter);
             }
         }
         
