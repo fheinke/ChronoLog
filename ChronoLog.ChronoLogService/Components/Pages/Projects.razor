@@ -1,3 +1,40 @@
 @page "/projects"
+@using ChronoLog.Core.Interfaces
+@using ChronoLog.Core.Models.DisplayObjects
+@inject IProjectService ProjectService
 
 <PageTitle>Projects</PageTitle>
+
+<RadzenDataGrid @ref="grid" AllowFiltering="true" AllowColumnResize="true"
+                FilterMode="FilterMode.Advanced" PageSize="5" AllowPaging="true" AllowSorting="true" Data="@projects" ColumnWidth="300px"
+                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" TItem="ProjectModel" FilterCleared=@FilterCleared
+                LogicalFilterOperator="LogicalFilterOperator.Or" FilterPopupRenderMode="PopupRenderMode.OnDemand">
+    <Columns>
+        <RadzenDataGridColumn Property="@nameof(ProjectModel.ProjectId)" Title="ID" Filterable="true" Frozen="true" Width="80px" TextAlign="TextAlign.Center">
+            <Template Context="item">
+                @item.ProjectId
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn Property="@nameof(ProjectModel.Name)" Title="Project Name" Filterable="true">
+            <Template Context="item">
+                @item.Name
+            </Template>
+        </RadzenDataGridColumn>
+    </Columns>
+</RadzenDataGrid>
+
+@code {
+    private List<ProjectModel> projects = [];
+    RadzenDataGrid<ProjectModel> grid;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        projects = (await ProjectService.GetProjectsAsync())?.ToList() ?? [];
+    }
+
+    async Task FilterCleared()
+    {
+        await grid.FirstPage();
+    }
+}
