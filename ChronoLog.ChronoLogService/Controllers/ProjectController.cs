@@ -4,6 +4,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ChronoLog.ChronoLogService.Controllers;
 
+/// <summary>
+/// Managing Projects API Controller: CRUD operations for projects.
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 public class ProjectController : ControllerBase
@@ -17,6 +20,10 @@ public class ProjectController : ControllerBase
         _projectService = projectService;
     }
     
+    /// <summary>
+    /// Returns all projects.
+    /// </summary>
+    /// <returns>List of ProjectModel</returns>
     [HttpGet]
     [ProducesResponseType(typeof(List<ProjectModel>), 200)]
     public async Task<ActionResult<List<ProjectModel>>> GetAllProjects()
@@ -25,6 +32,11 @@ public class ProjectController : ControllerBase
         return Ok(projects);
     }
 
+    /// <summary>
+    /// Returns a project by its ID.
+    /// </summary>
+    /// <param name="projectId"></param>
+    /// <returns>ProjectModel</returns>
     [HttpGet("{projectId:guid}")]
     [ProducesResponseType(typeof(ProjectModel), 200)]
     [ProducesResponseType(404)]

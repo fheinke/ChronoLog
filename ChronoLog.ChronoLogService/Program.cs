@@ -24,6 +24,12 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.Converters.Add(new ChronoLog.Applications.Converters.TimeOnlyJsonConverter());
     });
 builder.Services.AddSwaggerExtension();
+builder.Services.AddSwaggerGen(c =>
+{
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    c.IncludeXmlComments(xmlPath);
+});
 
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<SqlDbContext>("DbConnectionCheck");
@@ -60,6 +66,11 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     app.UseHsts();
 }
+else
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
@@ -67,8 +78,6 @@ app.UseHttpsRedirection();
 app.UseHeaderPropagation();
 app.UseAntiforgery();
 app.MapStaticAssets();
-app.UseSwagger();
-app.UseSwaggerUI();
 app.MapControllers();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
