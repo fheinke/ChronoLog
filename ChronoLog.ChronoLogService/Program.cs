@@ -14,6 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+builder.Services.AddRadzenComponents();
 builder.Services.AddSqlServices();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddApplicationsToServiceCollection(builder.Configuration);
@@ -39,7 +40,6 @@ builder.Services.AddLogging(options =>
 });
 
 builder.Services.AddHeaderPropagation(o => { o.Headers.Add("x-auth-request-access-token"); });
-builder.Services.AddRadzenComponents();
 
 var app = builder.Build();
 

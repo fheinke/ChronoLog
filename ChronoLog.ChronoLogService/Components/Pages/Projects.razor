@@ -5,36 +5,92 @@
 
 <PageTitle>Projects</PageTitle>
 
-<RadzenDataGrid @ref="grid" AllowFiltering="true" AllowColumnResize="true"
-                FilterMode="FilterMode.Advanced" PageSize="5" AllowPaging="true" AllowSorting="true" Data="@projects" ColumnWidth="300px"
-                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" TItem="ProjectModel" FilterCleared=@FilterCleared
-                LogicalFilterOperator="LogicalFilterOperator.Or" FilterPopupRenderMode="PopupRenderMode.OnDemand">
-    <Columns>
-        <RadzenDataGridColumn Property="@nameof(ProjectModel.ProjectId)" Title="ID" Filterable="true" Frozen="true" Width="80px" TextAlign="TextAlign.Center">
-            <Template Context="item">
-                @item.ProjectId
-            </Template>
-        </RadzenDataGridColumn>
-        <RadzenDataGridColumn Property="@nameof(ProjectModel.Name)" Title="Project Name" Filterable="true">
-            <Template Context="item">
-                @item.Name
-            </Template>
-        </RadzenDataGridColumn>
-    </Columns>
-</RadzenDataGrid>
+<div style="display: flex; flex-direction: column; height: 100%;">
+    <RadzenCard>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <RadzenTextBox @bind-Value="_searchText" Placeholder="Search" Change="OnSearchTextChanged"/>
+            <RadzenLabel Text="@(_selectedProject is { Count: > 0 } ? _selectedProject.First().Name : "")"/>
+            <RadzenButton Text="Clear Filters" Click="ClearAllFilters"/>
+        </div>
+
+        <div style="flex: 1; overflow: auto; height: calc(100% - 64px);">
+            <RadzenDataGrid class="rz-data-grid" 
+                            @ref="_grid"
+                            @bind-Value="_selectedProject"
+                            Data="@FilteredProjects"
+                            AllowFiltering="true"
+                            AllowColumnResize="true"
+                            AllowRowSelectOnRowClick="true"
+                            FilterMode="FilterMode.Advanced"
+                            PageSize="5"
+                            AllowPaging="true"
+                            AllowSorting="true"
+                            ColumnWidth="300px"
+                            PagerHorizontalAlign="HorizontalAlign.Left"
+                            ShowPagingSummary="true"
+                            GridLines="DataGridGridLines.Horizontal"
+                            SelectionMode="DataGridSelectionMode.Single"
+                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                            LogicalFilterOperator="LogicalFilterOperator.And"
+                            FilterPopupRenderMode="PopupRenderMode.OnDemand">
+                <Columns>
+                    <RadzenDataGridColumn Property="@nameof(ProjectModel.ProjectId)" Title="ID" Filterable="true" Frozen="true" Width="80px" TextAlign="TextAlign.Center">
+                        <Template Context="item">
+                            @item.ProjectId
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn Property="@nameof(ProjectModel.Name)" Title="Project Name" Filterable="true">
+                        <Template Context="item">
+                            @item.Name
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </div>
+    </RadzenCard>
+</div>
 
 @code {
-    private List<ProjectModel> projects = [];
-    RadzenDataGrid<ProjectModel> grid;
+    private List<ProjectModel> _projects = [];
+    
+    private RadzenDataGrid<ProjectModel>? _grid;
+    private IList<ProjectModel>? _selectedProject;
+    private string _searchText = "";
+    
+    private List<ProjectModel> FilteredProjects => string.IsNullOrWhiteSpace(_searchText)
+        ? _projects
+        : _projects.Where(p => 
+            p.Name.Contains(_searchText, StringComparison.OrdinalIgnoreCase) || 
+            p.ProjectId.ToString().Contains(_searchText, StringComparison.OrdinalIgnoreCase)
+            ).ToList();
 
     protected override async Task OnInitializedAsync()
     {
-        await base.OnInitializedAsync();
-        projects = (await ProjectService.GetProjectsAsync())?.ToList() ?? [];
+        await LoadData();
+        if (_selectedProject is null || !_selectedProject.Any())
+            _selectedProject = _projects.Take(1).ToList();
     }
 
-    async Task FilterCleared()
+    private async Task LoadData()
     {
-        await grid.FirstPage();
+        _projects = (await ProjectService.GetProjectsAsync()).ToList();
+        StateHasChanged();
+    }
+
+    private async Task ClearAllFilters()
+    {
+        _searchText = string.Empty;
+        if (_grid is null)
+            return;
+        
+        foreach (var column in _grid.ColumnsCollection)
+            await column.SetFilterValueAsync(null);
+        
+        await _grid.Reload();
+    }
+    
+    private void OnSearchTextChanged(object? value)
+    {
+        _searchText = value?.ToString() ?? string.Empty;
     }
 }
