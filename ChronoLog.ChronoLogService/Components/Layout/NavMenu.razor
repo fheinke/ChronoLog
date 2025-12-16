@@ -1,41 +1,9 @@
-﻿@inject ThemeService ThemeService
-
-<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">ChronoLog</a>
-    </div>
-</div>
-
-<input type="checkbox" title="Navigation menu" class="navbar-toggler"/>
-
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Overview
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="projects">
-                <RadzenIcon Icon="list" class="me-2"></RadzenIcon> Projects
-            </NavLink>
-        </div>
-    </nav>
-</div>
-
-<div class="nav-footer">
-    <div class="nav-item px-3">
-        <RadzenButton Icon="@ThemeIcon" Style="width: 100%;" Click="ToggleTheme"/>
-    </div>
-</div>
+﻿<RadzenPanelMenu DisplayStyle="@(IsExpanded ? MenuItemDisplayStyle.IconAndText : MenuItemDisplayStyle.Icon)" ShowArrow="false">
+    <RadzenPanelMenuItem Text="Overview" Icon="home" Path="/" />
+    <RadzenPanelMenuItem Text="Projects" Icon="dashboard" Path="projects" />
+</RadzenPanelMenu>
 
 @code {
-    private string ThemeIcon => ThemeService.Theme == "material" ? "dark_mode" : "light_mode";
-    
-    private void ToggleTheme()
-    {
-        var newTheme = ThemeService.Theme == "material" ? "material-dark" : "material";
-        ThemeService.SetTheme(newTheme);
-        StateHasChanged();
-    }
+    [Parameter]
+    public bool IsExpanded { get; set; }
 }
