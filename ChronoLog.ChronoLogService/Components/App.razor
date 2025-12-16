@@ -13,7 +13,7 @@
     <ImportMap/>
     <link rel="icon" type="image/png" href="favicon.png"/>
     <HeadOutlet/>
-    <RadzenTheme Theme="default" />
+    <RadzenTheme Theme="material" />
 </head>
 
 <body>
@@ -48,7 +48,7 @@
         }
         else
         {
-            HttpContext.Response.Cookies.Append("ChronoLogTheme", "default" , new CookieOptions { Secure = Options.Value.IsSecure, Expires = DateTimeOffset.Now.Add(Options.Value.Duration) });    
+            HttpContext.Response.Cookies.Append("ChronoLogTheme", "material" , new CookieOptions { Secure = Options.Value.IsSecure, Expires = DateTimeOffset.Now.Add(Options.Value.Duration) });    
         }
     }
 }

@@ -30,11 +30,11 @@
 </div>
 
 @code {
-    private string ThemeIcon => ThemeService.Theme == "default" ? "dark_mode" : "light_mode";
+    private string ThemeIcon => ThemeService.Theme == "material" ? "dark_mode" : "light_mode";
     
     private void ToggleTheme()
     {
-        var newTheme = ThemeService.Theme == "default" ? "dark" : "default";
+        var newTheme = ThemeService.Theme == "material" ? "material-dark" : "material";
         ThemeService.SetTheme(newTheme);
         StateHasChanged();
     }
