@@ -8,13 +8,19 @@
 <div style="display: flex; flex-direction: column; height: 100%;">
     <RadzenCard>
         <div style="display: flex; justify-content: space-between; align-items: center;">
+            <RadzenButton Icon="refresh" Variant="Variant.Outlined" Click="LoadData"/>
+            <RadzenButton Text="Create Project" Click="CreateProject"/>
+        </div>
+    </RadzenCard>
+    <RadzenCard>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
             <RadzenTextBox @bind-Value="_searchText" Placeholder="Search" Change="OnSearchTextChanged"/>
             <RadzenLabel Text="@(_selectedProject is { Count: > 0 } ? _selectedProject.First().Name : "")"/>
             <RadzenButton Text="Clear Filters" Click="ClearAllFilters"/>
         </div>
 
         <div style="flex: 1; overflow: auto; height: calc(100% - 64px);">
-            <RadzenDataGrid class="rz-data-grid" 
+            <RadzenDataGrid class="rz-data-grid"
                             @ref="_grid"
                             @bind-Value="_selectedProject"
                             Data="@FilteredProjects"
@@ -22,7 +28,7 @@
                             AllowColumnResize="true"
                             AllowRowSelectOnRowClick="true"
                             FilterMode="FilterMode.Advanced"
-                            PageSize="5"
+                            PageSize="15"
                             AllowPaging="true"
                             AllowSorting="true"
                             ColumnWidth="300px"
@@ -34,14 +40,22 @@
                             LogicalFilterOperator="LogicalFilterOperator.And"
                             FilterPopupRenderMode="PopupRenderMode.OnDemand">
                 <Columns>
-                    <RadzenDataGridColumn Property="@nameof(ProjectModel.ProjectId)" Title="ID" Filterable="true" Frozen="true" Width="80px" TextAlign="TextAlign.Center">
+                    <RadzenDataGridColumn Property="@nameof(ProjectModel.IsDefault)" Title="Default" Filterable="false"Width="50px" TextAlign="TextAlign.Center">
                         <Template Context="item">
-                            @item.ProjectId
+                            @if (item.IsDefault)
+                            {
+                                <RadzenIcon Icon="check_circle" Style="color: green;"/>
+                            }
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn Property="@nameof(ProjectModel.Name)" Title="Project Name" Filterable="true">
+                    <RadzenDataGridColumn Property="@nameof(ProjectModel.Name)" Title="Project Name">
                         <Template Context="item">
                             @item.Name
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn Property="@nameof(ProjectModel.ResponseObject)" Title="Response Object">
+                        <Template Context="item">
+                            @item.ResponseObject
                         </Template>
                     </RadzenDataGridColumn>
                 </Columns>
@@ -92,5 +106,10 @@
     private void OnSearchTextChanged(object? value)
     {
         _searchText = value?.ToString() ?? string.Empty;
+    }
+    
+    private void CreateProject()
+    {
+        // Implementation for creating a new project goes here.
     }
 }
