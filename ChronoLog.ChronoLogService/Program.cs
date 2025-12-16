@@ -15,6 +15,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddRadzenComponents();
+builder.Services.AddRadzenCookieThemeService(options =>
+{
+    options.Name = "ChronoLogTheme";
+    options.Duration = TimeSpan.FromDays(365);
+});
 builder.Services.AddSqlServices();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddApplicationsToServiceCollection(builder.Configuration);

@@ -95,3 +95,13 @@
         overflow-y: auto;
     }
 }
+
+.nav-footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    padding: 1rem;
+    font-size: 0.8rem;
+    color: #aaaaaa;
+    background-color: rgba(0,0,0,0.4);
+}

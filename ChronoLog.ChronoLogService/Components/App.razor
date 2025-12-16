@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.Extensions.Options
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -12,7 +13,7 @@
     <ImportMap/>
     <link rel="icon" type="image/png" href="favicon.png"/>
     <HeadOutlet/>
-    <RadzenTheme Theme="material" />
+    <RadzenTheme Theme="default" />
 </head>
 
 <body>
@@ -23,3 +24,31 @@
 </body>
 
 </html>
+
+@code {
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; }
+
+    [Inject]
+    private ThemeService ThemeService { get; set; }
+    
+    [Inject]
+    private IOptions<CookieThemeServiceOptions> Options { get; set; }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        if (HttpContext is null) return;
+        var theme = HttpContext.Request.Cookies["ChronoLogTheme"];
+
+        if (!string.IsNullOrEmpty(theme))
+        {
+            ThemeService.SetTheme(theme, false);
+        }
+        else
+        {
+            HttpContext.Response.Cookies.Append("ChronoLogTheme", "default" , new CookieOptions { Secure = Options.Value.IsSecure, Expires = DateTimeOffset.Now.Add(Options.Value.Duration) });    
+        }
+    }
+}

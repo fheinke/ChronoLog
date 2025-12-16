@@ -1,4 +1,6 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@inject ThemeService ThemeService
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">ChronoLog</a>
     </div>
@@ -20,3 +22,20 @@
         </div>
     </nav>
 </div>
+
+<div class="nav-footer">
+    <div class="nav-item px-3">
+        <RadzenButton Icon="@ThemeIcon" Style="width: 100%;" Click="ToggleTheme"/>
+    </div>
+</div>
+
+@code {
+    private string ThemeIcon => ThemeService.Theme == "default" ? "dark_mode" : "light_mode";
+    
+    private void ToggleTheme()
+    {
+        var newTheme = ThemeService.Theme == "default" ? "dark" : "default";
+        ThemeService.SetTheme(newTheme);
+        StateHasChanged();
+    }
+}
