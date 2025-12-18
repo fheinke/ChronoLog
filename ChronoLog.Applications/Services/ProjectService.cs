@@ -53,6 +53,7 @@ public class ProjectService : IProjectService
     {
         var projects = await _sqlDbContext.Projects
             .AsNoTracking()
+            .OrderBy(p => p.Name)
             .Select(p => p.ToModel())
             .ToListAsync();
         return projects;

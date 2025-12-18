@@ -1,25 +1,29 @@
 @page "/projects"
 @using ChronoLog.Core.Interfaces
 @using ChronoLog.Core.Models.DisplayObjects
+@inject DialogService DialogService
 @inject IProjectService ProjectService
 
 <PageTitle>Projects</PageTitle>
 
-<div style="display: flex; flex-direction: column; height: 100%;">
+<div style="display: flex; flex-direction: column; height: 100%; gap: 10px;">
     <RadzenCard>
         <div style="display: flex; justify-content: space-between; align-items: center;">
-            <RadzenButton Icon="refresh" Variant="Variant.Outlined" Click="LoadData"/>
-            <RadzenButton Text="Create Project" Click="CreateProject"/>
+            <RadzenButton Text="Create Project" ButtonStyle="ButtonStyle.Success" Variant="Variant.Outlined" Click="OpenCreateProjectDialog"/>
         </div>
     </RadzenCard>
     <RadzenCard>
         <div style="display: flex; justify-content: space-between; align-items: center;">
-            <RadzenTextBox @bind-Value="_searchText" Placeholder="Search" Change="OnSearchTextChanged"/>
-            <RadzenLabel Text="@(_selectedProject is { Count: > 0 } ? _selectedProject.First().Name : "")"/>
-            <RadzenButton Text="Clear Filters" Click="ClearAllFilters"/>
+            <div style="display: flex; gap: 10px;">
+                <RadzenTextBox @bind-Value="_searchText" Placeholder="Search" Change="OnSearchTextChanged"/>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: flex-end;">
+                <RadzenButton Text="Clear Filters" Click="ClearAllFilters"/>
+                <RadzenButton Icon="refresh" Variant="Variant.Outlined" Click="LoadData"/>
+            </div>
         </div>
 
-        <div style="flex: 1; overflow: auto; height: calc(100% - 64px);">
+        <div style="flex: 1; overflow: auto; height: calc(100% - 64px); margin: 10px 0 0 0;">
             <RadzenDataGrid class="rz-data-grid"
                             @ref="_grid"
                             @bind-Value="_selectedProject"
@@ -40,7 +44,7 @@
                             LogicalFilterOperator="LogicalFilterOperator.And"
                             FilterPopupRenderMode="PopupRenderMode.OnDemand">
                 <Columns>
-                    <RadzenDataGridColumn Property="@nameof(ProjectModel.IsDefault)" Title="Default" Filterable="false"Width="50px" TextAlign="TextAlign.Center">
+                    <RadzenDataGridColumn Property="@nameof(ProjectModel.IsDefault)" Title="Default" Filterable="false" Width="50px" TextAlign="TextAlign.Center">
                         <Template Context="item">
                             @if (item.IsDefault)
                             {
@@ -108,8 +112,20 @@
         _searchText = value?.ToString() ?? string.Empty;
     }
     
-    private void CreateProject()
+    private async Task OpenCreateProjectDialog()
     {
-        // Implementation for creating a new project goes here.
+        await DialogService.OpenAsync<CreateProjectDialog>(
+            "Create Project",
+            new Dictionary<string, object>(),
+            new DialogOptions
+                {
+                    Width = "600px", 
+                    Height = "800px",
+                    CloseDialogOnEsc = true,
+                    CloseDialogOnOverlayClick = true
+                }
+        );
+        
+        await LoadData();
     }
 }

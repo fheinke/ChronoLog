@@ -1,0 +1,92 @@
+@using ChronoLog.Core.Interfaces
+@using ChronoLog.Core.Models.DisplayObjects
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+@inject IProjectService ProjectService
+
+<RadzenStack Gap="1rem" Orientation="Orientation.Vertical" JustifyContent="JustifyContent.SpaceBetween" Style="height: 100%;">
+        <RadzenStack>
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                <RadzenFormField Text="Projectname *" Style="width: 100%;">
+                    <ChildContent>
+                        <RadzenTextBox Name="Projectname" @bind-Value="@_project.Name"/>
+                    </ChildContent>
+                    <Helper>
+                        <RadzenText Visible="@_isInvalid" Style="color: red;" TextStyle="TextStyle.Caption">The Projectname is required.</RadzenText>
+                    </Helper>
+                </RadzenFormField>
+            </RadzenStack>
+
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                <RadzenFormField Text="Default Text for SAP Response" Style="width: 100%;">
+                    <ChildContent>
+                        <RadzenTextBox Name="DefaultResponseText" @bind-Value="@_project.DefaultResponseText"/>
+                    </ChildContent>
+                </RadzenFormField>
+            </RadzenStack>
+
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                <RadzenFormField Text="SAP Project ID *" Style="width: 100%;">
+                    <ChildContent>
+                        <RadzenTextBox Name="ResponseObject" @bind-Value="@_project.ResponseObject"/>
+                    </ChildContent>
+                    <Helper>
+                        <RadzenText Visible="@_isInvalid" Style="color: red;" TextStyle="TextStyle.Caption">The SAP Project ID is required.</RadzenText>
+                    </Helper>
+                </RadzenFormField>
+            </RadzenStack>
+
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                <RadzenFormField Text="Description" Style="width: 100%;">
+                    <ChildContent>
+                        <RadzenTextArea @bind-Value="@_project.Description"/>
+                    </ChildContent>
+                </RadzenFormField>
+            </RadzenStack>
+            
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <RadzenCheckBox @bind-Value="@_project.IsDefault" Name="CheckboxIsDefault"/>
+                    <RadzenLabel Text="Default Project" Component="CheckboxIsDefault"/>
+                </div>
+            </RadzenStack>
+        </RadzenStack>
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+            <RadzenButton Click="@(_ => DialogService.Close(true))" Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Danger" Text="Close" Style="width: 120px" />
+            <RadzenButton Click="@OnSubmit" Variant="Variant.Flat" Text="Save" Style="width: 120px" />
+        </RadzenStack>
+</RadzenStack>
+
+@code {
+    private ProjectModel _project = new();
+    private bool _isInvalid;
+
+    private async Task OnSubmit()
+    {
+        if (string.IsNullOrWhiteSpace(_project.Name) ||
+            string.IsNullOrWhiteSpace(_project.ResponseObject))
+        {
+            _isInvalid = true;
+            OnInvalidSubmit();
+            return;
+        }
+
+        await OnValidSubmit();
+    }
+
+    private async Task OnValidSubmit()
+    {
+        if (await ProjectService.CreateProjectAsync(_project))
+        {
+            NotificationService.Notify(NotificationSeverity.Success, "Project created successfully.", duration: 4000);
+            DialogService.Close(true);
+            return;
+        }
+        NotificationService.Notify(NotificationSeverity.Error, "Failed to create project.", duration: 4000);
+    }
+
+    private void OnInvalidSubmit()
+    {
+        NotificationService.Notify(NotificationSeverity.Error, "Please fix the validation errors.", duration: 4000);
+    }
+}

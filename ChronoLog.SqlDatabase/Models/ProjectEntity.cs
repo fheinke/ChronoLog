@@ -7,8 +7,8 @@ public class ProjectEntity
     public virtual ICollection<ProjecttimeEntity> Projecttimes { get; set; }
     
     public bool IsDefault { get; set; }
-    public string Name { get; set; }
+    public required string Name { get; set; }
     public string? Description { get; set; }
-    public string ResponseObject { get; set; }
+    public required string ResponseObject { get; set; }
     public string? DefaultResponseText { get; set; }
 }
