@@ -37,6 +37,18 @@ public class ProjectService : IProjectService
         return affectedRows > 0;
     }
     
+    public async Task<bool> CreateProjectAsync(ProjectModel projectModel)
+    {
+        if (projectModel.IsDefault)
+            await _sqlDbContext.Projects
+                .Where(p => p.IsDefault)
+                .ExecuteUpdateAsync(p => p.SetProperty(x => x.IsDefault, false));
+        
+        await _sqlDbContext.Projects.AddAsync(projectModel.ToEntity());
+        var affectedRows = await _sqlDbContext.SaveChangesAsync();
+        return affectedRows > 0;
+    }
+    
     public async Task<List<ProjectModel>> GetProjectsAsync()
     {
         var projects = await _sqlDbContext.Projects
