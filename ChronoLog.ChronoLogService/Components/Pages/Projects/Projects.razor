@@ -2,6 +2,7 @@
 @using ChronoLog.Core.Interfaces
 @using ChronoLog.Core.Models.DisplayObjects
 @inject DialogService DialogService
+@inject NotificationService NotificationService
 @inject IProjectService ProjectService
 
 <PageTitle>Projects</PageTitle>
@@ -44,7 +45,7 @@
                             LogicalFilterOperator="LogicalFilterOperator.And"
                             FilterPopupRenderMode="PopupRenderMode.OnDemand">
                 <Columns>
-                    <RadzenDataGridColumn Property="@nameof(ProjectModel.IsDefault)" Title="Default" Filterable="false" Width="50px" TextAlign="TextAlign.Center">
+                    <RadzenDataGridColumn Property="@nameof(ProjectModel.IsDefault)" Title="Default" Filterable="false" Sortable="false" Resizable="false" Width="30px" TextAlign="TextAlign.Center">
                         <Template Context="item">
                             @if (item.IsDefault)
                             {
@@ -60,6 +61,14 @@
                     <RadzenDataGridColumn Property="@nameof(ProjectModel.ResponseObject)" Title="Response Object">
                         <Template Context="item">
                             @item.ResponseObject
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn Filterable="false" Sortable="false" Resizable="false" Width="30px" TextAlign="TextAlign.Center">
+                        <Template Context="item">
+                            <RadzenButton Icon="delete"
+                                          ButtonStyle="ButtonStyle.Danger"
+                                          Size="ButtonSize.Small"
+                                          Click="@(async _ => await ConfirmDelete(item))"/>
                         </Template>
                     </RadzenDataGridColumn>
                 </Columns>
@@ -127,5 +136,38 @@
         );
         
         await LoadData();
+    }
+    
+    private async Task ConfirmDelete(ProjectModel project)
+    {
+        var confirmed = await DialogService.Confirm($"Delete \"{project.Name}\" permanently?", "Delete project",
+            new ConfirmOptions
+            {
+                OkButtonText = "Delete",
+                CancelButtonText = "Cancel",
+                CloseDialogOnEsc = true,
+                CloseDialogOnOverlayClick = true
+            });
+        if (confirmed is not true) return;
+
+        try
+        {
+            var success = await ProjectService.DeleteProjectAsync(project.ProjectId);
+            if (success)
+            {
+                NotificationService.Notify(NotificationSeverity.Success, "Project deleted.", duration: 4000);
+                await LoadData();
+                if (_grid != null) await _grid.Reload();
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Delete failed.", duration: 4000);
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, $"Delete failed, failure message: {ex.Message}", duration: 6000);
+            Console.Error.WriteLine(ex);
+        }
     }
 }
