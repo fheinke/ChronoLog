@@ -33,6 +33,8 @@ public class WorkdayService : IWorkdayService
     {
         var workdays = await _sqlDbContext.Workdays
             .AsNoTracking()
+            .Include(w => w.Worktimes)
+            .Include(w => w.Projecttimes)
             .Select(w => w.ToViewModel())
             .ToListAsync();
         return workdays;

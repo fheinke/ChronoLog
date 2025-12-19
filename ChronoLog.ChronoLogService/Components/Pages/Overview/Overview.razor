@@ -8,21 +8,21 @@
 <PageTitle>Overview</PageTitle>
 
 <div style="display: flex; flex-direction: column; height: 100%; gap: 10px;">
-    <RadzenScheduler @ref=@_scheduler 
-                     SlotRender=@OnSlotRender 
-                     style="height: 768px;" 
-                     TItem="WorkdayViewModel" 
-                     Data=@_workdays 
-                     StartProperty="Date" 
-                     EndProperty="Date"
+    <RadzenScheduler @ref=@_scheduler
+                     SlotRender=@OnSlotRender
+                     Style="height: 760px;"
+                     TItem="WorkdayViewModel"
+                     Data=@_workdays
+                     StartProperty="Start"
+                     EndProperty="End"
                      TextProperty="TypeText"
-                     SlotSelect=@OnSlotSelect 
-                     AppointmentSelect=@OnAppointmentSelect 
-                     AppointmentRender=@OnAppointmentRender 
+                     SlotSelect=@OnSlotSelect
+                     AppointmentSelect=@OnAppointmentSelect
+                     AppointmentRender=@OnAppointmentRender
                      DaySelect="@OnDaySelect">
-        <RadzenMonthView />
-        <RadzenWeekView />
-        <RadzenDayView />
+        <RadzenMonthView/>
+        <RadzenWeekView StartTime="@(new TimeSpan(0, 0, 0))" EndTime="@(new TimeSpan(24, 0, 0))"/>
+        <RadzenDayView StartTime="@(new TimeSpan(0, 0, 0))" EndTime="@(new TimeSpan(24, 0, 0))"/>
     </RadzenScheduler>    
 </div>
 
