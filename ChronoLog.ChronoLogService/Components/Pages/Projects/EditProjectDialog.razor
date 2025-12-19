@@ -1,0 +1,155 @@
+@using ChronoLog.Core.Interfaces
+@using ChronoLog.Core.Models.DisplayObjects
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+@inject IProjectService ProjectService
+
+<RadzenStack Gap="1rem" Orientation="Orientation.Vertical" JustifyContent="JustifyContent.SpaceBetween" Style="height: 100%;">
+    <RadzenStack>
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+            <RadzenFormField Text="Projectname *" Style="width: 100%;">
+                <ChildContent>
+                    <RadzenTextBox Name="Projectname" @bind-Value="@Project.Name"/>
+                </ChildContent>
+                <Helper>
+                    <RadzenText Visible="@_isInvalid" Style="color: red;" TextStyle="TextStyle.Caption">The Projectname is required.</RadzenText>
+                </Helper>
+            </RadzenFormField>
+        </RadzenStack>
+
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+            <RadzenFormField Text="Default Text for SAP Response" Style="width: 100%;">
+                <ChildContent>
+                    <RadzenTextBox Name="DefaultResponseText" @bind-Value="@Project.DefaultResponseText"/>
+                </ChildContent>
+            </RadzenFormField>
+        </RadzenStack>
+
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+            <RadzenFormField Text="SAP Project ID *" Style="width: 100%;">
+                <ChildContent>
+                    <RadzenTextBox Name="ResponseObject" @bind-Value="@Project.ResponseObject"/>
+                </ChildContent>
+                <Helper>
+                    <RadzenText Visible="@_isInvalid" Style="color: red;" TextStyle="TextStyle.Caption">The SAP Project ID is required.</RadzenText>
+                </Helper>
+            </RadzenFormField>
+        </RadzenStack>
+
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+            <RadzenFormField Text="Description" Style="width: 100%;">
+                <ChildContent>
+                    <RadzenTextArea @bind-Value="@Project.Description"/>
+                </ChildContent>
+            </RadzenFormField>
+        </RadzenStack>
+
+        @if (!_originalProjectModel.IsDefault)
+        {
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <RadzenCheckBox @bind-Value="@Project.IsDefault" Name="CheckboxIsDefault"/>
+                    <RadzenLabel Text="Default Project" Component="CheckboxIsDefault"/>
+                </div>
+            </RadzenStack>
+        }
+    </RadzenStack>
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+        <RadzenButton Click="@(_ => DialogService.Close(true))" Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Danger" Text="Close" Style="width: 120px"/>
+        <RadzenButton Click="@(async _ => await OnSubmit())" Variant="Variant.Flat" Text="Save" Style="width: 120px"/>
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter]
+    public ProjectModel Project { get; set; }
+
+    private ProjectModel _originalProjectModel = new();
+    private bool _isInvalid;
+
+    protected override void OnInitialized()
+    {
+        if (Project is null)
+        {
+            Project = new ProjectModel();
+        }
+
+        _originalProjectModel = new ProjectModel
+        {
+            Name = Project.Name,
+            DefaultResponseText = Project.DefaultResponseText,
+            ResponseObject = Project.ResponseObject,
+            Description = Project.Description,
+            IsDefault = Project.IsDefault
+        };
+    }
+
+    private bool ProjectHasChanges()
+    {
+        return _originalProjectModel.Name != Project.Name ||
+               _originalProjectModel.DefaultResponseText != Project.DefaultResponseText ||
+               _originalProjectModel.ResponseObject != Project.ResponseObject ||
+               _originalProjectModel.Description != Project.Description ||
+               _originalProjectModel.IsDefault != Project.IsDefault;
+    }
+
+    private async Task OnSubmit()
+    {
+        _isInvalid = false;
+
+        if (string.IsNullOrWhiteSpace(Project.Name) ||
+            string.IsNullOrWhiteSpace(Project.ResponseObject))
+        {
+            _isInvalid = true;
+            OnInvalidSubmit();
+            return;
+        }
+
+        await OnValidSubmit();
+    }
+
+    private async Task OnValidSubmit()
+    {
+        if (!ProjectHasChanges())
+        {
+            DialogService.Close(true);
+            return;
+        }
+
+        var confirmed = await DialogService.Confirm(
+            "Save changes to the project?",
+            "Confirm Project changes",
+            new ConfirmOptions
+            {
+                OkButtonText = "Save",
+                CancelButtonText = "Cancel",
+                CloseDialogOnEsc = false,
+                CloseDialogOnOverlayClick = false
+            });
+
+        if (confirmed is not true) return;
+
+        try
+        {
+            var success = await ProjectService.UpdateProjectAsync(Project);
+            if (success)
+            {
+                NotificationService.Notify(NotificationSeverity.Success, "Project updated successfully.", duration: 4000);
+                DialogService.Close(true);
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Project not updated", duration: 4000);
+            }
+        }
+        catch (Exception)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Project not updated", duration: 4000);
+        }
+    }
+
+    private void OnInvalidSubmit()
+    {
+        NotificationService.Notify(NotificationSeverity.Error, "Please fix the validation errors.", duration: 4000);
+    }
+}

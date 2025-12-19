@@ -63,8 +63,12 @@
                             @item.ResponseObject
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn Filterable="false" Sortable="false" Resizable="false" Width="30px" TextAlign="TextAlign.Center">
+                    <RadzenDataGridColumn Filterable="false" Sortable="false" Resizable="false" Width="40px" TextAlign="TextAlign.Center">
                         <Template Context="item">
+                            <RadzenButton Icon="edit"
+                                          ButtonStyle="ButtonStyle.Base"
+                                          Size="ButtonSize.Small"
+                                          Click="@(async _ => await OpenEditProjectDialog(item))"/>
                             <RadzenButton Icon="delete"
                                           ButtonStyle="ButtonStyle.Danger"
                                           Size="ButtonSize.Small"
@@ -129,7 +133,27 @@
             new DialogOptions
                 {
                     Width = "600px", 
-                    Height = "800px",
+                    Height = "500px",
+                    CloseDialogOnEsc = true,
+                    CloseDialogOnOverlayClick = true
+                }
+        );
+        
+        await LoadData();
+    }
+    
+    private async Task OpenEditProjectDialog(ProjectModel project)
+    {
+        await DialogService.OpenAsync<EditProjectDialog>(
+            "Edit Project",
+            new Dictionary<string, object>
+            {
+                { "Project", project }
+            },
+            new DialogOptions
+                {
+                    Width = "600px", 
+                    Height = "500px",
                     CloseDialogOnEsc = true,
                     CloseDialogOnOverlayClick = true
                 }

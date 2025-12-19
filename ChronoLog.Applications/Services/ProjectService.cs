@@ -95,6 +95,28 @@ public class ProjectService : IProjectService
         return affectedRows > 0;
     }
     
+    public async Task<bool> UpdateProjectAsync(ProjectModel projectModel)
+    {
+        var project = await _sqlDbContext.Projects
+            .FirstOrDefaultAsync(p => p.ProjectId == projectModel.ProjectId);
+        if (project is null)
+            return false;
+        
+        project.Description = projectModel.Description;
+        project.ResponseObject = projectModel.ResponseObject;
+        project.DefaultResponseText = projectModel.DefaultResponseText;
+        project.IsDefault = projectModel.IsDefault;
+        
+        if (project.IsDefault)
+            await _sqlDbContext.Projects
+                .Where(p => p.IsDefault && p.ProjectId != projectModel.ProjectId)
+                .ExecuteUpdateAsync(p => p.SetProperty(x => x.IsDefault, false));
+        
+        _sqlDbContext.Projects.Update(project);
+        var affectedRows = await _sqlDbContext.SaveChangesAsync();
+        return affectedRows > 0;
+    }
+    
     public async Task<bool> DeleteProjectAsync(Guid projectId)
     {
         var project = await _sqlDbContext.Projects
