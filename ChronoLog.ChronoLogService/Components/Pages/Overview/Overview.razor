@@ -1,0 +1,108 @@
+﻿@page "/"
+@inject DialogService DialogService
+@using ChronoLog.Core.Interfaces
+@using ChronoLog.Core.Models
+@using ChronoLog.Core.Models.DisplayObjects
+@inject IWorkdayService WorkdayService
+
+<PageTitle>Overview</PageTitle>
+
+<div style="display: flex; flex-direction: column; height: 100%; gap: 10px;">
+    <RadzenScheduler @ref=@_scheduler 
+                     SlotRender=@OnSlotRender 
+                     style="height: 768px;" 
+                     TItem="WorkdayViewModel" 
+                     Data=@_workdays 
+                     StartProperty="Date" 
+                     EndProperty="Date"
+                     TextProperty="TypeText"
+                     SlotSelect=@OnSlotSelect 
+                     AppointmentSelect=@OnAppointmentSelect 
+                     AppointmentRender=@OnAppointmentRender 
+                     DaySelect="@OnDaySelect">
+        <RadzenMonthView />
+        <RadzenWeekView />
+        <RadzenDayView />
+    </RadzenScheduler>    
+</div>
+
+@code {
+    private RadzenScheduler<WorkdayViewModel> _scheduler;
+    private List<WorkdayViewModel> _workdays;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _workdays = (await WorkdayService.GetWorkdaysAsync()).ToList();
+        StateHasChanged();
+    }
+
+    void OnDaySelect(SchedulerDaySelectEventArgs args) { }
+
+    void OnSlotRender(SchedulerSlotRenderEventArgs args)
+    {
+        // Highlight today in month view
+        if (args.View.Text == "Month" && args.Start.Date == DateTime.Today)
+        {
+            args.Attributes["style"] = "background: var(--rz-scheduler-highlight-background-color, rgba(255,220,40,.2));";
+        }
+
+        // Highlight working hours (7-15)
+        if ((args.View.Text == "Week" || args.View.Text == "Day") && args.Start.Hour > 7 && args.Start.Hour < 15)
+        {
+            args.Attributes["style"] = "background: var(--rz-scheduler-highlight-background-color, rgba(255,220,40,.2));";
+        }
+    }
+
+    async Task OnSlotSelect(SchedulerSlotSelectEventArgs args)
+    {
+        if (args.View.Text != "Year")
+        {
+            WorkdayViewModel data = await DialogService.OpenAsync<AddWorkdayDialog>(
+                "Add Workday",
+                new Dictionary<string, object> { { "Start", args.Start }, { "End", args.End } });
+
+            if (data is not null)
+            {
+                _workdays.Add(data);
+                await _scheduler.Reload();
+            }
+        }
+    }
+
+    async Task OnAppointmentSelect(SchedulerAppointmentSelectEventArgs<WorkdayViewModel> args)
+    {
+        var copy = new WorkdayViewModel
+        {
+            Date = args.Data.Date,
+            Type = args.Data.Type,
+            Worktimes = args.Data.Worktimes,
+            Projecttimes = args.Data.Projecttimes
+        };
+
+        var data = await DialogService.OpenAsync<EditWorkdayDialog>(
+            "Edit Workday",
+            new Dictionary<string, object> { { "WorkdayViewModel", copy } });
+
+        if (data is not null)
+        {
+            args.Data.Date = data.Date;
+            args.Data.Type = data.Type;
+            args.Data.Worktimes = data.Worktimes;
+            args.Data.Projecttimes = data.Projecttimes;
+        }
+
+        await _scheduler.Reload();
+    }
+
+    void OnAppointmentRender(SchedulerAppointmentRenderEventArgs<WorkdayViewModel> args)
+    {
+        if (args.Data.Type == WorkdayType.Office)
+            args.Attributes["style"] = "background: red";
+        
+    }
+}

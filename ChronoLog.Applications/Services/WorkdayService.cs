@@ -21,7 +21,7 @@ public class WorkdayService : IWorkdayService
         var model = new WorkdayModel
         {
             WorkdayId = Guid.NewGuid(),
-            Date = workday.Date ?? DateOnly.FromDateTime(DateTime.Now),
+            Date = workday.Date ?? DateTime.Now,
             Type = workday.Type
         };
         await _sqlDbContext.Workdays.AddAsync(model.ToEntity());
