@@ -30,6 +30,21 @@ public class WorktimeService : IWorktimeService
         return affectedRows > 0;
     }
     
+    public async Task<Guid> CreateWorktimeAsync(WorktimeModel worktime)
+    {
+        var model = new WorktimeModel
+        {
+            WorktimeId = Guid.NewGuid(),
+            WorkdayId = worktime.WorkdayId,
+            StartTime = worktime.StartTime,
+            EndTime = worktime.EndTime ?? null,
+            BreakTime =  worktime.BreakTime ?? null
+        };
+        await _sqlDbContext.Worktimes.AddAsync(model.ToEntity());
+        var affectedRows = await _sqlDbContext.SaveChangesAsync();
+        return affectedRows > 0 ? model.WorktimeId : Guid.Empty;
+    }
+    
     public async Task<List<WorktimeModel>> GetWorktimesAsync()
     {
         var worktimes = await _sqlDbContext.Worktimes

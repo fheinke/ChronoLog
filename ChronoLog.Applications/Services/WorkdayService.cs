@@ -29,6 +29,19 @@ public class WorkdayService : IWorkdayService
         return affectedRows > 0;
     }
     
+    public async Task<bool> CreateWorkdayAsync(WorkdayModel workday)
+    {
+        var model = new WorkdayModel
+        {
+            WorkdayId = Guid.NewGuid(),
+            Date = workday.Date,
+            Type = workday.Type
+        };
+        await _sqlDbContext.Workdays.AddAsync(model.ToEntity());
+        var affectedRows = await _sqlDbContext.SaveChangesAsync();
+        return affectedRows > 0;
+    }
+    
     public async Task<List<WorkdayViewModel>> GetWorkdaysAsync()
     {
         var workdays = await _sqlDbContext.Workdays

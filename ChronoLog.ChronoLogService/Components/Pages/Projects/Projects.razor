@@ -66,12 +66,15 @@
                     <RadzenDataGridColumn Filterable="false" Sortable="false" Resizable="false" Width="40px" TextAlign="TextAlign.Center">
                         <Template Context="item">
                             <RadzenButton Icon="edit"
-                                          ButtonStyle="ButtonStyle.Base"
+                                          ButtonStyle="ButtonStyle.Light"
+                                          Variant="Variant.Flat"
                                           Size="ButtonSize.Small"
                                           Click="@(async _ => await OpenEditProjectDialog(item))"/>
                             <RadzenButton Icon="delete"
                                           ButtonStyle="ButtonStyle.Danger"
+                                            Variant="Variant.Flat"
                                           Size="ButtonSize.Small"
+                                          Shade="Shade.Lighter"
                                           Click="@(async _ => await ConfirmDelete(item))"/>
                         </Template>
                     </RadzenDataGridColumn>

@@ -76,17 +76,16 @@
 
     async Task OnAppointmentSelect(SchedulerAppointmentSelectEventArgs<WorkdayViewModel> args)
     {
-        var copy = new WorkdayViewModel
-        {
-            Date = args.Data.Date,
-            Type = args.Data.Type,
-            Worktimes = args.Data.Worktimes,
-            Projecttimes = args.Data.Projecttimes
-        };
-
         var data = await DialogService.OpenAsync<EditWorkdayDialog>(
             "Edit Workday",
-            new Dictionary<string, object> { { "WorkdayViewModel", copy } });
+            new Dictionary<string, object> { { "WorkdayViewModel", args.Data } },
+            new DialogOptions
+            {
+                Width = "1200px",
+                Height = "600px",
+                CloseDialogOnEsc = true,
+                CloseDialogOnOverlayClick = true
+            });
 
         if (data is not null)
         {
@@ -103,6 +102,5 @@
     {
         if (args.Data.Type == WorkdayType.Office)
             args.Attributes["style"] = "background: red";
-        
     }
 }

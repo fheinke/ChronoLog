@@ -1,0 +1,198 @@
+@using ChronoLog.Core.Interfaces
+@using ChronoLog.Core.Models
+@using ChronoLog.Core.Models.DisplayObjects
+@inject DialogService DialogService
+@inject IWorktimeService WorktimeService
+
+<RadzenTemplateForm TItem="WorkdayViewModel" Data="@WorkdayViewModel" Submit=@OnSubmit>
+    <RadzenStack Gap="1rem">
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
+            <RadzenLabel Text="Workday Type" Component="WorkdayTypeDropdown"/>
+            <RadzenDropDown @bind-Value="@_workdayType" Data="@WorkdayTypes" Name="WorkdayTypeDropdown"/>
+        </RadzenStack>
+
+        <RadzenCardGroup Responsive="true">
+            <!-- Worktime edit -->
+            <RadzenCard Variant="Variant.Flat">
+                <RadzenDataGrid @ref="@_worktimeGrid"
+                                Data="@_worktimes"
+                                TItem="WorktimeModel"
+                                AllowAlternatingRows="false"
+                                AllowFiltering="true"
+                                AllowPaging="true"
+                                AllowSorting="true"
+                                PageSize="15"
+                                EditMode="DataGridEditMode.Single"
+                                RowUpdate="@OnUpdateRow"
+                                RowCreate="@OnCreateRow"
+                                Sort="@Reset"
+                                Page="@Reset"
+                                Filter="@Reset">
+                    <HeaderTemplate>
+                        <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="add_circle" Text="Add Worktime" Click="@InsertRow" Disabled="@(EditMode == DataGridEditMode.Single && _worktimesToInsert.Count() > 0)"/>
+                    </HeaderTemplate>
+                    <Columns>
+                        <RadzenDataGridColumn TItem="WorktimeModel" Property="Starttime" Title="Starttime" Width="150px">
+                            <EditTemplate Context="worktime">
+                                <RadzenTimeSpanPicker Value="@(worktime.StartTime.ToTimeSpan())"
+                                                      ValueChanged="@( (TimeSpan ts) => worktime.StartTime = TimeOnly.FromTimeSpan(ts) )"
+                                                      Min="@TimeSpan.Zero"
+                                                      Max="@TimeSpan.FromMinutes(1439)"/>
+                            </EditTemplate>
+                            <Template Context="worktime">
+                                @worktime.StartTime.ToString("HH':'mm':'ss")
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="WorktimeModel" Property="Endtime" Title="Endtime" Width="150px">
+                            <EditTemplate Context="worktime">
+                                <RadzenTimeSpanPicker Value="@(worktime.EndTime.HasValue ? worktime.EndTime.Value.ToTimeSpan() : (TimeSpan?)null)"
+                                                      ValueChanged="@( (TimeSpan? ts) => worktime.EndTime = ts.HasValue ? TimeOnly.FromTimeSpan(ts.Value) : (TimeOnly?)null )"
+                                                      Min="@TimeSpan.Zero"
+                                                      Max="@TimeSpan.FromMinutes(1439)"/>
+                            </EditTemplate>
+                            <Template Context="worktime">
+                                @worktime.EndTime?.ToString("HH':'mm':'ss")
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn Context="worktime" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Frozen="true" FrozenPosition="FrozenColumnPosition.Right">
+                            <Template Context="worktime">
+                                <RadzenButton Icon="add_circle" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Size="ButtonSize.Medium" Shade="Shade.Lighter" Click="@(() => InsertAfterRow(worktime))" title="Add new row after this row" Disabled="@(EditMode == DataGridEditMode.Single && _worktimesToInsert.Count() > 0)" />
+                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" class="rz-my-1 rz-ms-1" Click="@(_ => EditRow(worktime))" @onclick:stopPropagation="true" />
+                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Size="ButtonSize.Medium" Shade="Shade.Lighter" class="rz-my-1 rz-ms-1" Click="@(_ => DeleteRow(worktime))" @onclick:stopPropagation="true" />
+                            </Template>
+                            <EditTemplate Context="worktime">
+                                <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@(_ => SaveRow(worktime))" aria-label="Save"/>
+                                <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" class="rz-my-1 rz-ms-1" Click="@(_ => CancelEdit(worktime))" aria-label="Cancel"/>
+                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Size="ButtonSize.Medium" Shade="Shade.Lighter" class="rz-my-1 rz-ms-1" Click="@(_ => DeleteRow(worktime))" aria-label="Delete" />
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+            </RadzenCard>
+
+            <!-- Project edit -->
+            <RadzenCard Variant="Variant.Flat">
+
+            </RadzenCard>
+        </RadzenCardGroup>
+    </RadzenStack>
+</RadzenTemplateForm>
+
+@code {
+    [Parameter]
+    public required WorkdayViewModel WorkdayViewModel { get; set; }
+
+    private static readonly IEnumerable<string> WorkdayTypes = Enum.GetNames(typeof(WorkdayType));
+    private string _workdayType = WorkdayTypes.First();
+
+    private RadzenDataGrid<WorktimeModel> _worktimeGrid;
+    private List<WorktimeModel> _worktimes = [];
+
+    private const DataGridEditMode EditMode = DataGridEditMode.Single;
+
+    private List<WorktimeModel> _worktimesToInsert = [];
+    private List<WorktimeModel> _worktimesToUpdate = [];
+
+    protected override void OnParametersSet()
+    {
+        _worktimes = WorkdayViewModel.Worktimes?.ToList() ?? new List<WorktimeModel>();
+    }
+
+    private void Reset()
+    {
+        _worktimesToInsert.Clear();
+        _worktimesToUpdate.Clear();
+    }
+
+    private void Reset(WorktimeModel worktime)
+    {
+        _worktimesToInsert.Remove(worktime);
+        _worktimesToUpdate.Remove(worktime);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        if (!_worktimes.Any())
+            _worktimes = WorkdayViewModel.Worktimes.ToList();
+    }
+
+    private async Task EditRow(WorktimeModel worktime)
+    {
+        if (!_worktimeGrid.IsValid) return;
+        if (EditMode == DataGridEditMode.Single) Reset();
+
+        _worktimesToUpdate.Add(worktime);
+        await _worktimeGrid.EditRow(worktime);
+    }
+
+    private void OnUpdateRow(WorktimeModel worktime)
+    {
+        Reset(worktime);
+        _ = WorktimeService.UpdateWorktimeAsync(worktime);
+    }
+
+    private async Task SaveRow(WorktimeModel worktime)
+    {
+        await _worktimeGrid.UpdateRow(worktime);
+    }
+
+    private void CancelEdit(WorktimeModel worktime)
+    {
+        Reset(worktime);
+        _worktimeGrid.CancelEditRow(worktime);
+    }
+
+    private async Task DeleteRow(WorktimeModel worktime)
+    {
+        Reset(worktime);
+
+        if (_worktimes.Contains(worktime))
+        {
+            await WorktimeService.DeleteWorktimeAsync(worktime.WorktimeId);
+            _worktimes.Remove(worktime);
+        }
+        else
+        {
+            _worktimeGrid.CancelEditRow(worktime);
+        }
+
+        await _worktimeGrid.Reload();
+    }
+
+    private async Task InsertRow()
+    {
+        if (!_worktimeGrid.IsValid) return;
+        if (EditMode == DataGridEditMode.Single) Reset();
+
+        var newWorktime = new WorktimeModel();
+        _worktimesToInsert.Add(newWorktime);
+        await _worktimeGrid.InsertRow(newWorktime);
+    }
+
+    private async Task InsertAfterRow(WorktimeModel worktime)
+    {
+        if (!_worktimeGrid.IsValid) return;
+        if (EditMode == DataGridEditMode.Single) Reset();
+
+        var newWorktime = new WorktimeModel();
+        _worktimesToInsert.Add(newWorktime);
+        await _worktimeGrid.InsertAfterRow(newWorktime, worktime);
+    }
+
+    private async Task OnCreateRow(WorktimeModel worktime)
+    {
+        worktime.WorkdayId = WorkdayViewModel.WorkdayId;
+        var createdWorktimeId = await WorktimeService.CreateWorktimeAsync(worktime);
+        var createdWorktime = await WorktimeService.GetWorktimeByIdAsync(createdWorktimeId);
+
+        if (createdWorktime != null) _worktimes.Add(createdWorktime);
+        _worktimesToInsert.Remove(worktime);
+        await _worktimeGrid.Reload();
+    }
+
+    void OnSubmit(WorkdayViewModel model)
+    {
+        DialogService.Close(model);
+    }
+}
