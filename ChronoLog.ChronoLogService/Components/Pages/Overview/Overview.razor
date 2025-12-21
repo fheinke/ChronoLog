@@ -63,11 +63,11 @@
         if (args.View.Text != "Year")
         {
             WorkdayViewModel data = await DialogService.OpenAsync<EditWorkdayDialog>(
-                "Add Workday",
+                $"Add Workday - {args.Start.Date.ToShortDateString()}",
                 new Dictionary<string, object> { { "SelectedDate", args.Start.Date } }, 
                 new DialogOptions 
                 { 
-                    Width = "1200px", 
+                    Width = "1400px", 
                     Height = "600px", 
                     CloseDialogOnEsc = true, 
                     CloseDialogOnOverlayClick = true 
@@ -78,17 +78,19 @@
                 _workdays.Add(data);
                 await _scheduler.Reload();
             }
+
+            await LoadData();
         }
     }
 
     async Task OnAppointmentSelect(SchedulerAppointmentSelectEventArgs<WorkdayViewModel> args)
     {
         var data = await DialogService.OpenAsync<EditWorkdayDialog>(
-            "Edit Workday",
+            $"Edit Workday - {args.Start.Date.ToShortDateString()}",
             new Dictionary<string, object> { { "Workday", args.Data } },
             new DialogOptions
             {
-                Width = "1200px",
+                Width = "1400px",
                 Height = "600px",
                 CloseDialogOnEsc = true,
                 CloseDialogOnOverlayClick = true
@@ -103,6 +105,7 @@
         }
 
         await _scheduler.Reload();
+        await LoadData();
     }
 
     void OnAppointmentRender(SchedulerAppointmentRenderEventArgs<WorkdayViewModel> args)
