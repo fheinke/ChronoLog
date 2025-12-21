@@ -62,9 +62,16 @@
     {
         if (args.View.Text != "Year")
         {
-            WorkdayViewModel data = await DialogService.OpenAsync<AddWorkdayDialog>(
+            WorkdayViewModel data = await DialogService.OpenAsync<EditWorkdayDialog>(
                 "Add Workday",
-                new Dictionary<string, object> { { "Start", args.Start }, { "End", args.End } });
+                new Dictionary<string, object> { { "SelectedDate", args.Start.Date } }, 
+                new DialogOptions 
+                { 
+                    Width = "1200px", 
+                    Height = "600px", 
+                    CloseDialogOnEsc = true, 
+                    CloseDialogOnOverlayClick = true 
+                });
 
             if (data is not null)
             {
@@ -78,7 +85,7 @@
     {
         var data = await DialogService.OpenAsync<EditWorkdayDialog>(
             "Edit Workday",
-            new Dictionary<string, object> { { "WorkdayViewModel", args.Data } },
+            new Dictionary<string, object> { { "Workday", args.Data } },
             new DialogOptions
             {
                 Width = "1200px",
