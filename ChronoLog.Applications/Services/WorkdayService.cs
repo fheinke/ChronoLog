@@ -29,7 +29,7 @@ public class WorkdayService : IWorkdayService
         return affectedRows > 0;
     }
     
-    public async Task<bool> CreateWorkdayAsync(WorkdayModel workday)
+    public async Task<Guid> CreateWorkdayAsync(WorkdayModel workday)
     {
         var model = new WorkdayModel
         {
@@ -39,7 +39,7 @@ public class WorkdayService : IWorkdayService
         };
         await _sqlDbContext.Workdays.AddAsync(model.ToEntity());
         var affectedRows = await _sqlDbContext.SaveChangesAsync();
-        return affectedRows > 0;
+        return affectedRows > 0 ? model.WorkdayId : Guid.Empty;
     }
     
     public async Task<List<WorkdayViewModel>> GetWorkdaysAsync()
@@ -50,6 +50,12 @@ public class WorkdayService : IWorkdayService
             .Include(w => w.Projecttimes)
             .Select(w => w.ToViewModel())
             .ToListAsync();
+
+        foreach (var workday in workdays.Where(workday => workday.Worktimes.Count != 0))
+        {
+            workday.Worktimes = workday.Worktimes.OrderBy(x => x.StartTime).ToList();
+        }
+        
         return workdays;
     }
 
@@ -58,14 +64,28 @@ public class WorkdayService : IWorkdayService
         var workday = await _sqlDbContext.Workdays
             .AsNoTracking()
             .Where(w => w.WorkdayId == workdayId)
+            .Include(w => w.Worktimes)
+            .Include(w => w.Projecttimes)
             .Select(w => w.ToViewModel())
             .FirstOrDefaultAsync();
+        
+        workday?.Worktimes = workday.Worktimes.OrderBy(x => x.StartTime).ToList();
+        
         return workday ?? null;
     }
 
     public async Task<bool> UpdateWorkdayAsync(Guid workdayId, DateOnly date, WorkdayType type)
     {
-        throw new NotImplementedException();
+        var workday = await _sqlDbContext.Workdays
+            .FirstOrDefaultAsync(w => w.WorkdayId == workdayId);
+        if (workday == null)
+            return false;
+        
+        workday.Date = date.ToDateTime(new TimeOnly(0, 0));
+        workday.Type = type;
+        _sqlDbContext.Workdays.Update(workday);
+        var affectedRows = await _sqlDbContext.SaveChangesAsync();
+        return affectedRows > 0;
     }
 
     public async Task<bool> DeleteWorkdayAsync(Guid workdayId)

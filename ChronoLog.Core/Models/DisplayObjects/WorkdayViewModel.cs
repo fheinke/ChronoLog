@@ -19,4 +19,27 @@ public class WorkdayViewModel
         : TimeOnly.MaxValue;
     public DateTime Start => Date.Date.Add(StartTimeOnly.ToTimeSpan());
     public DateTime End => Date.Date.Add(EndTimeOnly.ToTimeSpan());
+    
+    // Total worktime calculation with Breaktime consideration
+    public TimeSpan TotalWorktime
+    {
+        get
+        {
+            var total = TimeSpan.Zero;
+            foreach (var worktime in Worktimes)
+            {
+                if (worktime.EndTime.HasValue)
+                {
+                    var duration = worktime.EndTime.Value - worktime.StartTime;
+                    total += duration;
+                }
+
+                if (worktime.BreakTime.HasValue)
+                {
+                    total -= worktime.BreakTime.Value;
+                }
+            }
+            return total;
+        }
+    }
 }
