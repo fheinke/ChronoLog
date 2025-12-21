@@ -27,8 +27,8 @@
 </div>
 
 @code {
-    private RadzenScheduler<WorkdayViewModel> _scheduler;
-    private List<WorkdayViewModel> _workdays;
+    private RadzenScheduler<WorkdayViewModel>? _scheduler;
+    private List<WorkdayViewModel>? _workdays;
     
     protected override async Task OnInitializedAsync()
     {
@@ -41,9 +41,9 @@
         StateHasChanged();
     }
 
-    void OnDaySelect(SchedulerDaySelectEventArgs args) { }
+    private static void OnDaySelect(SchedulerDaySelectEventArgs args) { }
 
-    void OnSlotRender(SchedulerSlotRenderEventArgs args)
+    private static void OnSlotRender(SchedulerSlotRenderEventArgs args)
     {
         // Highlight today in month view
         if (args.View.Text == "Month" && args.Start.Date == DateTime.Today)
@@ -58,7 +58,7 @@
         }
     }
 
-    async Task OnSlotSelect(SchedulerSlotSelectEventArgs args)
+    private async Task OnSlotSelect(SchedulerSlotSelectEventArgs args)
     {
         if (args.View.Text != "Year")
         {
@@ -75,15 +75,15 @@
 
             if (data is not null)
             {
-                _workdays.Add(data);
-                await _scheduler.Reload();
+                _workdays?.Add(data);
+                await _scheduler?.Reload()!;
             }
 
             await LoadData();
         }
     }
 
-    async Task OnAppointmentSelect(SchedulerAppointmentSelectEventArgs<WorkdayViewModel> args)
+    private async Task OnAppointmentSelect(SchedulerAppointmentSelectEventArgs<WorkdayViewModel> args)
     {
         var data = await DialogService.OpenAsync<EditWorkdayDialog>(
             $"Edit Workday - {args.Start.Date.ToShortDateString()}",
@@ -104,13 +104,19 @@
             args.Data.Projecttimes = data.Projecttimes;
         }
 
-        await _scheduler.Reload();
+        await _scheduler?.Reload()!;
         await LoadData();
     }
 
-    void OnAppointmentRender(SchedulerAppointmentRenderEventArgs<WorkdayViewModel> args)
+    private static void OnAppointmentRender(SchedulerAppointmentRenderEventArgs<WorkdayViewModel> args)
     {
-        if (args.Data.Type == WorkdayType.Office)
-            args.Attributes["style"] = "background: red";
+        args.Attributes["style"] = args.Data.Type switch
+        {
+            WorkdayType.Homeoffice => "background: blue",
+            WorkdayType.Office => "background: red",
+            WorkdayType.Gleitzeittag or WorkdayType.Urlaub => "background: violet",
+            WorkdayType.Krankheitstag => "background: yellow; color: black",
+            _ => args.Attributes["style"]
+        };
     }
 }
