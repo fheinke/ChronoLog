@@ -10,5 +10,6 @@ public enum WorkdayType
     Krankheitstag,
     Urlaub,
     Gleitzeittag,
+    Feiertag,
     Dienstreise
 }

@@ -3,6 +3,7 @@
 @using ChronoLog.Core.Interfaces
 @using ChronoLog.Core.Models
 @using ChronoLog.Core.Models.DisplayObjects
+@using PublicHoliday
 @inject IWorkdayService WorkdayService
 
 <PageTitle>Overview</PageTitle>
@@ -45,17 +46,65 @@
 
     private static void OnSlotRender(SchedulerSlotRenderEventArgs args)
     {
+        var holidays = new GermanPublicHoliday { State = GermanPublicHoliday.States.BW }.PublicHolidayNames(args.Start.Year);
+        var isHoliday = holidays.ContainsKey(args.Start.Date);
+        
+        // Dim non-working days (Saturday and Sunday) and holidays
+        if (args.Start.DayOfWeek == DayOfWeek.Saturday || 
+            args.Start.DayOfWeek == DayOfWeek.Sunday ||
+            isHoliday)
+        {
+            args.Attributes["style"] = "background: var(--rz-scheduler-nonworkingday-background-color, rgba(160,160,160,.2));";
+        }
+        
+        // Add holiday tooltip
+        if (isHoliday && holidays.TryGetValue(args.Start.Date, out var holidayName))
+        {
+            args.Attributes["title"] = $"{holidayName} (Feiertag)";
+        }
+        
         // Highlight today in month view
         if (args.View.Text == "Month" && args.Start.Date == DateTime.Today)
         {
             args.Attributes["style"] = "background: var(--rz-scheduler-highlight-background-color, rgba(255,220,40,.2));";
         }
 
-        // Highlight working hours (7-15)
-        if ((args.View.Text == "Week" || args.View.Text == "Day") && args.Start.Hour > 7 && args.Start.Hour < 15)
+        // Highlight working hours
+        if ((args.View.Text == "Week" || args.View.Text == "Day") && args.Start.Hour > 7 && args.Start.Hour < 16)
         {
             args.Attributes["style"] = "background: var(--rz-scheduler-highlight-background-color, rgba(255,220,40,.2));";
         }
+    }
+    
+    private static void OnAppointmentRender(SchedulerAppointmentRenderEventArgs<WorkdayViewModel> args)
+    {
+        // Change background and text color based on WorkdayType
+        (string? bg, string fg) = args.Data.Type switch
+        {
+            WorkdayType.Homeoffice => ("#1976d2", "white"),
+            WorkdayType.Office => ("#d32f2f", "white"),
+            WorkdayType.Gleitzeittag or WorkdayType.Urlaub => ("#8e24aa", "white"),
+            WorkdayType.Krankheitstag => ("#fdd835", "black"),
+            WorkdayType.Feiertag => ("#388e3c", "white"),
+            _ => (null, "inherit")
+        };
+
+        // Keep existing styles and append new styles
+        var existingStyle = args.Attributes.ContainsKey("style") ? args.Attributes["style"]?.ToString() ?? string.Empty : string.Empty;
+        var styleBuilder = existingStyle.TrimEnd(';');
+
+        if (bg is not null)
+        {
+            if (!string.IsNullOrEmpty(styleBuilder))
+            {
+                styleBuilder += ";";
+            }
+
+            // Add important colors to override default styles
+            styleBuilder += $"background-color: {bg} !important; border-color: {bg} !important; color: {fg} !important;";
+        }
+
+        args.Attributes["style"] = styleBuilder;
     }
 
     private async Task OnSlotSelect(SchedulerSlotSelectEventArgs args)
@@ -106,17 +155,5 @@
 
         await _scheduler?.Reload()!;
         await LoadData();
-    }
-
-    private static void OnAppointmentRender(SchedulerAppointmentRenderEventArgs<WorkdayViewModel> args)
-    {
-        args.Attributes["style"] = args.Data.Type switch
-        {
-            WorkdayType.Homeoffice => "background: blue",
-            WorkdayType.Office => "background: red",
-            WorkdayType.Gleitzeittag or WorkdayType.Urlaub => "background: violet",
-            WorkdayType.Krankheitstag => "background: yellow; color: black",
-            _ => args.Attributes["style"]
-        };
     }
 }
