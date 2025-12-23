@@ -1,6 +1,7 @@
 @using ChronoLog.Core.Interfaces
 @using ChronoLog.Core.Models
 @using ChronoLog.Core.Models.DisplayObjects
+@using Microsoft.IdentityModel.Tokens
 @using Radzen.Blazor.Rendering
 @inject DialogService DialogService
 @inject NotificationService NotificationService
@@ -15,7 +16,7 @@
         position: absolute;
         overflow: hidden;
         height: 360px;
-        width: 600px;
+        width: 400px;
         border: var(--rz-panel-border);
         background-color: var(--rz-panel-background-color);
         box-shadow: var(--rz-panel-shadow);
@@ -50,9 +51,9 @@ else
                                         Data="@_worktimes"
                                         TItem="WorktimeModel"
                                         AllowAlternatingRows="false"
-                                        AllowFiltering="true"
+                                        AllowFiltering="false"
                                         AllowPaging="true"
-                                        AllowSorting="true"
+                                        AllowSorting="false"
                                         PageSize="15"
                                         EditMode="DataGridEditMode.Single"
                                         RowUpdate="@OnUpdateWorktimeRow"
@@ -129,9 +130,11 @@ else
                                 </RadzenDataGridColumn>
                             </Columns>
                             <FooterTemplate>
-                                <div class="rz-p-2 rz-text-bold">
-                                    <!-- TODO: Calculation should be refreshed on data changes -->
-                                    Total Worked Hours: @Workday.TotalWorktime.ToString(@"hh\:mm\:ss")
+                                <div class="rz-d-flex rz-justify-content-end rz-p-2">
+                                    <strong>Total Worktime: </strong>&nbsp;
+                                    <span>
+                                        @(CalculateTotalWorktime()?.ToString(@"hh\:mm\:ss") ?? "N/A")
+                                    </span>
                                 </div>
                             </FooterTemplate>
                         </RadzenDataGrid>
@@ -143,9 +146,9 @@ else
                                         Data="@_projecttimes"
                                         TItem="ProjecttimeModel"
                                         AllowAlternatingRows="false"
-                                        AllowFiltering="true"
+                                        AllowFiltering="false"
                                         AllowPaging="true"
-                                        AllowSorting="true"
+                                        AllowSorting="false"
                                         PageSize="15"
                                         EditMode="DataGridEditMode.Single"
                                         RowUpdate="@OnUpdateProjecttimeRow"
@@ -159,69 +162,69 @@ else
                                               Disabled="@(_projecttimesToInsert.Any())"/>
                             </HeaderTemplate>
                             <Columns>
-                                <!-- TODO: Project selection with info button -->
-                                <!-- TODO: The Project is mandatory -->
-                                <!-- TODO: Fix Update not working after changing Project in EditTemplate -->
                                 <RadzenDataGridColumn TItem="ProjecttimeModel" Title="Project" Width="250px">
-                                    <Template Context="item">
+                                    <Template Context="projecttime">
                                         <div class="rz-d-flex rz-align-items-center">
-                                            @(_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.Name)
+                                            @(_projects.FirstOrDefault(p => p.ProjectId == projecttime.ProjectId)?.Name)
                                             <RadzenButton Icon="info"
                                                           @ref="_projectInfoButton"
                                                           ButtonStyle="ButtonStyle.Info"
                                                           Variant="Variant.Outlined"
                                                           Size="ButtonSize.Small"
-                                                          Click="@(() => ShowProjectInfo(item.ProjectId, _projectInfoButton))"
+                                                          Click="@(() => ShowProjectInfo(projecttime.ProjectId, _projectInfoButton))"
                                                           @onclick:stopPropagation="true"/>
                                         </div>
                                     </Template>
-                                    <EditTemplate Context="item">
-                                        <div class="rz-dropdown-wrapper rz-d-flex rz-align-items-center" style="position: relative; display: flex; align-items: center;">
-                                            <RadzenDropDown Data="@_projects"
-                                                            TextProperty="Name"
-                                                            ValueProperty="ProjectId"
-                                                            @bind-Value="item.ProjectId"/>
+                                    <EditTemplate Context="projecttime">
+                                        <div class="rz-dropdown-wrapper rz-d-flex rz-align-items-center"
+                                             style="position: relative; display: flex; align-items: center;">
+                                            <RadzenFormField Text="Project" Style="width: 100%">
+                                                <ChildContent>
+                                                    <RadzenDropDown Data="@_projects"
+                                                                    TextProperty="Name"
+                                                                    ValueProperty="ProjectId"
+                                                                    @bind-Value="projecttime.ProjectId"
+                                                                    Name="ProjectSelect"/>
+                                                    <RadzenRequiredValidator Component="ProjectSelect"
+                                                                             Text="Project is mandatory."/>
+                                                </ChildContent>
+                                            </RadzenFormField>
                                             <RadzenButton Icon="info"
                                                           @ref="_projectInfoButton"
                                                           ButtonStyle="ButtonStyle.Info"
                                                           Variant="Variant.Outlined"
-                                                            Size="ButtonSize.Small"
-                                                          Click="@(() => ShowProjectInfo(item.ProjectId, _projectInfoButton))"
+                                                          Size="ButtonSize.Small"
+                                                          Click="@(() => ShowProjectInfo(projecttime.ProjectId, _projectInfoButton))"
                                                           @onclick:stopPropagation="true"/>
                                         </div>
                                     </EditTemplate>
                                 </RadzenDataGridColumn>
                                 <RadzenDataGridColumn TItem="ProjecttimeModel" Property="TimeSpent" Title="Time Spent"
                                                       Width="120px">
-                                    <EditTemplate Context="item">
-                                        <RadzenTimeSpanPicker Value="@(item.TimeSpent)"
-                                                              ValueChanged="@((TimeSpan ts) => item.TimeSpent = ts)"
+                                    <EditTemplate Context="projecttime">
+                                        <RadzenTimeSpanPicker Value="@(projecttime.TimeSpent)"
+                                                              ValueChanged="@((TimeSpan ts) => projecttime.TimeSpent = ts)"
                                                               Min="@TimeSpan.Zero"
                                                               Max="@TimeSpan.FromMinutes(1439)"/>
                                     </EditTemplate>
-                                    <Template Context="item">
-                                        @item.TimeSpent.ToString(@"hh\:mm\:ss")
+                                    <Template Context="projecttime">
+                                        @projecttime.TimeSpent.ToString(@"hh\:mm\:ss")
                                     </Template>
                                 </RadzenDataGridColumn>
                                 <RadzenDataGridColumn TItem="ProjecttimeModel"
                                                       Property="ResponseText"
                                                       Title="Custom Response Text"
                                                       Width="250px">
-                                    <EditTemplate Context="item">
-                                        <RadzenFormField Text="Custom Response Text">
-                                            <ChildContent>
-                                                <RadzenTextBox Name="ResponseText" @Value="@item.ResponseText"/>
-                                            </ChildContent>
-                                        </RadzenFormField>
-                                    </EditTemplate>
-                                    <Template Context="item">
+                                    <EditTemplate Context="projecttime">
                                         <RadzenFormField Text="Custom Response Text">
                                             <ChildContent>
                                                 <RadzenTextBox Name="ResponseText"
-                                                               @bind-Value="@item.ResponseText"
-                                                               Disabled="true"/>
+                                                               @bind-Value="@projecttime.ResponseText"/>
                                             </ChildContent>
                                         </RadzenFormField>
+                                    </EditTemplate>
+                                    <Template Context="projecttime">
+                                        <span>@projecttime.ResponseText</span>
                                     </Template>
                                 </RadzenDataGridColumn>
                                 <RadzenDataGridColumn Context="projecttime" Filterable="false" Sortable="false"
@@ -259,18 +262,36 @@ else
     </RadzenTemplateForm>
 }
 
-<Popup @ref=_projectInfoPopup Lazy="true" class="projectInfo-popup"
+<Popup @ref="_projectInfoPopup" Lazy="true" class="projectInfo-popup"
        style="position:absolute; top:100%; left:0; z-index:1000; display:block;">
-    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-h-100 rz-p-4">
-        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
-            <RadzenFormField Text="Projectname" Style="width: 100%;">
-                <ChildContent>
-                    <RadzenTextBox Name="Projectname"
-                                   Value="@(_selectedProject?.Name ?? string.Empty)"
-                                   Disabled="true"/>
-                </ChildContent>
-            </RadzenFormField>
-        </RadzenStack>
+    <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+        <RadzenLabel Text="Project Information" Style="font-size: 1.1rem;"/>
+        <hr/>
+        @if (_selectedProject is not null)
+        {
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+                    <strong>Name:</strong>
+                    <span>@(_selectedProject.Name)</span>
+                </RadzenStack>
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+                    <strong>Description:</strong>
+                    <span>@(_selectedProject.Description.IsNullOrEmpty() ? "—" : _selectedProject.Description)</span>
+                </RadzenStack>
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+                    <strong>Response Object ID:</strong>
+                    <span>@_selectedProject.ResponseObject</span>
+                </RadzenStack>
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+                    <strong>Default Response Text:</strong>
+                    <span>@(_selectedProject.DefaultResponseText.IsNullOrEmpty() ? "—" : _selectedProject.DefaultResponseText)</span>
+                </RadzenStack>
+            </RadzenStack>
+        }
+        else
+        {
+            <div class="rz-text-muted">No project selected.</div>
+        }
     </RadzenStack>
 </Popup>
 
@@ -300,11 +321,14 @@ else
     protected override async Task OnInitializedAsync()
     {
         _originalWorkdayType = Workday?.Type;
+        _projects = await ProjectService.GetProjectsAsync();
 
         if (Workday is not null)
         {
             _worktimes = Workday.Worktimes.ToList();
-            _projecttimes = Workday.Projecttimes.ToList();
+            _projecttimes = Workday.Projecttimes
+                .OrderBy(x => _projects.FirstOrDefault(p => p.ProjectId == x.ProjectId)?.Name)
+                .ToList();
         }
         else
         {
@@ -312,8 +336,6 @@ else
             _worktimes = [];
             _projecttimes = [];
         }
-
-        _projects = await ProjectService.GetProjectsAsync();
     }
 
     private async Task CreateWorkdayIfNotExists()
@@ -335,7 +357,7 @@ else
 
         if (WorkdayTypeHasChanged && !IsWorkingDay)
         {
-            var confirmed = await DialogService.Confirm("Changing the workday type will delete all associated worktimes. Do you want to proceed?", "Confirm Workday Type Change",
+            var confirmed = await DialogService.Confirm("Changing the workday type will delete ALL associated work- and project times. Do you want to proceed?", "Confirm Workday Type Change",
                 new ConfirmOptions
                 {
                     OkButtonText = "Yes",
@@ -378,16 +400,30 @@ else
 
                 _worktimes.Remove(worktime);
             }
-
-            await _worktimeGrid.Reload();
         }
+
+        if (!IsWorkingDay && _projecttimes.Any())
+        {
+            foreach (var projecttime in _projecttimes.ToList())
+            {
+                if (!await ProjecttimeService.DeleteProjecttimeAsync(projecttime.ProjecttimeId))
+                {
+                    NotificationService.Notify(NotificationSeverity.Error, "Deletion of project time failed.", duration: 4000);
+                    continue;
+                }
+
+                _projecttimes.Remove(projecttime);
+            }
+        }
+
+        await _worktimeGrid.Reload();
     }
 
     private async Task DeleteWorkday()
     {
         if (Workday is null) return;
 
-        var confirmed = await DialogService.Confirm($"Delete Workday permanently?", "Delete Workday",
+        var confirmed = await DialogService.Confirm("Delete Workday permanently?", "Delete Workday",
             new ConfirmOptions
             {
                 OkButtonText = "Delete",
@@ -418,6 +454,35 @@ else
 
         _projectInfoPopup?.ToggleAsync(button!.Element);
         return Task.CompletedTask;
+    }
+
+    private TimeSpan? CalculateTotalWorktime()
+    {
+        IEnumerable<WorktimeModel> worktimeSource;
+
+        if (_worktimes.Any())
+            worktimeSource = _worktimes;
+        else if (Workday is not null)
+            worktimeSource = Workday.Worktimes;
+        else
+            return null;
+
+        var totalWorktime = TimeSpan.Zero;
+        foreach (var worktime in worktimeSource)
+        {
+            if (worktime.EndTime.HasValue)
+            {
+                var duration = worktime.EndTime.Value - worktime.StartTime;
+                totalWorktime += duration;
+            }
+
+            if (worktime.BreakTime.HasValue)
+            {
+                totalWorktime -= worktime.BreakTime.Value;
+            }
+        }
+
+        return totalWorktime;
     }
 
     void OnSubmit(WorkdayViewModel model)

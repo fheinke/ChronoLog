@@ -35,6 +35,14 @@ public partial class EditWorkdayDialog
     private async Task OnUpdateWorktimeRow(WorktimeModel worktime)
     {
         RemovePendingWorktimeInsertion(worktime);
+        
+        if (IsOverlappingWithExistingWorktimes(worktime))
+        {
+            _worktimeGrid.CancelEditRow(worktime);
+            NotificationService.Notify(NotificationSeverity.Error, "The specified worktime overlaps with existing worktimes.", duration: 4000);
+            return;
+        }
+        
         if (!await WorktimeService.UpdateWorktimeAsync(worktime))
         {
             _worktimeGrid.CancelEditRow(worktime);
@@ -96,6 +104,15 @@ public partial class EditWorkdayDialog
     private async Task OnCreateWorktimeRow(WorktimeModel worktime)
     {
         if (Workday is null) return;
+        
+        if (IsOverlappingWithExistingWorktimes(worktime))
+        {
+            _worktimesToInsert.Remove(worktime);
+            _worktimeGrid.CancelEditRow(worktime);
+            NotificationService.Notify(NotificationSeverity.Error, "The specified worktime overlaps with existing worktimes.", duration: 4000);
+            await _worktimeGrid.Reload();
+            return;
+        }
 
         worktime.WorkdayId = Workday.WorkdayId;
         var createdWorktimeId = await WorktimeService.CreateWorktimeAsync(worktime);
@@ -105,64 +122,94 @@ public partial class EditWorkdayDialog
         _worktimesToInsert.Remove(worktime);
         await _worktimeGrid.Reload();
     }
+    
+    private bool IsOverlappingWithExistingWorktimes(WorktimeModel worktimeCandidate)
+    {
+        if (worktimeCandidate.EndTime == null)
+            return false;
+
+        var start = worktimeCandidate.StartTime;
+        var end = worktimeCandidate.EndTime;
+        
+        var existingWorktimes = _worktimes
+            .Concat(_worktimesToInsert)
+            .Where(w => w.WorktimeId != worktimeCandidate.WorktimeId);
+
+        foreach (var worktime in existingWorktimes)
+        {
+            if (worktime.StartTime == default || worktime.EndTime == null) continue;
+            
+            if (!(end <= worktime.StartTime || start >= worktime.EndTime))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     private void ClearPendingProjecttimeInsertions()
     {
         _projecttimesToInsert.Clear();
     }
 
-    private void RemovePendingProjecttimeInsertion(ProjecttimeModel project)
+    private void RemovePendingProjecttimeInsertion(ProjecttimeModel projettime)
     {
-        _projecttimesToInsert.Remove(project);
+        _projecttimesToInsert.Remove(projettime);
     }
 
-    private async Task EditProjecttimeRow(ProjecttimeModel project)
+    private async Task EditProjecttimeRow(ProjecttimeModel projettime)
     {
         if (!_projecttimeGrid.IsValid) return;
 
         ClearPendingProjecttimeInsertions();
-        await _projecttimeGrid.EditRow(project);
+        await _projecttimeGrid.EditRow(projettime);
     }
 
-    private async Task OnUpdateProjecttimeRow(ProjecttimeModel project)
+    private async Task OnUpdateProjecttimeRow(ProjecttimeModel projettime)
     {
-        RemovePendingProjecttimeInsertion(project);
-        if (!await ProjecttimeService.UpdateProjecttimeAsync(project))
+        RemovePendingProjecttimeInsertion(projettime);
+        if (!await ProjecttimeService.UpdateProjecttimeAsync(projettime))
         {
-            _projecttimeGrid.CancelEditRow(project);
-            NotificationService.Notify(NotificationSeverity.Error, "Update of projecttime failed.", duration: 4000);
+            _projecttimeGrid.CancelEditRow(projettime);
+            NotificationService.Notify(NotificationSeverity.Error, "Update of project time failed.", duration: 4000);
         }
     }
 
-    private async Task SaveProjecttimeRow(ProjecttimeModel project)
+    private async Task SaveProjecttimeRow(ProjecttimeModel projettime)
     {
-        await _projecttimeGrid.UpdateRow(project);
-    }
-
-    private void CancelProjecttimeEdit(ProjecttimeModel project)
-    {
-        RemovePendingProjecttimeInsertion(project);
-        _projecttimeGrid.CancelEditRow(project);
-    }
-
-    private async Task DeleteProjecttimeRow(ProjecttimeModel project)
-    {
-        RemovePendingProjecttimeInsertion(project);
-
-        if (_projecttimes.Contains(project))
+        if (projettime.ProjectId == Guid.Empty)
         {
-            if (!await ProjecttimeService.DeleteProjecttimeAsync(project.ProjecttimeId))
+            NotificationService.Notify(NotificationSeverity.Error, "Please select a project.", duration: 4000);
+            return;
+        }
+        await _projecttimeGrid.UpdateRow(projettime);
+    }
+
+    private void CancelProjecttimeEdit(ProjecttimeModel projettime)
+    {
+        RemovePendingProjecttimeInsertion(projettime);
+        _projecttimeGrid.CancelEditRow(projettime);
+    }
+
+    private async Task DeleteProjecttimeRow(ProjecttimeModel projettime)
+    {
+        RemovePendingProjecttimeInsertion(projettime);
+
+        if (_projecttimes.Contains(projettime))
+        {
+            if (!await ProjecttimeService.DeleteProjecttimeAsync(projettime.ProjecttimeId))
             {
-                NotificationService.Notify(NotificationSeverity.Error, "Deletion of projecttime failed.",
+                NotificationService.Notify(NotificationSeverity.Error, "Deletion of project time failed.",
                     duration: 4000);
                 return;
             }
 
-            _projecttimes.Remove(project);
+            _projecttimes.Remove(projettime);
         }
         else
         {
-            _projecttimeGrid.CancelEditRow(project);
+            _projecttimeGrid.CancelEditRow(projettime);
         }
 
         await _projecttimeGrid.Reload();
@@ -182,22 +229,22 @@ public partial class EditWorkdayDialog
         catch
         {
             _projecttimesToInsert.Remove(newProjecttime);
-            NotificationService.Notify(NotificationSeverity.Error, "Insertion of projecttime failed.", duration: 4000);
+            NotificationService.Notify(NotificationSeverity.Error, "Insertion of project time failed.", duration: 4000);
         }
     }
 
-    private async Task OnCreateProjecttimeRow(ProjecttimeModel project)
+    private async Task OnCreateProjecttimeRow(ProjecttimeModel projettime)
     {
         if (Workday is null) return;
 
-        Workday.Projecttimes.Add(project);
+        Workday.Projecttimes.Add(projettime);
 
-        project.WorkdayId = Workday.WorkdayId;
-        var createdProjecttimeId = await ProjecttimeService.CreateProjecttimeAsync(project);
+        projettime.WorkdayId = Workday.WorkdayId;
+        var createdProjecttimeId = await ProjecttimeService.CreateProjecttimeAsync(projettime);
         var createdProjecttime = await ProjecttimeService.GetProjecttimeAsync(createdProjecttimeId);
 
         if (createdProjecttime != null) _projecttimes.Add(createdProjecttime);
-        _projecttimesToInsert.Remove(project);
+        _projecttimesToInsert.Remove(projettime);
         await _projecttimeGrid.Reload();
     }
 }
