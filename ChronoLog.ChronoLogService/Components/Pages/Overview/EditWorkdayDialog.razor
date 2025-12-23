@@ -21,84 +21,87 @@ else
                 <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Outlined" Size="ButtonSize.Medium" class="rz-my-1 rz-ms-1" Click="@DeleteWorkday"/>
             </RadzenStack>
 
-            <RadzenCardGroup Responsive="true">
-                <!-- Worktime edit -->
-                <RadzenCard Variant="Variant.Flat">
-                    <RadzenDataGrid @ref="@_worktimeGrid"
-                                    Data="@_worktimes"
-                                    TItem="WorktimeModel"
-                                    AllowAlternatingRows="false"
-                                    AllowFiltering="true"
-                                    AllowPaging="true"
-                                    AllowSorting="true"
-                                    PageSize="15"
-                                    EditMode="DataGridEditMode.Single"
-                                    RowUpdate="@OnUpdateRow"
-                                    RowCreate="@OnCreateRow"
-                                    Sort="@ClearPendingInsertions"
-                                    Page="@ClearPendingInsertions"
-                                    Filter="@ClearPendingInsertions">
-                        <HeaderTemplate>
-                            <RadzenButton ButtonStyle="ButtonStyle.Success" Variant="Variant.Outlined" Icon="add_circle" Click="@InsertRow" Disabled="@(_worktimesToInsert.Any())"/>
-                        </HeaderTemplate>
-                        <Columns>
-                            <RadzenDataGridColumn TItem="WorktimeModel" Property="StartTime" Title="In" Width="150px">
-                                <EditTemplate Context="worktime">
-                                    <RadzenTimeSpanPicker Value="@(worktime.StartTime.ToTimeSpan())"
-                                                          ValueChanged="@((TimeSpan ts) => worktime.StartTime = TimeOnly.FromTimeSpan(ts))"
-                                                          Min="@TimeSpan.Zero"
-                                                          Max="@TimeSpan.FromMinutes(1439)"/>
-                                </EditTemplate>
-                                <Template Context="worktime">
-                                    @worktime.StartTime.ToString("HH':'mm':'ss")
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="WorktimeModel" Property="BreakTime" Title="Break" Width="150px">
-                                <EditTemplate Context="worktime">
-                                    <RadzenTimeSpanPicker Value="@(worktime.BreakTime.HasValue ? worktime.BreakTime.Value : (TimeSpan?)null)"
-                                                          ValueChanged="@((TimeSpan? ts) => worktime.BreakTime = ts.HasValue ? ts.Value : null)"
-                                                          Min="@TimeSpan.Zero"
-                                                          Max="@TimeSpan.FromHours(12)"/>
-                                </EditTemplate>
-                                <Template Context="worktime">
-                                    @worktime.BreakTime?.ToString(@"hh\:mm\:ss")
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="WorktimeModel" Property="EndTime" Title="Out" Width="150px">
-                                <EditTemplate Context="worktime">
-                                    <RadzenTimeSpanPicker Value="@(worktime.EndTime.HasValue ? worktime.EndTime.Value.ToTimeSpan() : (TimeSpan?)null)"
-                                                          ValueChanged="@((TimeSpan? ts) => worktime.EndTime = ts.HasValue ? TimeOnly.FromTimeSpan(ts.Value) : (TimeOnly?)null)"
-                                                          Min="@TimeSpan.Zero"
-                                                          Max="@TimeSpan.FromMinutes(1439)"/>
-                                </EditTemplate>
-                                <Template Context="worktime">
-                                    @worktime.EndTime?.ToString("HH':'mm':'ss")
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn Context="worktime" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Width="150px" Frozen="true" FrozenPosition="FrozenColumnPosition.Right">
-                                <Template Context="worktime">
-                                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" class="rz-my-1 rz-ms-1" Click="@(_ => EditRow(worktime))" @onclick:stopPropagation="true"/>
-                                </Template>
-                                <EditTemplate Context="worktime">
-                                    <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@(_ => SaveRow(worktime))" aria-label="Save"/>
-                                    <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" class="rz-my-1 rz-ms-1" Click="@(_ => CancelEdit(worktime))" aria-label="Cancel"/>
-                                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Size="ButtonSize.Medium" Shade="Shade.Lighter" class="rz-my-1 rz-ms-1" Click="@(_ => DeleteRow(worktime))" aria-label="Delete"/>
-                                </EditTemplate>
-                            </RadzenDataGridColumn>
-                        </Columns>
-                        <FooterTemplate>
-                            <div class="rz-p-2 rz-text-bold">
-                                Total Worked Hours: @Workday.TotalWorktime.ToString(@"hh\:mm\:ss")
-                            </div>
-                        </FooterTemplate>
-                    </RadzenDataGrid>
-                </RadzenCard>
+            @if (IsWorkingDay)
+            {
+                <RadzenCardGroup Responsive="true">
+                    <!-- Worktime edit -->
+                    <RadzenCard Variant="Variant.Flat">
+                        <RadzenDataGrid @ref="@_worktimeGrid"
+                                        Data="@_worktimes"
+                                        TItem="WorktimeModel"
+                                        AllowAlternatingRows="false"
+                                        AllowFiltering="true"
+                                        AllowPaging="true"
+                                        AllowSorting="true"
+                                        PageSize="15"
+                                        EditMode="DataGridEditMode.Single"
+                                        RowUpdate="@OnUpdateRow"
+                                        RowCreate="@OnCreateRow"
+                                        Sort="@ClearPendingInsertions"
+                                        Page="@ClearPendingInsertions"
+                                        Filter="@ClearPendingInsertions">
+                            <HeaderTemplate>
+                                <RadzenButton ButtonStyle="ButtonStyle.Success" Variant="Variant.Outlined" Icon="add_circle" Click="@InsertRow" Disabled="@(_worktimesToInsert.Any())"/>
+                            </HeaderTemplate>
+                            <Columns>
+                                <RadzenDataGridColumn TItem="WorktimeModel" Property="StartTime" Title="In" Width="150px">
+                                    <EditTemplate Context="worktime">
+                                        <RadzenTimeSpanPicker Value="@(worktime.StartTime.ToTimeSpan())"
+                                                              ValueChanged="@((TimeSpan ts) => worktime.StartTime = TimeOnly.FromTimeSpan(ts))"
+                                                              Min="@TimeSpan.Zero"
+                                                              Max="@TimeSpan.FromMinutes(1439)"/>
+                                    </EditTemplate>
+                                    <Template Context="worktime">
+                                        @worktime.StartTime.ToString("HH':'mm':'ss")
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="WorktimeModel" Property="BreakTime" Title="Break" Width="150px">
+                                    <EditTemplate Context="worktime">
+                                        <RadzenTimeSpanPicker Value="@(worktime.BreakTime.HasValue ? worktime.BreakTime.Value : (TimeSpan?)null)"
+                                                              ValueChanged="@((TimeSpan? ts) => worktime.BreakTime = ts.HasValue ? ts.Value : null)"
+                                                              Min="@TimeSpan.Zero"
+                                                              Max="@TimeSpan.FromHours(12)"/>
+                                    </EditTemplate>
+                                    <Template Context="worktime">
+                                        @worktime.BreakTime?.ToString(@"hh\:mm\:ss")
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="WorktimeModel" Property="EndTime" Title="Out" Width="150px">
+                                    <EditTemplate Context="worktime">
+                                        <RadzenTimeSpanPicker Value="@(worktime.EndTime.HasValue ? worktime.EndTime.Value.ToTimeSpan() : (TimeSpan?)null)"
+                                                              ValueChanged="@((TimeSpan? ts) => worktime.EndTime = ts.HasValue ? TimeOnly.FromTimeSpan(ts.Value) : (TimeOnly?)null)"
+                                                              Min="@TimeSpan.Zero"
+                                                              Max="@TimeSpan.FromMinutes(1439)"/>
+                                    </EditTemplate>
+                                    <Template Context="worktime">
+                                        @worktime.EndTime?.ToString("HH':'mm':'ss")
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn Context="worktime" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Width="150px" Frozen="true" FrozenPosition="FrozenColumnPosition.Right">
+                                    <Template Context="worktime">
+                                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" class="rz-my-1 rz-ms-1" Click="@(_ => EditRow(worktime))" @onclick:stopPropagation="true"/>
+                                    </Template>
+                                    <EditTemplate Context="worktime">
+                                        <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@(_ => SaveRow(worktime))" aria-label="Save"/>
+                                        <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" class="rz-my-1 rz-ms-1" Click="@(_ => CancelEdit(worktime))" aria-label="Cancel"/>
+                                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Size="ButtonSize.Medium" Shade="Shade.Lighter" class="rz-my-1 rz-ms-1" Click="@(_ => DeleteRow(worktime))" aria-label="Delete"/>
+                                    </EditTemplate>
+                                </RadzenDataGridColumn>
+                            </Columns>
+                            <FooterTemplate>
+                                <div class="rz-p-2 rz-text-bold">
+                                    Total Worked Hours: @Workday.TotalWorktime.ToString(@"hh\:mm\:ss")
+                                </div>
+                            </FooterTemplate>
+                        </RadzenDataGrid>
+                    </RadzenCard>
 
-                <!-- Project edit -->
-                <RadzenCard Variant="Variant.Flat">
+                    <!-- Project edit -->
+                    <RadzenCard Variant="Variant.Flat">
 
-                </RadzenCard>
-            </RadzenCardGroup>
+                    </RadzenCard>
+                </RadzenCardGroup>
+            }
         </RadzenStack>
     </RadzenTemplateForm>
 }
@@ -113,6 +116,12 @@ else
     private readonly List<WorktimeModel> _worktimesToInsert = [];
     
     private WorkdayType? _originalWorkdayType;
+
+    private bool IsWorkingDay =>
+        Workday?.Type
+            is WorkdayType.Dienstreise
+            or WorkdayType.Homeoffice
+            or WorkdayType.Office;
     
     private bool WorkdayTypeHasChanged =>
         Workday is not null &&
@@ -151,6 +160,28 @@ else
     {
         if (Workday is null) return;
         
+        if (WorkdayTypeHasChanged && !IsWorkingDay)
+        {
+            var confirmed = await DialogService.Confirm("Changing the workday type will delete all associated worktimes. Do you want to proceed?", "Confirm Workday Type Change",
+                new ConfirmOptions
+                {
+                    OkButtonText = "Yes",
+                    CancelButtonText = "No",
+                    CloseDialogOnEsc = true,
+                    CloseDialogOnOverlayClick = true,
+                    ShowTitle = false
+                });
+
+            if (confirmed is not true)
+            {
+                if (_originalWorkdayType.HasValue)
+                {
+                    Workday.Type = _originalWorkdayType.Value;
+                }
+                return;
+            }
+        }
+        
         if (!await WorkdayService.UpdateWorkdayAsync(Workday.WorkdayId, DateOnly.FromDateTime(Workday.Date), Workday.Type))
         {
             NotificationService.Notify(NotificationSeverity.Error, "Update of workday type failed.", duration: 4000);
@@ -159,6 +190,20 @@ else
         {
             NotificationService.Notify(NotificationSeverity.Success, "Update of workday type succeeded.", duration: 4000);
             _originalWorkdayType = Workday.Type;
+        }
+        
+        if (!IsWorkingDay && _worktimes.Any())
+        {
+            foreach (var worktime in _worktimes.ToList())
+            {
+                if (!await WorktimeService.DeleteWorktimeAsync(worktime.WorktimeId))
+                {
+                    NotificationService.Notify(NotificationSeverity.Error, "Deletion of worktime failed.", duration: 4000);
+                    continue;
+                }
+                _worktimes.Remove(worktime);
+            }
+            await _worktimeGrid.Reload();
         }
     }
     
