@@ -11,6 +11,7 @@
 <div style="display: flex; flex-direction: column; height: 100%; gap: 10px;">
     <RadzenScheduler @ref="@_scheduler"
                      SlotRender="@OnSlotRender"
+                     SelectedIndex="1"
                      Style="height: 760px;"
                      TItem="WorkdayViewModel"
                      Data="@_workdays"
@@ -21,17 +22,18 @@
                      AppointmentSelect="@OnAppointmentSelect"
                      AppointmentRender="@OnAppointmentRender"
                      DaySelect="@OnDaySelect">
+        <RadzenYearView/>
         <RadzenMonthView/>
         <RadzenWeekView StartTime="@(new TimeSpan(0, 0, 0))" EndTime="@(new TimeSpan(24, 0, 0))"/>
         <RadzenDayView StartTime="@(new TimeSpan(0, 0, 0))" EndTime="@(new TimeSpan(24, 0, 0))"/>
-    </RadzenScheduler>    
+    </RadzenScheduler>
 </div>
 
 @code {
     private RadzenScheduler<WorkdayViewModel>? _scheduler;
     private List<WorkdayViewModel>? _workdays;
     private static readonly GermanPublicHoliday Holidays = new() { State = GermanPublicHoliday.States.HE };
-    
+
     protected override async Task OnInitializedAsync()
     {
         await LoadData();
@@ -43,38 +45,56 @@
         StateHasChanged();
     }
 
-    private static void OnDaySelect(SchedulerDaySelectEventArgs args) { }
+    private static void OnDaySelect(SchedulerDaySelectEventArgs args)
+    {
+    }
 
     private static void OnSlotRender(SchedulerSlotRenderEventArgs args)
     {
         var holidayNames = Holidays.PublicHolidayNames(args.Start.Year);
         var isHoliday = holidayNames.ContainsKey(args.Start.Date);
         
-        // Dim non-working days (Saturday and Sunday) and holidays
-        if (args.Start.DayOfWeek == DayOfWeek.Saturday || 
-            args.Start.DayOfWeek == DayOfWeek.Sunday ||
-            isHoliday)
-        {
-            args.Attributes["style"] = "background: var(--rz-scheduler-nonworkingday-background-color, rgba(160,160,160,.2));";
-        }
+        var existingStyle = args.Attributes.TryGetValue("style", out var style) ? style?.ToString() ?? string.Empty : string.Empty;
+        var styleBuilder = existingStyle.TrimEnd(';');
+
+        // Dim non-working days (Saturday and Sunday)
+        if (args.Start.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday)
+            styleBuilder = AppendStyle(styleBuilder, "background: var(--rz-base-300)");
         
+        // Highlight holidays
+        if (isHoliday)
+            styleBuilder = AppendStyle(styleBuilder, "background: var(--rz-warning-lighter)");
+
         // Add holiday tooltip
         if (isHoliday && holidayNames.TryGetValue(args.Start.Date, out var holidayName))
         {
             args.Attributes["title"] = $"{holidayName} (Feiertag)";
         }
-        
+
         switch (args.View.Text)
         {
-            // Highlight today in month view
-            case "Month" when args.Start.Date == DateTime.Today:
+            // Highlight today in year and month view
+            case "Year" or "Month" when args.Start.Date == DateTime.Today:
             // Highlight working hours
             case "Week" or "Day" when args.Start.Hour is > 7 and < 16:
-                args.Attributes["style"] = "background: var(--rz-scheduler-highlight-background-color, rgba(255,220,40,.2));";
+                styleBuilder = AppendStyle(styleBuilder, "background: var(--rz-primary-lighter)");
                 break;
         }
+        
+        if (!string.IsNullOrWhiteSpace(styleBuilder))
+        {
+            args.Attributes["style"] = styleBuilder;
+        }
+
+        return;
+
+        static string AppendStyle(string baseStyle, string newStyle)
+        {
+            if (string.IsNullOrWhiteSpace(baseStyle)) return newStyle;
+            return baseStyle.TrimEnd() + ";" + newStyle;
+        }
     }
-    
+
     private static void OnAppointmentRender(SchedulerAppointmentRenderEventArgs<WorkdayViewModel> args)
     {
         // Change background and text color based on WorkdayType
@@ -108,27 +128,39 @@
 
     private async Task OnSlotSelect(SchedulerSlotSelectEventArgs args)
     {
-        if (args.View.Text != "Year")
+        if (args.View.Text == "Year")
+            return;
+
+        if (args.Appointments.Any())
         {
-            WorkdayViewModel data = await DialogService.OpenAsync<EditWorkdayDialog>(
-                $"Add Workday - {args.Start.Date.ToShortDateString()}",
-                new Dictionary<string, object> { { "SelectedDate", args.Start.Date } }, 
-                new DialogOptions 
-                { 
-                    Width = "1400px", 
-                    Height = "600px", 
-                    CloseDialogOnEsc = true, 
-                    CloseDialogOnOverlayClick = true 
-                });
-
-            if (data is not null)
+            var appointmentArgs = new SchedulerAppointmentSelectEventArgs<WorkdayViewModel>
             {
-                _workdays?.Add(data);
-                await _scheduler?.Reload()!;
-            }
-
-            await LoadData();
+                Start = args.Start,
+                End = args.End,
+                Data = (WorkdayViewModel)args.Appointments.First().Data
+            };
+            await OnAppointmentSelect(appointmentArgs);
+            return;
         }
+
+        WorkdayViewModel data = await DialogService.OpenAsync<EditWorkdayDialog>(
+            $"Add Workday - {args.Start.Date.ToShortDateString()}",
+            new Dictionary<string, object> { { "SelectedDate", args.Start.Date } },
+            new DialogOptions
+            {
+                Width = "1400px",
+                Height = "600px",
+                CloseDialogOnEsc = true,
+                CloseDialogOnOverlayClick = true
+            });
+
+        if (data is not null)
+        {
+            _workdays?.Add(data);
+            await _scheduler?.Reload()!;
+        }
+
+        await LoadData();
     }
 
     private async Task OnAppointmentSelect(SchedulerAppointmentSelectEventArgs<WorkdayViewModel> args)
@@ -155,4 +187,5 @@
         await _scheduler?.Reload()!;
         await LoadData();
     }
+
 }
