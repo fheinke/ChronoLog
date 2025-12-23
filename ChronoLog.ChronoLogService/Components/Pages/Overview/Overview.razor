@@ -9,17 +9,17 @@
 <PageTitle>Overview</PageTitle>
 
 <div style="display: flex; flex-direction: column; height: 100%; gap: 10px;">
-    <RadzenScheduler @ref=@_scheduler
-                     SlotRender=@OnSlotRender
+    <RadzenScheduler @ref="@_scheduler"
+                     SlotRender="@OnSlotRender"
                      Style="height: 760px;"
                      TItem="WorkdayViewModel"
-                     Data=@_workdays
+                     Data="@_workdays"
                      StartProperty="Start"
                      EndProperty="End"
                      TextProperty="TypeText"
-                     SlotSelect=@OnSlotSelect
-                     AppointmentSelect=@OnAppointmentSelect
-                     AppointmentRender=@OnAppointmentRender
+                     SlotSelect="@OnSlotSelect"
+                     AppointmentSelect="@OnAppointmentSelect"
+                     AppointmentRender="@OnAppointmentRender"
                      DaySelect="@OnDaySelect">
         <RadzenMonthView/>
         <RadzenWeekView StartTime="@(new TimeSpan(0, 0, 0))" EndTime="@(new TimeSpan(24, 0, 0))"/>
@@ -30,6 +30,7 @@
 @code {
     private RadzenScheduler<WorkdayViewModel>? _scheduler;
     private List<WorkdayViewModel>? _workdays;
+    private static readonly GermanPublicHoliday Holidays = new() { State = GermanPublicHoliday.States.HE };
     
     protected override async Task OnInitializedAsync()
     {
@@ -46,8 +47,8 @@
 
     private static void OnSlotRender(SchedulerSlotRenderEventArgs args)
     {
-        var holidays = new GermanPublicHoliday { State = GermanPublicHoliday.States.BW }.PublicHolidayNames(args.Start.Year);
-        var isHoliday = holidays.ContainsKey(args.Start.Date);
+        var holidayNames = Holidays.PublicHolidayNames(args.Start.Year);
+        var isHoliday = holidayNames.ContainsKey(args.Start.Date);
         
         // Dim non-working days (Saturday and Sunday) and holidays
         if (args.Start.DayOfWeek == DayOfWeek.Saturday || 
@@ -58,28 +59,26 @@
         }
         
         // Add holiday tooltip
-        if (isHoliday && holidays.TryGetValue(args.Start.Date, out var holidayName))
+        if (isHoliday && holidayNames.TryGetValue(args.Start.Date, out var holidayName))
         {
             args.Attributes["title"] = $"{holidayName} (Feiertag)";
         }
         
-        // Highlight today in month view
-        if (args.View.Text == "Month" && args.Start.Date == DateTime.Today)
+        switch (args.View.Text)
         {
-            args.Attributes["style"] = "background: var(--rz-scheduler-highlight-background-color, rgba(255,220,40,.2));";
-        }
-
-        // Highlight working hours
-        if ((args.View.Text == "Week" || args.View.Text == "Day") && args.Start.Hour > 7 && args.Start.Hour < 16)
-        {
-            args.Attributes["style"] = "background: var(--rz-scheduler-highlight-background-color, rgba(255,220,40,.2));";
+            // Highlight today in month view
+            case "Month" when args.Start.Date == DateTime.Today:
+            // Highlight working hours
+            case "Week" or "Day" when args.Start.Hour is > 7 and < 16:
+                args.Attributes["style"] = "background: var(--rz-scheduler-highlight-background-color, rgba(255,220,40,.2));";
+                break;
         }
     }
     
     private static void OnAppointmentRender(SchedulerAppointmentRenderEventArgs<WorkdayViewModel> args)
     {
         // Change background and text color based on WorkdayType
-        (string? bg, string fg) = args.Data.Type switch
+        var (bg, fg) = args.Data.Type switch
         {
             WorkdayType.Homeoffice => ("#1976d2", "white"),
             WorkdayType.Office => ("#d32f2f", "white"),
@@ -90,7 +89,7 @@
         };
 
         // Keep existing styles and append new styles
-        var existingStyle = args.Attributes.ContainsKey("style") ? args.Attributes["style"]?.ToString() ?? string.Empty : string.Empty;
+        var existingStyle = args.Attributes.TryGetValue("style", out var style) ? style?.ToString() ?? string.Empty : string.Empty;
         var styleBuilder = existingStyle.TrimEnd(';');
 
         if (bg is not null)
