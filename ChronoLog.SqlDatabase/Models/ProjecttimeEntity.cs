@@ -4,8 +4,8 @@ public class ProjecttimeEntity
 {
     public Guid ProjecttimeId { get; set; }
     
-    public required Guid WorkdayId { get; set; }
-    public required WorkdayEntity Workday { get; set; }
+    public Guid WorkdayId { get; set; }
+    public WorkdayEntity Workday { get; set; }
     public Guid ProjectId { get; set; }
     public ProjectEntity Project { get; set; }
     

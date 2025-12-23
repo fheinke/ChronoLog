@@ -39,4 +39,16 @@ public static class ModelsToEntities
             BreakTime = model.BreakTime
         };
     }
+    
+    public static ProjecttimeEntity ToEntity(this ProjecttimeModel model)
+    {
+        return new ProjecttimeEntity
+        {
+            ProjecttimeId = model.ProjecttimeId,
+            WorkdayId = model.WorkdayId,
+            ProjectId = model.ProjectId,
+            TimeSpent = model.TimeSpent,
+            ResponseText = model.ResponseText
+        };
+    }
 }
