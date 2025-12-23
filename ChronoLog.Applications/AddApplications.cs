@@ -10,7 +10,6 @@ public static class AddApplications
     public static IServiceCollection AddApplicationsToServiceCollection(this IServiceCollection serviceCollection,
         IConfiguration config)
     {
-        serviceCollection.AddScoped<ITimeService, TimeService>();
         serviceCollection.AddScoped<IProjectService, ProjectService>();
         serviceCollection.AddScoped<IWorkdayService, WorkdayService>();
         serviceCollection.AddScoped<IWorktimeService, WorktimeService>();
