@@ -54,6 +54,19 @@ public class WorktimeService : IWorktimeService
         return worktimes;
     }
     
+    public async Task<List<WorktimeModel>> GetWorktimesAsync(List<Guid> worktimeIds)
+    {
+        if (worktimeIds.Count == 0)
+            return [];
+        
+        var worktimes = await _sqlDbContext.Worktimes
+            .AsNoTracking()
+            .Where(w => worktimeIds.Contains(w.WorktimeId))
+            .Select(w => w.ToModel())
+            .ToListAsync();
+        return worktimes;
+    }
+    
     public async Task<WorktimeModel?> GetWorktimeAsync(Guid worktimeId)
     {
         var worktime = await _sqlDbContext.Worktimes
