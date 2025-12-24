@@ -58,6 +58,24 @@ public class WorkdayService : IWorkdayService
         
         return workdays;
     }
+    
+    public async Task<List<WorkdayViewModel>> GetWorkdaysAsync(DateTime startDate, DateTime endDate)
+    {
+        var workdays = await _sqlDbContext.Workdays
+            .AsNoTracking()
+            .Where(w => w.Date >= startDate && w.Date <= endDate)
+            .Include(w => w.Worktimes)
+            .Include(w => w.Projecttimes)
+            .Select(w => w.ToViewModel())
+            .ToListAsync();
+
+        foreach (var workday in workdays.Where(workday => workday.Worktimes.Count != 0))
+        {
+            workday.Worktimes = workday.Worktimes.OrderBy(x => x.StartTime).ToList();
+        }
+        
+        return workdays;
+    }
 
     public async Task<WorkdayViewModel?> GetWorkdayByIdAsync(Guid workdayId)
     {
