@@ -1,11 +1,48 @@
 @page "/evaluation"
+@using System.Globalization
+@using ChronoLog.Core.Interfaces
+@using ChronoLog.Core.Models.DisplayObjects
+@inject IWorkdayService WorkdayService
+@inject IWorktimeService WorktimeService
+@inject IProjectService ProjectService
+@inject IProjecttimeService ProjecttimeService
 
 <PageTitle>Evaluation</PageTitle>
 
-<RadzenTabs Change="@OnTabChange" RenderMode="TabRenderMode.Server">
+<RadzenTabs Change="@OnTabChange">
     <Tabs>
         <RadzenTabsItem Text="Weekly SAP">
-            
+            <!--
+            TODO:
+            - Working time
+            - Projecttimes
+                - Project ID
+                - Time spent
+                - Text per Project
+        -->
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center" Gap="0.5rem" class="rz-p-12">
+                <RadzenLabel Text="Select Week" Component="DatePickerYearWeek" />
+                <RadzenDatePicker @bind-Value="@selectedDate" ShowButton="false" DateFormat="dd/MM/yyyy" CurrentDateChanged="@OnCurrentDateChanged" Name="DatePickerYearWeek">
+                    <FooterTemplate>
+                        <RadzenButton Click="@(_ => selectedDate = DateTime.Now)" Text="Today" Style="width: 100%;" class="rz-my-4" />
+                    </FooterTemplate>
+                </RadzenDatePicker>
+                <RadzenButton Icon="chevron_left" ButtonStyle="ButtonStyle.Light" Click="@PrevWeek" Style="margin-left:0.5rem;" />
+                <RadzenButton Icon="chevron_right" ButtonStyle="ButtonStyle.Light" Click="@NextWeek" />
+                <div style="display:flex; align-items:center; margin-left:1rem;">
+                    <strong>Week @CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(selectedDate, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday):</strong>&nbsp;
+                    <span>@DateRangeStart.ToString("dd.MM.yyyy") - @DateRangeEnd.ToString("dd.MM.yyyy")</span>
+                </div>
+            </RadzenStack>
+            <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0.5rem" class="rz-p-4 rz-mb-6 rz-border-radius-1" Style="border: var(--rz-grid-cell-border, 1px solid rgba(0,0,0,0.12));">
+                <RadzenLabel Text="Total Working Time:"/>
+                <RadzenBadge Text="40h"/>
+                <RadzenLabel Text="Total Project Time:"/>
+                <RadzenBadge Text="38h"/>
+                <RadzenLabel Text="Remaining Time:"/>
+                <RadzenBadge Text="2h"/>
+            </RadzenStack>
+
         </RadzenTabsItem>
         
         <RadzenTabsItem Text="Monthly SAP">
@@ -19,13 +56,68 @@
 </RadzenTabs>
 
 @code {
+    private DateTime selectedDate = DateTime.Now;
+    private DateTime DateRangeStart;
+    private DateTime DateRangeEnd;
+    
+    private List<ProjectModel> _projects = [];
+    private List<WorkdayViewModel> _workdays = [];
+    private List<WorktimeModel> _worktimes = [];
+    private List<ProjecttimeModel> _projecttimes = [];
+    
     protected override async Task OnInitializedAsync()
     {
+        SetWeekFromDate(selectedDate);
         
+        _projects = await ProjectService.GetProjectsAsync();
+        _workdays = await WorkdayService.GetWorkdaysAsync(DateRangeStart, DateRangeEnd);
+        var worktimeIds = _workdays
+            .SelectMany(w => w.Worktimes)
+            .Select(wt => wt.WorktimeId)
+            .ToList();
+        var projecttimeIds = _workdays
+            .SelectMany(w => w.Projecttimes)
+            .Select(pt => pt.ProjecttimeId)
+            .ToList();
+        _worktimes = await WorktimeService.GetWorktimesAsync(worktimeIds);
+        _projecttimes = await ProjecttimeService.GetProjecttimesAsync(projecttimeIds);
     }
     
     private void OnTabChange(int index)
     {
         
+    }
+    
+    private void OnCurrentDateChanged(DateTime date)
+    {
+        selectedDate = new DateTime(date.Year, date.Month, date.Day);
+        SetWeekFromDate(selectedDate);
+    }
+    
+    private void SetWeekFromDate(DateTime date)
+    {
+        DateRangeStart = GetStartOfWeek(date, DayOfWeek.Monday);
+        DateRangeEnd = DateRangeStart.AddDays(6).Date;
+        StateHasChanged();
+    }
+    
+    private static DateTime GetStartOfWeek(DateTime date, DayOfWeek startOfWeek)
+    {
+        var diff = (7 + (date.DayOfWeek - startOfWeek)) % 7;
+        return date.Date.AddDays(-diff);
+    }
+    
+    private void PrevWeek()
+    {
+        var newStart = DateRangeStart.AddDays(-7);
+        selectedDate = newStart;
+        SetWeekFromDate(selectedDate);
+    }
+
+    private void NextWeek()
+    {
+        var newStart = DateRangeStart.AddDays(7);
+        selectedDate = newStart;
+        SetWeekFromDate(selectedDate);
     }
 }
