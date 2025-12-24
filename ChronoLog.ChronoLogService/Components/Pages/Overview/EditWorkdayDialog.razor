@@ -296,6 +296,13 @@ else
 </Popup>
 
 @code {
+    private readonly ILogger _logger;
+    
+    public EditWorkdayDialog(ILogger logger)
+    {
+        _logger = logger;
+    }
+    
     [Parameter] public WorkdayViewModel? Workday { get; set; }
     [Parameter] public DateTime SelectedDate { get; set; }
 
