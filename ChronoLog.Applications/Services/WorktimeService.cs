@@ -54,7 +54,7 @@ public class WorktimeService : IWorktimeService
         return worktimes;
     }
     
-    public async Task<WorktimeModel?> GetWorktimeByIdAsync(Guid worktimeId)
+    public async Task<WorktimeModel?> GetWorktimeAsync(Guid worktimeId)
     {
         var worktime = await _sqlDbContext.Worktimes
             .AsNoTracking()

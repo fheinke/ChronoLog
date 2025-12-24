@@ -30,7 +30,7 @@ public class WorktimeController : ControllerBase
     [ProducesResponseType(404)]
     public async Task<ActionResult<WorktimeModel>> GetWorktimeById(Guid worktimeId)
     {
-        var worktime = await _worktimeService.GetWorktimeByIdAsync(worktimeId);
+        var worktime = await _worktimeService.GetWorktimeAsync(worktimeId);
         if (worktime == null)
             return NotFound("Worktime not found");
         return Ok(worktime);
