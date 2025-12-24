@@ -9,6 +9,7 @@
 @inject IWorktimeService WorktimeService
 @inject IProjectService ProjectService
 @inject IProjecttimeService ProjecttimeService
+@inject ILogger<EditWorkdayDialog> Logger
 
 <style>
     .projectInfo-popup {
@@ -17,10 +18,10 @@
         overflow: hidden;
         height: 360px;
         width: 400px;
-        border: var(--rz-panel-border);
-        background-color: var(--rz-panel-background-color);
-        box-shadow: var(--rz-panel-shadow);
-        border-radius: var(--rz-border-radius)
+        border: var(--rz-panel-border, 1px solid rgba(0,0,0,0.12));
+        background-color: var(--rz-panel-background-color, #ffffff);
+        box-shadow: var(--rz-panel-shadow, 0 1px 3px rgba(0,0,0,0.1));
+        border-radius: var(--rz-border-radius, 4px);
     }
 </style>
 
@@ -296,16 +297,9 @@ else
 </Popup>
 
 @code {
-    private readonly ILogger _logger;
-    
-    public EditWorkdayDialog(ILogger logger)
-    {
-        _logger = logger;
-    }
-    
     [Parameter] public WorkdayViewModel? Workday { get; set; }
     [Parameter] public DateTime SelectedDate { get; set; }
-
+    
     private static readonly IEnumerable<WorkdayType> WorkdayTypes = Enum.GetValues(typeof(WorkdayType)).Cast<WorkdayType>();
     private WorkdayType? _originalWorkdayType;
 

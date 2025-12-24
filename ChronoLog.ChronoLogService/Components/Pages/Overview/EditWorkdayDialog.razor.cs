@@ -55,7 +55,7 @@ public partial class EditWorkdayDialog
         {
             _worktimeGrid.CancelEditRow(worktime);
             NotificationService.Notify(NotificationSeverity.Error, "Update of worktime failed.", duration: 4000);
-            _logger.LogError(ex, "Error updating worktime row.");
+            Logger?.LogError(ex, "Error updating worktime row.");
         }
     }
 
@@ -86,7 +86,7 @@ public partial class EditWorkdayDialog
             catch (Exception ex)
             {
                 NotificationService.Notify(NotificationSeverity.Error, "Deletion of worktime failed.", duration: 4000);
-                _logger.LogError(ex, "Error deleting worktime row.");
+                Logger?.LogError(ex, "Error deleting worktime row.");
                 return;
             }
         }
@@ -113,7 +113,7 @@ public partial class EditWorkdayDialog
         {
             _worktimesToInsert.RemoveAll(w => w.WorktimeId == newWorktime.WorktimeId);
             NotificationService.Notify(NotificationSeverity.Error, "Insertion of worktime failed.", duration: 4000);
-            _logger.LogError(ex, "Error inserting worktime row.");
+            Logger?.LogError(ex, "Error inserting worktime row.");
         }
     }
 
@@ -141,7 +141,7 @@ public partial class EditWorkdayDialog
         catch (Exception ex)
         {
             NotificationService.Notify(NotificationSeverity.Error, "Create of worktime failed.", duration: 4000);
-            _logger.LogError(ex, "Error creating worktime row.");
+            Logger?.LogError(ex, "Error creating worktime row.");
         }
         finally
         {
@@ -203,7 +203,7 @@ public partial class EditWorkdayDialog
         {
             _projecttimeGrid.CancelEditRow(projecttime);
             NotificationService.Notify(NotificationSeverity.Error, "Update of project time failed.", duration: 4000);
-            _logger.LogError(ex, "Error updating project time row.");
+            Logger?.LogError(ex, "Error updating project time row.");
         }
     }
 
@@ -243,7 +243,7 @@ public partial class EditWorkdayDialog
             catch (Exception ex)
             {
                 NotificationService.Notify(NotificationSeverity.Error, "Deletion of project time failed.", duration: 4000);
-                _logger.LogError(ex, "Error deleting project time row.");
+                Logger?.LogError(ex, "Error deleting project time row.");
                 return;
             }
         }
@@ -270,7 +270,7 @@ public partial class EditWorkdayDialog
         {
             _projecttimesToInsert.RemoveAll(p => p.ProjecttimeId == newProjecttime.ProjecttimeId);
             NotificationService.Notify(NotificationSeverity.Error, "Insertion of project time failed.", duration: 4000);
-            _logger.LogError(ex, "Error inserting project time row.");
+            Logger?.LogError(ex, "Error inserting project time row.");
         }
     }
 
@@ -295,7 +295,7 @@ public partial class EditWorkdayDialog
         catch (Exception ex)
         {
             NotificationService.Notify(NotificationSeverity.Error, "Create of project time failed.", duration: 4000);
-            _logger.LogError(ex, "Error creating project time row.");
+            Logger?.LogError(ex, "Error creating project time row.");
         }
         finally
         {
