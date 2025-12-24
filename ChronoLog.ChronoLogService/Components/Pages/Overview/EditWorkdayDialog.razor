@@ -16,12 +16,12 @@
         display: none;
         position: absolute;
         overflow: hidden;
-        height: 360px;
+        height: 300px;
         width: 400px;
         border: var(--rz-panel-border, 1px solid rgba(0,0,0,0.12));
-        background-color: var(--rz-panel-background-color, #ffffff);
-        box-shadow: var(--rz-panel-shadow, 0 1px 3px rgba(0,0,0,0.1));
-        border-radius: var(--rz-border-radius, 4px);
+        background-color: var(--rz-panel-background-color, rgba(255,255,255,1));
+        box-shadow: var(--rz-panel-shadow, 1px 3px rgba(0,0,0,0.1));
+        border-radius: var(--rz-border-radius, 6px);
     }
 </style>
 
@@ -266,26 +266,18 @@ else
 <Popup @ref="_projectInfoPopup" Lazy="true" class="projectInfo-popup"
        style="position:absolute; top:100%; left:0; z-index:1000; display:block;">
     <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
-        <RadzenLabel Text="Project Information" Style="font-size: 1.1rem;"/>
-        <hr/>
         @if (_selectedProject is not null)
         {
-            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
-                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
-                    <strong>Name:</strong>
-                    <span>@(_selectedProject.Name)</span>
-                </RadzenStack>
-                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
-                    <strong>Description:</strong>
-                    <span>@(_selectedProject.Description.IsNullOrEmpty() ? "—" : _selectedProject.Description)</span>
-                </RadzenStack>
-                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
-                    <strong>Response Object ID:</strong>
-                    <span>@_selectedProject.ResponseObject</span>
-                </RadzenStack>
-                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
-                    <strong>Default Response Text:</strong>
-                    <span>@(_selectedProject.DefaultResponseText.IsNullOrEmpty() ? "—" : _selectedProject.DefaultResponseText)</span>
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Start" Gap="1rem" class="rz-p-4">
+                <RadzenStack Gap="0">
+                    <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-2 rz-my-0">Name</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1"><b>@(_selectedProject.Name)</b></RadzenText>
+                    <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">Description</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1"><b>@(_selectedProject.Description.IsNullOrEmpty() ? "—" : _selectedProject.Description)</b></RadzenText>
+                    <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">Response Object ID</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1"><b>@(_selectedProject.ResponseObject)</b></RadzenText>
+                    <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">Default Response Text</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1"><b>@(_selectedProject.DefaultResponseText.IsNullOrEmpty() ? "—" : _selectedProject.DefaultResponseText)</b></RadzenText>
                 </RadzenStack>
             </RadzenStack>
         }
