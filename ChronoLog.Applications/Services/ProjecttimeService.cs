@@ -38,6 +38,19 @@ public class ProjecttimeService : IProjecttimeService
             .ToListAsync();
         return projecttimes;
     }
+    
+    public async Task<List<ProjecttimeModel>> GetProjecttimesAsync(List<Guid> projecttimeIds)
+    {
+        if (projecttimeIds.Count == 0)
+            return [];
+        
+        var projecttimes = await _sqlDbContext.Projecttimes
+            .AsNoTracking()
+            .Where(p => projecttimeIds.Contains(p.ProjecttimeId))
+            .Select(p => p.ToModel())
+            .ToListAsync();
+        return projecttimes;
+    }
 
     public async Task<ProjecttimeModel?> GetProjecttimeAsync(Guid projecttimeId)
     {
