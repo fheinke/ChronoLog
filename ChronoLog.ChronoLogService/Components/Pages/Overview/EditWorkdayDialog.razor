@@ -347,8 +347,9 @@ else
     private async Task SaveWorkdayTypeChange()
     {
         if (Workday is null) return;
+        var hasWorktimesAndProjects = _worktimes.Any() || _projecttimes.Any();
 
-        if (WorkdayTypeHasChanged && !IsWorkingDay)
+        if (WorkdayTypeHasChanged && !IsWorkingDay && hasWorktimesAndProjects)
         {
             var confirmed = await DialogService.Confirm("Changing the workday type will delete ALL associated work- and project times. Do you want to proceed?", "Confirm Workday Type Change",
                 new ConfirmOptions
