@@ -1,6 +1,7 @@
 @page "/evaluation"
 @using System.Globalization
 @using ChronoLog.Core.Interfaces
+@using ChronoLog.Core.Models
 @using ChronoLog.Core.Models.DisplayObjects
 @inject IWorkdayService WorkdayService
 @inject IWorktimeService WorktimeService
@@ -36,11 +37,11 @@
             </RadzenStack>
             <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0.5rem" class="rz-p-4 rz-mb-6 rz-border-radius-1" Style="border: var(--rz-grid-cell-border, 1px solid rgba(0,0,0,0.12));">
                 <RadzenLabel Text="Your Weekly Working Time:"/>
-                <RadzenBadge Text="@(weeklyWorkingHours.ToString(CultureInfo.CurrentCulture) + "h")"/>
+                <RadzenBadge Text="@(GetWorkingHoursAdjusted().ToString(CultureInfo.CurrentCulture) + "h")"/>
                 <RadzenLabel Text="Total Working Time:"/>
                 <RadzenBadge Text="@($"{totalWorkingHours.TotalHours:F2}h")"/>
                 <RadzenLabel Text="Remaining Time:"/>
-                <RadzenBadge Text="2h"/>
+                <RadzenBadge Text="@($"{Math.Max(0, GetWorkingHoursAdjusted() - totalWorkingHours.TotalHours):F2}h")"/>
             </RadzenStack>
 
         </RadzenTabsItem>
@@ -60,6 +61,7 @@
     private DateTime DateRangeStart;
     private DateTime DateRangeEnd;
     
+    private const double dailyWorkingHours = 8.0;
     private static double weeklyWorkingHours = 40.0;
     private TimeSpan totalWorkingHours;
     
@@ -123,6 +125,17 @@
         selectedDate = newStart;
         SetWeekFromDate(selectedDate);
         await UpdateWorkdayDataAsync();
+    }
+
+    private double GetWorkingHoursAdjusted()
+    {
+        var reducingWorkdayTypes = Enum.GetValues(typeof(ReducingWorkdayType))
+            .Cast<ReducingWorkdayType>()
+            .Select(x => x.ToString())
+            .ToList();;
+        var daysToReduce = _workdays.Count(x => reducingWorkdayTypes.Contains(x.Type.ToString()));
+        var adjustedHours = weeklyWorkingHours - (daysToReduce * dailyWorkingHours);
+        return Math.Max(0, adjustedHours);
     }
     
     private async Task<TimeSpan> GetTotalWorkingHours()

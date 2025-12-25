@@ -13,3 +13,12 @@ public enum WorkdayType
     Feiertag,
     Dienstreise
 }
+
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum ReducingWorkdayType
+{
+    Krankheitstag,
+    Urlaub,
+    Gleitzeittag,
+    Feiertag
+}
