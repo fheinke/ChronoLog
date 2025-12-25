@@ -67,6 +67,17 @@ public class WorktimeService : IWorktimeService
         return worktimes;
     }
     
+    public async Task<List<WorktimeModel>> GetWorktimesAsync(DateTime startDate, DateTime endDate)
+    {
+        var worktimes = await _sqlDbContext.Worktimes
+            .AsNoTracking()
+            .Where(wt => wt.Workday.Date >= startDate && wt.Workday.Date <= endDate)
+            .Select(w => w.ToModel())
+            .ToListAsync();
+    
+        return worktimes;
+    }
+    
     public async Task<WorktimeModel?> GetWorktimeAsync(Guid worktimeId)
     {
         var worktime = await _sqlDbContext.Worktimes
@@ -104,5 +115,34 @@ public class WorktimeService : IWorktimeService
         _sqlDbContext.Worktimes.Remove(worktime);
         var affectedRows = await _sqlDbContext.SaveChangesAsync();
         return affectedRows > 0;
+    }
+    
+    public async Task<TimeSpan?> GetTotalWorktimeAsync(DateTime startDate, DateTime endDate)
+    {
+        var worktimes = await _sqlDbContext.Worktimes
+            .AsNoTracking()
+            .Include(w => w.Workday)
+            .Where(wt => wt.Workday.Date >= startDate && wt.Workday.Date <= endDate)
+            .ToListAsync();
+
+        if (worktimes.Count == 0)
+            return TimeSpan.Zero;
+
+        var totalWorktime = TimeSpan.Zero;
+        foreach (var worktime in worktimes)
+        {
+            if (worktime.EndTime.HasValue)
+            {
+                var duration = worktime.EndTime.Value - worktime.StartTime;
+                totalWorktime += duration;
+            }
+
+            if (worktime.BreakTime.HasValue)
+            {
+                totalWorktime -= worktime.BreakTime.Value;
+            }
+        }
+
+        return totalWorktime;
     }
 }

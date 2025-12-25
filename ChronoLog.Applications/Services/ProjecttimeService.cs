@@ -51,6 +51,18 @@ public class ProjecttimeService : IProjecttimeService
             .ToListAsync();
         return projecttimes;
     }
+    
+    public async Task<List<ProjecttimeModel>> GetProjecttimesAsync(DateTime startDate, DateTime endDate)
+    {
+        var projecttimes = await _sqlDbContext.Projecttimes
+            .AsNoTracking()
+            .Where(pt => pt.Workday.Date >= startDate && pt.Workday.Date <= endDate)
+            .Select(p => p.ToModel())
+            .ToListAsync();
+    
+        return projecttimes;
+    }
+    
 
     public async Task<ProjecttimeModel?> GetProjecttimeAsync(Guid projecttimeId)
     {

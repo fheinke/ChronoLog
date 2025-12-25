@@ -117,32 +117,4 @@ public class WorkdayService : IWorkdayService
         var affectedRows = await _sqlDbContext.SaveChangesAsync();
         return affectedRows > 0;
     }
-
-    public async Task<TimeSpan?> GetTotalWorktimeAsync(Guid workdayId)
-    {
-        var workday = await _sqlDbContext.Workdays
-            .AsNoTracking()
-            .Where(w => w.WorkdayId == workdayId)
-            .Include(w => w.Worktimes)
-            .FirstOrDefaultAsync();
-        if (workday == null)
-            return null;
-
-        var totalWorktime = TimeSpan.Zero;
-        foreach (var worktime in workday.Worktimes)
-        {
-            if (worktime.EndTime.HasValue)
-            {
-                var duration = worktime.EndTime.Value - worktime.StartTime;
-                totalWorktime += duration;
-            }
-
-            if (worktime.BreakTime.HasValue)
-            {
-                totalWorktime -= worktime.BreakTime.Value;
-            }
-        }
-
-        return totalWorktime;
-    }
 }
