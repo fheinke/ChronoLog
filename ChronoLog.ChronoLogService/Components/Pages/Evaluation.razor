@@ -13,43 +13,87 @@
 <RadzenTabs Change="@OnTabChange">
     <Tabs>
         <RadzenTabsItem Text="Weekly SAP">
-            <!--
-            TODO:
-            - Working time
-            - Projecttimes
-                - Project ID
-                - Time spent
-                - Text per Project
-        -->
-            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center" Gap="0.5rem" class="rz-p-12">
-                <RadzenLabel Text="Select Week" Component="DatePickerYearWeek" />
-                <RadzenDatePicker @bind-Value="@selectedDate" ShowButton="false" DateFormat="dd/MM/yyyy" CurrentDateChanged="@OnCurrentDateChanged" Name="DatePickerYearWeek">
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center"
+                         AlignItems="AlignItems.Center" Gap="0.5rem" class="rz-p-12">
+                <RadzenLabel Text="Select Week" Component="DatePickerYearWeek"/>
+                <RadzenDatePicker @bind-Value="@_selectedDate" ShowButton="false" DateFormat="dd/MM/yyyy"
+                                  CurrentDateChanged="@OnCurrentDateChanged" Name="DatePickerYearWeek">
                     <FooterTemplate>
-                        <RadzenButton Click="@(_ => OnCurrentDateChanged(DateTime.Now))" Text="Today" Style="width: 100%;" class="rz-my-4" />
+                        <RadzenButton Click="@(_ => OnCurrentDateChanged(DateTime.Now))" Text="Today"
+                                      Style="width: 100%;" class="rz-my-4"/>
                     </FooterTemplate>
                 </RadzenDatePicker>
-                <RadzenButton Icon="chevron_left" ButtonStyle="ButtonStyle.Light" Click="@PrevWeek" Style="margin-left:0.5rem;" />
-                <RadzenButton Icon="chevron_right" ButtonStyle="ButtonStyle.Light" Click="@NextWeek" />
+                <RadzenButton Icon="chevron_left" ButtonStyle="ButtonStyle.Light" Click="@PrevWeek"
+                              Style="margin-left:0.5rem;"/>
+                <RadzenButton Icon="chevron_right" ButtonStyle="ButtonStyle.Light" Click="@NextWeek"/>
                 <div style="display:flex; align-items:center; margin-left:1rem;">
-                    <strong>Week @CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(selectedDate, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday):</strong>&nbsp;
-                    <span>@DateRangeStart.ToString("dd.MM.yyyy") - @DateRangeEnd.ToString("dd.MM.yyyy")</span>
+                    <strong>Week @CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(_selectedDate, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday):</strong>&nbsp;
+                    <span>@_dateRangeStart.ToString("dd.MM.yyyy") - @_dateRangeEnd.ToString("dd.MM.yyyy")</span>
                 </div>
             </RadzenStack>
-            <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0.5rem" class="rz-p-4 rz-mb-6 rz-border-radius-1" Style="border: var(--rz-grid-cell-border, 1px solid rgba(0,0,0,0.12));">
+            <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0.5rem"
+                         class="rz-p-4 rz-mb-6 rz-border-radius-1"
+                         Style="border: var(--rz-grid-cell-border, 1px solid rgba(0,0,0,0.12));">
                 <RadzenLabel Text="Your Weekly Working Time:"/>
                 <RadzenBadge Text="@(GetWorkingHoursAdjusted().ToString(CultureInfo.CurrentCulture) + "h")"/>
                 <RadzenLabel Text="Total Working Time:"/>
-                <RadzenBadge Text="@($"{totalWorkingHours.TotalHours:F2}h")"/>
-                <RadzenLabel Text="Remaining Time:"/>
-                <RadzenBadge Text="@($"{Math.Max(0, GetWorkingHoursAdjusted() - totalWorkingHours.TotalHours):F2}h")"/>
+                <RadzenBadge Text="@($"{_totalWorkingHours.TotalHours:F2}h")"/>
+            </RadzenStack>
+            <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0.5rem"
+                         class="rz-p-4 rz-mb-6 rz-border-radius-1"
+                         Style="border: var(--rz-grid-cell-border, 1px solid rgba(0,0,0,0.12));">
+                <RadzenLabel Text="Project Times for the Week:"/>
+                @if (_projecttimes.Count > 0)
+                {
+                    <RadzenDataGrid Data="@_projecttimes" TItem="ProjecttimeModel" RowHover="true"
+                                    ShowPagingSummary="true" PageSize="15" AllowPaging="true" AllowSorting="true"
+                                    AllowFiltering="true" Style="width:100%;">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="ProjecttimeModel" Title="Date">
+                                <Template Context="item">
+                                    @_workdays.FirstOrDefault(w => w.WorkdayId == item.WorkdayId)!.Date.ToString("dd.MM.yyyy")
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="ProjecttimeModel" Property="Name" Title="Project Name">
+                                <Template Context="item">
+                                    @_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)!.Name
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="ProjecttimeModel" Property="TimeSpent" Title="Time Spent (h)">
+                                <Template Context="item">
+                                    @item.TimeSpent.TotalHours.ToString("F2")
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="ProjecttimeModel" Title="Response Text">
+                                <Template Context="item">
+                                    @if (!string.IsNullOrEmpty(item.ResponseText))
+                                    {
+                                        <span
+                                            style="font-weight: bold; color: var(--rz-primary);">@item.ResponseText</span>
+                                    }
+                                    else
+                                    {
+                                        <span
+                                            style="font-style: italic; color: var(--rz-text-secondary-color);">@_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)!.DefaultResponseText</span>
+                                    }
+                                </Template>
+                            </RadzenDataGridColumn>
+
+                        </Columns>
+                    </RadzenDataGrid>
+                }
+                else
+                {
+                    <RadzenLabel Text="No project times recorded for this week." Style="font-style: italic;"/>
+                }
             </RadzenStack>
 
         </RadzenTabsItem>
-        
+
         <RadzenTabsItem Text="Monthly SAP">
 
         </RadzenTabsItem>
-        
+
         <RadzenTabsItem Text="Yearly Stats">
 
         </RadzenTabsItem>
@@ -57,90 +101,118 @@
 </RadzenTabs>
 
 @code {
-    private DateTime selectedDate = DateTime.Now;
-    private DateTime DateRangeStart;
-    private DateTime DateRangeEnd;
-    
-    private const double dailyWorkingHours = 8.0;
-    private static double weeklyWorkingHours = 40.0;
-    private TimeSpan totalWorkingHours;
-    
+    private DateTime _selectedDate = GetStartOfWeek(DateTime.Now);
+    private DateTime _dateRangeStart;
+    private DateTime _dateRangeEnd;
+
+    private const double DailyWorkingHours = 8.0;
+    private List<string>? _reducingWorkdayTypes;
+    private TimeSpan _totalWorkingHours;
+
+    private ProjectModel? _defaultProject;
     private List<ProjectModel> _projects = [];
     private List<WorkdayViewModel> _workdays = [];
-    private List<WorktimeModel> _worktimes = [];
     private List<ProjecttimeModel> _projecttimes = [];
-    
+
     protected override async Task OnInitializedAsync()
     {
-        SetWeekFromDate(selectedDate);
+        SetWeekFromDate(_selectedDate);
         _projects = await ProjectService.GetProjectsAsync();
+        _defaultProject = _projects.FirstOrDefault(p => p.IsDefault);
+        _reducingWorkdayTypes = GetReducingWorkdayTypes();
         await UpdateWorkdayDataAsync();
     }
-    
+
     private async Task UpdateWorkdayDataAsync()
     {
-        _workdays = await WorkdayService.GetWorkdaysAsync(DateRangeStart, DateRangeEnd);
-        _worktimes = await WorktimeService.GetWorktimesAsync(DateRangeStart, DateRangeEnd);
-        _projecttimes = await ProjecttimeService.GetProjecttimesAsync(DateRangeStart, DateRangeEnd);
-        
-        totalWorkingHours = await GetTotalWorkingHours();
+        _workdays = await WorkdayService.GetWorkdaysAsync(_dateRangeStart, _dateRangeEnd);
+        _projecttimes = await ProjecttimeService.GetProjecttimesAsync(_dateRangeStart, _dateRangeEnd);
+
+        foreach (var workday in _workdays)
+        {
+            if (_reducingWorkdayTypes!.Contains(workday.TypeText))
+                continue;
+
+            var totalDailyProjecttime = _projecttimes
+                .Where(pt => pt.WorkdayId == workday.WorkdayId)
+                .Sum(pt => pt.TimeSpent.TotalHours);
+            if (totalDailyProjecttime >= DailyWorkingHours)
+                continue;
+            var defaultProjecttime = new ProjecttimeModel
+            {
+                WorkdayId = workday.WorkdayId,
+                ProjectId = _defaultProject?.ProjectId ?? Guid.Empty,
+                TimeSpent = TimeSpan.FromHours(DailyWorkingHours - totalDailyProjecttime)
+            };
+            _projecttimes.Add(defaultProjecttime);
+        }
+
+        _projecttimes = _projecttimes
+            .OrderBy(pt => _workdays.FirstOrDefault(w => w.WorkdayId == pt.WorkdayId)?.Date)
+            .ThenBy(pt => _projects.FirstOrDefault(p => p.ProjectId == pt.ProjectId)?.Name)
+            .ToList();
+
+        _totalWorkingHours = await GetTotalWorkingHours();
         StateHasChanged();
     }
-    
+
     private void OnTabChange(int index)
     {
-        
     }
-    
+
     private async Task OnCurrentDateChanged(DateTime date)
     {
-        selectedDate = new DateTime(date.Year, date.Month, date.Day);
-        SetWeekFromDate(selectedDate);
+        _selectedDate = new DateTime(date.Year, date.Month, date.Day);
+        SetWeekFromDate(_selectedDate);
         await UpdateWorkdayDataAsync();
     }
-    
+
     private void SetWeekFromDate(DateTime date)
     {
-        DateRangeStart = GetStartOfWeek(date, DayOfWeek.Monday);
-        DateRangeEnd = DateRangeStart.AddDays(6).Date;
+        _dateRangeStart = GetStartOfWeek(date);
+        _dateRangeEnd = _dateRangeStart.AddDays(6).Date;
     }
-    
-    private static DateTime GetStartOfWeek(DateTime date, DayOfWeek startOfWeek)
+
+    private static DateTime GetStartOfWeek(DateTime date)
     {
-        var diff = (7 + (date.DayOfWeek - startOfWeek)) % 7;
+        var diff = (7 + (date.DayOfWeek - DayOfWeek.Monday)) % 7;
         return date.Date.AddDays(-diff);
     }
     
     private async Task PrevWeek()
     {
-        var newStart = DateRangeStart.AddDays(-7);
-        selectedDate = newStart;
-        SetWeekFromDate(selectedDate);
+        _selectedDate = _dateRangeStart.AddDays(-7);
+        SetWeekFromDate(_selectedDate);
         await UpdateWorkdayDataAsync();
     }
 
     private async Task NextWeek()
     {
-        var newStart = DateRangeStart.AddDays(7);
-        selectedDate = newStart;
-        SetWeekFromDate(selectedDate);
+        _selectedDate = _dateRangeStart.AddDays(7);
+        SetWeekFromDate(_selectedDate);
         await UpdateWorkdayDataAsync();
+    }
+
+    private static List<string> GetReducingWorkdayTypes()
+    {
+        return Enum.GetValues(typeof(ReducingWorkdayType))
+            .Cast<ReducingWorkdayType>()
+            .Select(x => x.ToString())
+            .ToList();
     }
 
     private double GetWorkingHoursAdjusted()
     {
-        var reducingWorkdayTypes = Enum.GetValues(typeof(ReducingWorkdayType))
-            .Cast<ReducingWorkdayType>()
-            .Select(x => x.ToString())
-            .ToList();;
-        var daysToReduce = _workdays.Count(x => reducingWorkdayTypes.Contains(x.Type.ToString()));
-        var adjustedHours = weeklyWorkingHours - (daysToReduce * dailyWorkingHours);
+        var reducingWorkdayTypes = _reducingWorkdayTypes;
+        var daysToReduce = _workdays.Count(x => reducingWorkdayTypes!.Contains(x.Type.ToString()));
+        var adjustedHours = DailyWorkingHours * 5 - daysToReduce * DailyWorkingHours;
         return Math.Max(0, adjustedHours);
     }
-    
+
     private async Task<TimeSpan> GetTotalWorkingHours()
     {
-        var totalHours = await WorktimeService.GetTotalWorktimeAsync(DateRangeStart, DateRangeEnd);
+        var totalHours = await WorktimeService.GetTotalWorktimeAsync(_dateRangeStart, _dateRangeEnd);
         return totalHours ?? TimeSpan.Zero;
     }
+
 }
