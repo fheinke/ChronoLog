@@ -45,9 +45,15 @@
                 <RadzenLabel Text="Project Times for the Week:"/>
                 @if (_projecttimes.Count > 0)
                 {
-                    <RadzenDataGrid Data="@_projecttimes" TItem="ProjecttimeModel" RowHover="true"
-                                    ShowPagingSummary="true" PageSize="15" AllowPaging="true" AllowSorting="true"
-                                    AllowFiltering="true" Style="width:100%;">
+                    <RadzenDataGrid Data="@_projecttimes"
+                                    TItem="ProjecttimeModel"
+                                    RowHover="true"
+                                    ShowPagingSummary="true"
+                                    PageSize="15"
+                                    AllowPaging="true"
+                                    AllowSorting="true"
+                                    AllowFiltering="true"
+                                    Style="width:100%;">
                         <Columns>
                             <RadzenDataGridColumn TItem="ProjecttimeModel" Title="Date">
                                 <Template Context="item">
@@ -178,7 +184,7 @@
         var diff = (7 + (date.DayOfWeek - DayOfWeek.Monday)) % 7;
         return date.Date.AddDays(-diff);
     }
-    
+
     private async Task PrevWeek()
     {
         _selectedDate = _dateRangeStart.AddDays(-7);
