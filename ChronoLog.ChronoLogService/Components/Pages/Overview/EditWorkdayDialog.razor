@@ -1,7 +1,6 @@
 @using ChronoLog.Core.Interfaces
 @using ChronoLog.Core.Models
 @using ChronoLog.Core.Models.DisplayObjects
-@using Microsoft.IdentityModel.Tokens
 @using Radzen.Blazor.Rendering
 @inject DialogService DialogService
 @inject NotificationService NotificationService
@@ -273,11 +272,11 @@ else
                     <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-2 rz-my-0">Name</RadzenText>
                     <RadzenText TextStyle="TextStyle.Body1"><b>@(_selectedProject.Name)</b></RadzenText>
                     <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">Description</RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body1"><b>@(_selectedProject.Description.IsNullOrEmpty() ? "—" : _selectedProject.Description)</b></RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1"><b>@(string.IsNullOrEmpty(_selectedProject.Description) ? "—" : _selectedProject.Description)</b></RadzenText>
                     <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">Response Object ID</RadzenText>
                     <RadzenText TextStyle="TextStyle.Body1"><b>@(_selectedProject.ResponseObject)</b></RadzenText>
                     <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">Default Response Text</RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body1"><b>@(_selectedProject.DefaultResponseText.IsNullOrEmpty() ? "—" : _selectedProject.DefaultResponseText)</b></RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1"><b>@(string.IsNullOrEmpty(_selectedProject.DefaultResponseText) ? "—" : _selectedProject.DefaultResponseText)</b></RadzenText>
                 </RadzenStack>
             </RadzenStack>
         }
