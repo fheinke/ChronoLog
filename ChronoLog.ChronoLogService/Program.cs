@@ -6,11 +6,27 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using MySql.Data.MySqlClient;
 using ChronoLog.SqlDatabase;
 using ChronoLog.SqlDatabase.Context;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Identity.Web;
+using Microsoft.Identity.Web.UI;
 using Radzen;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Authentication
+builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
+    .AddMicrosoftIdentityWebApp(builder.Configuration. GetSection("AzureAd"));
+builder.Services.AddControllersWithViews()
+    .AddMicrosoftIdentityUI();
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = options.DefaultPolicy;
+});
+builder.Services.AddRazorPages();
+builder.Services.AddServerSideBlazor()
+    .AddMicrosoftIdentityConsentHandler();
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -80,12 +96,17 @@ else
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.UseHeaderPropagation();
 app.UseAntiforgery();
 app.MapStaticAssets();
 app.MapControllers();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+app.MapFallbackToFile("index.html");
 
 app.UseHealthChecks("/.well-known/readiness", new HealthCheckOptions
 {

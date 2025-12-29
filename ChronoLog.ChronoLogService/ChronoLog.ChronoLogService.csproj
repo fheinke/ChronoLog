@@ -23,6 +23,8 @@
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
       <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.0" />
+      <PackageReference Include="Microsoft.Identity.Web" Version="4.2.0" />
+      <PackageReference Include="Microsoft.Identity.Web.UI" Version="4.2.0" />
       <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="10.0.0-rc.1.25458.5" />
       <PackageReference Include="PublicHoliday" Version="3.9.0" />
       <PackageReference Include="Radzen.Blazor" Version="8.3.9" />
