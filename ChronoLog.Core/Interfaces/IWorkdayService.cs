@@ -12,4 +12,5 @@ public interface IWorkdayService
     Task<WorkdayViewModel?> GetWorkdayByIdAsync(Guid workdayId);
     Task<bool> UpdateWorkdayAsync(Guid workdayId, DateOnly date, WorkdayType type);
     Task<bool> DeleteWorkdayAsync(Guid workdayId);
+    Task<TimeSpan> GetTotalWorktimeAsync(Guid workdayId);
 }

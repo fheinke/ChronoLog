@@ -30,15 +30,30 @@
         </div>
     </RadzenStack>
     
+    @if (_missingWorktimeDates.Any())
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Warning"
+                     Variant="Variant.Flat"
+                     Shade="Shade.Lighter"
+                     class="rz-my-4">
+            <strong>Warning:</strong> There are missing worktime entries for the following dates:
+            <ul style="margin: 0.5rem 0 0 0; padding-left: 1.5rem;">
+                @foreach (var date in _missingWorktimeDates)
+                {
+                    <li>@date.ToString("dd.MM.yyyy")</li>
+                }
+            </ul>
+            For accurate evaluation, please ensure all worktime entries are recorded.
+        </RadzenAlert>
+    }
+    
     <RadzenTabs>
         <Tabs>
             <RadzenTabsItem Text="Daily SAP">
                 <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0.5rem"
                              class="rz-p-4 rz-mb-6 rz-border-radius-1"
                              Style="border: var(--rz-grid-cell-border, 1px solid rgba(0,0,0,0.12));">
-                    <RadzenLabel Text="Your Weekly Working Time:"/>
-                    <RadzenBadge Text="@(GetWorkingHoursAdjusted().ToString(CultureInfo.CurrentCulture) + "h")"/>
-                    <RadzenLabel Text="Total Working Time:"/>
+                    <RadzenLabel Text="Total Booked Working Time:"/>
                     <RadzenBadge Text="@($"{_totalWorkingHours.TotalHours:F2}h")"/>
                 </RadzenStack>
                 <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0.5rem"
@@ -118,6 +133,7 @@
     private List<ProjectModel> _projects = [];
     private List<WorkdayViewModel> _workdays = [];
     private List<ProjecttimeModel> _projecttimes = [];
+    private List<DateTime> _missingWorktimeDates = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -132,22 +148,30 @@
     {
         _workdays = await WorkdayService.GetWorkdaysAsync(_dateRangeStart, _dateRangeEnd);
         _projecttimes = await ProjecttimeService.GetProjecttimesAsync(_dateRangeStart, _dateRangeEnd);
-
+        _missingWorktimeDates.Clear();
+        
         foreach (var workday in _workdays)
         {
             if (_reducingWorkdayTypes!.Contains(workday.TypeText))
                 continue;
 
+            var actualWorktime = await WorkdayService.GetTotalWorktimeAsync(workday.WorkdayId);
+            var actualWorktimeHours = actualWorktime.TotalHours == 0 ? DailyWorkingHours : actualWorktime.TotalHours;
+            if (actualWorktime == TimeSpan.Zero)
+                _missingWorktimeDates.Add(workday.Date);
+
             var totalDailyProjecttime = _projecttimes
                 .Where(pt => pt.WorkdayId == workday.WorkdayId)
                 .Sum(pt => pt.TimeSpent.TotalHours);
-            if (totalDailyProjecttime >= DailyWorkingHours)
+            
+            if (totalDailyProjecttime >= actualWorktimeHours)
                 continue;
+            
             var defaultProjecttime = new ProjecttimeModel
             {
                 WorkdayId = workday.WorkdayId,
                 ProjectId = _defaultProject?.ProjectId ?? Guid.Empty,
-                TimeSpent = TimeSpan.FromHours(DailyWorkingHours - totalDailyProjecttime)
+                TimeSpent = TimeSpan.FromHours(actualWorktimeHours - totalDailyProjecttime)
             };
             _projecttimes.Add(defaultProjecttime);
         }
@@ -160,6 +184,7 @@
             .OrderBy(pt => workdayLookup.TryGetValue(pt.WorkdayId, out var date) ? date : DateTime.MaxValue)
             .ThenBy(pt => projectLookup.TryGetValue(pt.ProjectId, out var name) ? name : string.Empty)
             .ToList();
+        _missingWorktimeDates = _missingWorktimeDates.Distinct().OrderBy(d => d).ToList();
 
         _totalWorkingHours = await GetTotalWorkingHours();
         StateHasChanged();
@@ -204,13 +229,6 @@
             .Cast<ReducingWorkdayType>()
             .Select(x => x.ToString())
             .ToList();
-    }
-
-    private double GetWorkingHoursAdjusted()
-    {
-        var daysToReduce = _workdays.Count(x => _reducingWorkdayTypes!.Contains(x.Type.ToString()));
-        var adjustedHours = DailyWorkingHours * 5 - daysToReduce * DailyWorkingHours;
-        return Math.Max(0, adjustedHours);
     }
 
     private async Task<TimeSpan> GetTotalWorkingHours()
