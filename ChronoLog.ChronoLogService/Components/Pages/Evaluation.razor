@@ -40,7 +40,9 @@
             <ul style="margin: 0.5rem 0 0 0; padding-left: 1.5rem;">
                 @foreach (var date in _missingWorktimeDates)
                 {
-                    <li>@date.ToString("dd.MM.yyyy")</li>
+                    <li>
+                        <RadzenLink Path="@GetWorkdayEditPath(date)" Text="@date.ToString("dd.MM.yyyy")" Style="margin-left:0.5rem;"/>
+                    </li>
                 }
             </ul>
             For accurate evaluation, please ensure all worktime entries are recorded.
@@ -235,6 +237,11 @@
     {
         var totalHours = await WorktimeService.GetTotalWorktimeAsync(_dateRangeStart, _dateRangeEnd);
         return totalHours ?? TimeSpan.Zero;
+    }
+    
+    private static string GetWorkdayEditPath(DateTime date)
+    {
+        return $"/?date={date:yyyy-MM-dd}";
     }
 
 }

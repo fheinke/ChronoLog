@@ -1,5 +1,6 @@
 ﻿@page "/"
 @inject DialogService DialogService
+@inject NavigationManager NavigationManager
 @using ChronoLog.Core.Interfaces
 @using ChronoLog.Core.Models
 @using ChronoLog.Core.Models.DisplayObjects
@@ -43,6 +44,24 @@
     {
         _workdays = (await WorkdayService.GetWorkdaysAsync()).ToList();
         StateHasChanged();
+    }
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+
+        if (firstRender)
+        {
+            var uri = new Uri(NavigationManager.Uri);
+            var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+            var dateString = query["date"];
+
+            if (!string.IsNullOrEmpty(dateString) && DateTime.TryParse(dateString, out var date))
+            {
+                await OpenEditDialogForDate(date);
+                NavigationManager.NavigateTo("/", false);
+            }
+        }
     }
 
     private static void OnDaySelect(SchedulerDaySelectEventArgs args)
@@ -186,6 +205,31 @@
 
         await _scheduler?.Reload()!;
         await LoadData();
+    }
+    
+    private async Task OpenEditDialogForDate(DateTime date)
+    {
+        var workday = _workdays?.FirstOrDefault(w => w.Date.Date == date.Date);
+
+        if (workday != null)
+        {
+            var appointmentArgs = new SchedulerAppointmentSelectEventArgs<WorkdayViewModel>
+            {
+                Start = date,
+                End = date.AddDays(1),
+                Data = workday
+            };
+            await OnAppointmentSelect(appointmentArgs);
+        }
+        else
+        {
+            var slotArgs = new SchedulerSlotSelectEventArgs
+            {
+                Start = date,
+                End = date.AddDays(1)
+            };
+            await OnSlotSelect(slotArgs);
+        }
     }
 
 }
