@@ -15,99 +15,102 @@ using Radzen;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Authentication
+// Authentication & Authorization
 builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
     .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"));
+builder.Services.AddAuthorization(options => { options.FallbackPolicy = options.DefaultPolicy; });
+
+// MVC & Razor
 builder.Services.AddControllersWithViews()
-    .AddMicrosoftIdentityUI();
-builder.Services.AddAuthorization(options =>
-{
-    options.FallbackPolicy = options.DefaultPolicy;
-});
+    .AddMicrosoftIdentityUI()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+        options.JsonSerializerOptions.Converters.Add(new ChronoLog.Applications.Converters.TimeOnlyJsonConverter());
+    });
 builder.Services.AddRazorPages();
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents();
+
+// Blazor
 builder.Services.AddServerSideBlazor()
     .AddMicrosoftIdentityConsentHandler();
 
-builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
+// Radzen
 builder.Services.AddRadzenComponents();
 builder.Services.AddRadzenCookieThemeService(options =>
 {
     options.Name = "ChronoLogTheme";
     options.Duration = TimeSpan.FromDays(365);
 });
-builder.Services.AddSqlServices();
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddApplicationsToServiceCollection(builder.Configuration);
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
-        options.JsonSerializerOptions.Converters.Add(new ChronoLog.Applications.Converters.TimeOnlyJsonConverter());
-    });
-builder.Services.AddSwaggerExtension();
-builder.Services.AddSwaggerGen(c =>
-{
-    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
-    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-    c.IncludeXmlComments(xmlPath);
-});
 
+// Database & Services
+builder.Services.AddSqlServices();
+builder.Services.AddApplicationsToServiceCollection(builder.Configuration);
+builder.Services.AddHttpContextAccessor();
+
+// API Documentation
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddSwaggerExtension();
+    builder.Services.AddSwaggerGen(options =>
+    {
+        var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+        var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+        if (File.Exists(xmlPath)) options.IncludeXmlComments(xmlPath);
+    });
+}
+
+// Health Checks
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<SqlDbContext>("DbConnectionCheck");
+
+// Logging
 builder.Services.AddLogging(options =>
 {
     options.AddSimpleConsole(opt => opt.TimestampFormat = "[yyyy-MM-dd HH:mm:ss] ");
 });
 
-builder.Services.AddHeaderPropagation(o => { o.Headers.Add("x-auth-request-access-token"); });
+// Header Progagation
+builder.Services.AddHeaderPropagation(options => { options.Headers.Add("x-auth-request-access-token"); });
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
-{
-    var scopedProvider = scope.ServiceProvider;
+// Database initialization check
+EnsureDatabaseConnection(app);
 
-    try
-    {
-        var sqlDbContext = scopedProvider.GetRequiredService<SqlDbContext>();
-        sqlDbContext.Database.CanConnect();
-        sqlDbContext.Database.GetService<IRelationalDatabaseCreator>();
-    }
-    catch (MySqlException e)
-    {
-        app.Logger.LogError(e, "Connection to database failed.");
-        throw;
-    }
-}
-
-if (!app.Environment.IsDevelopment())
-{
-    app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    app.UseHsts();
-}
-else
+// Middleware pipeline
+if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+else
+{
+    app.UseExceptionHandler("/Error", createScopeForErrors: true);
+    app.UseHsts();
+}
 
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseHeaderPropagation();
 app.UseAntiforgery();
+
+// Endpoints
 app.MapStaticAssets();
 app.MapControllers();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-app.UseHealthChecks("/.well-known/readiness", new HealthCheckOptions
+// Health Check Endpoint
+app.MapHealthChecks("/.well-known/readiness", new HealthCheckOptions
 {
-    Predicate = (check) => check.Name == "DbConnectionCheck",
+    Predicate = check => check.Name == "DbConnectionCheck",
     ResultStatusCodes =
     {
         [HealthStatus.Healthy] = StatusCodes.Status200OK,
@@ -117,6 +120,25 @@ app.UseHealthChecks("/.well-known/readiness", new HealthCheckOptions
     AllowCachingResponses = false
 });
 
-app.MapFallbackToFile("index.html");
-
 app.Run();
+return;
+
+static void EnsureDatabaseConnection(WebApplication app)
+{
+    using var scope = app.Services.CreateScope();
+    try
+    {
+        var sqlDbContext = scope.ServiceProvider.GetRequiredService<SqlDbContext>();
+        sqlDbContext.Database.GetService<IRelationalDatabaseCreator>();
+        
+        if (sqlDbContext.Database.CanConnect())
+        {
+            app.Logger.LogInformation("Database connection established successfully");
+        }
+    }
+    catch (MySqlException ex)
+    {
+        app.Logger.LogCritical(ex, "Failed to connect to database. Application will terminate.");
+        throw;
+    }
+}
