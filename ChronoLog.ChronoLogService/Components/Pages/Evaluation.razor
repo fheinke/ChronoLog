@@ -10,7 +10,7 @@
 
 <PageTitle>Evaluation</PageTitle>
 
-<RadzenTabs Change="@OnTabChange">
+<RadzenTabs>
     <Tabs>
         <RadzenTabsItem Text="Weekly SAP">
             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center"
@@ -57,12 +57,12 @@
                         <Columns>
                             <RadzenDataGridColumn TItem="ProjecttimeModel" Title="Date">
                                 <Template Context="item">
-                                    @_workdays.FirstOrDefault(w => w.WorkdayId == item.WorkdayId)!.Date.ToString("dd.MM.yyyy")
+                                    @_workdays.FirstOrDefault(w => w.WorkdayId == item.WorkdayId)?.Date.ToString("dd.MM.yyyy")
                                 </Template>
                             </RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="ProjecttimeModel" Property="Name" Title="Project Name">
                                 <Template Context="item">
-                                    @_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)!.Name
+                                    @_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.Name
                                 </Template>
                             </RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="ProjecttimeModel" Property="TimeSpent" Title="Time Spent (h)">
@@ -80,7 +80,7 @@
                                     else
                                     {
                                         <span
-                                            style="font-style: italic; color: var(--rz-text-secondary-color);">@_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)!.DefaultResponseText</span>
+                                            style="font-style: italic; color: var(--rz-text-secondary-color);">@_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.DefaultResponseText</span>
                                     }
                                 </Template>
                             </RadzenDataGridColumn>
@@ -153,17 +153,17 @@
             _projecttimes.Add(defaultProjecttime);
         }
 
+        // Dictionary Lookups for better performance during sorting
+        var workdayLookup = _workdays.ToDictionary(w => w.WorkdayId, w => w.Date);
+        var projectLookup = _projects.ToDictionary(p => p.ProjectId, p => p.Name);
+        
         _projecttimes = _projecttimes
-            .OrderBy(pt => _workdays.FirstOrDefault(w => w.WorkdayId == pt.WorkdayId)?.Date)
-            .ThenBy(pt => _projects.FirstOrDefault(p => p.ProjectId == pt.ProjectId)?.Name)
+            .OrderBy(pt => workdayLookup.TryGetValue(pt.WorkdayId, out var date) ? date : DateTime.MaxValue)
+            .ThenBy(pt => projectLookup.TryGetValue(pt.ProjectId, out var name) ? name : string.Empty)
             .ToList();
 
         _totalWorkingHours = await GetTotalWorkingHours();
         StateHasChanged();
-    }
-
-    private void OnTabChange(int index)
-    {
     }
 
     private async Task OnCurrentDateChanged(DateTime date)
@@ -209,8 +209,7 @@
 
     private double GetWorkingHoursAdjusted()
     {
-        var reducingWorkdayTypes = _reducingWorkdayTypes;
-        var daysToReduce = _workdays.Count(x => reducingWorkdayTypes!.Contains(x.Type.ToString()));
+        var daysToReduce = _workdays.Count(x => _reducingWorkdayTypes!.Contains(x.Type.ToString()));
         var adjustedHours = DailyWorkingHours * 5 - daysToReduce * DailyWorkingHours;
         return Math.Max(0, adjustedHours);
     }
