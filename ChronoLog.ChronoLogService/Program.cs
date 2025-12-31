@@ -17,7 +17,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Authentication
 builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
-    .AddMicrosoftIdentityWebApp(builder.Configuration. GetSection("AzureAd"));
+    .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"));
 builder.Services.AddControllersWithViews()
     .AddMicrosoftIdentityUI();
 builder.Services.AddAuthorization(options =>
@@ -72,8 +72,7 @@ using (var scope = app.Services.CreateScope())
     {
         var sqlDbContext = scopedProvider.GetRequiredService<SqlDbContext>();
         sqlDbContext.Database.CanConnect();
-        sqlDbContext.Database.GetService <IRelationalDatabaseCreator>()
-            .HasTables();
+        sqlDbContext.Database.GetService<IRelationalDatabaseCreator>();
     }
     catch (MySqlException e)
     {
@@ -106,8 +105,6 @@ app.MapControllers();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-app.MapFallbackToFile("index.html");
-
 app.UseHealthChecks("/.well-known/readiness", new HealthCheckOptions
 {
     Predicate = (check) => check.Name == "DbConnectionCheck",
@@ -119,5 +116,7 @@ app.UseHealthChecks("/.well-known/readiness", new HealthCheckOptions
     },
     AllowCachingResponses = false
 });
+
+app.MapFallbackToFile("index.html");
 
 app.Run();
