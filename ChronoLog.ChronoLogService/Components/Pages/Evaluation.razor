@@ -10,101 +10,100 @@
 
 <PageTitle>Evaluation</PageTitle>
 
-<RadzenTabs>
-    <Tabs>
-        <RadzenTabsItem Text="Weekly SAP">
-            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center"
-                         AlignItems="AlignItems.Center" Gap="0.5rem" class="rz-p-12">
-                <RadzenLabel Text="Select Week" Component="DatePickerYearWeek"/>
-                <RadzenDatePicker @bind-Value="@_selectedDate" ShowButton="false" DateFormat="dd/MM/yyyy"
-                                  CurrentDateChanged="@OnCurrentDateChanged" Name="DatePickerYearWeek">
-                    <FooterTemplate>
-                        <RadzenButton Click="@(_ => OnCurrentDateChanged(DateTime.Now))" Text="Today"
-                                      Style="width: 100%;" class="rz-my-4"/>
-                    </FooterTemplate>
-                </RadzenDatePicker>
-                <RadzenButton Icon="chevron_left" ButtonStyle="ButtonStyle.Light" Click="@PrevWeek"
-                              Style="margin-left:0.5rem;"/>
-                <RadzenButton Icon="chevron_right" ButtonStyle="ButtonStyle.Light" Click="@NextWeek"/>
-                <div style="display:flex; align-items:center; margin-left:1rem;">
-                    <strong>Week @CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(_selectedDate, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday):</strong>&nbsp;
-                    <span>@_dateRangeStart.ToString("dd.MM.yyyy") - @_dateRangeEnd.ToString("dd.MM.yyyy")</span>
-                </div>
-            </RadzenStack>
-            <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0.5rem"
-                         class="rz-p-4 rz-mb-6 rz-border-radius-1"
-                         Style="border: var(--rz-grid-cell-border, 1px solid rgba(0,0,0,0.12));">
-                <RadzenLabel Text="Your Weekly Working Time:"/>
-                <RadzenBadge Text="@(GetWorkingHoursAdjusted().ToString(CultureInfo.CurrentCulture) + "h")"/>
-                <RadzenLabel Text="Total Working Time:"/>
-                <RadzenBadge Text="@($"{_totalWorkingHours.TotalHours:F2}h")"/>
-            </RadzenStack>
-            <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0.5rem"
-                         class="rz-p-4 rz-mb-6 rz-border-radius-1"
-                         Style="border: var(--rz-grid-cell-border, 1px solid rgba(0,0,0,0.12));">
-                <RadzenLabel Text="Project Times for the Week:"/>
-                @if (_projecttimes.Count > 0)
-                {
-                    <RadzenDataGrid Data="@_projecttimes"
-                                    TItem="ProjecttimeModel"
-                                    RowHover="true"
-                                    ShowPagingSummary="true"
-                                    PageSize="15"
-                                    AllowPaging="true"
-                                    AllowSorting="true"
-                                    AllowFiltering="true"
-                                    Style="width:100%;">
-                        <Columns>
-                            <RadzenDataGridColumn TItem="ProjecttimeModel" Title="Date">
-                                <Template Context="item">
-                                    @_workdays.FirstOrDefault(w => w.WorkdayId == item.WorkdayId)?.Date.ToString("dd.MM.yyyy")
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="ProjecttimeModel" Property="Name" Title="Project Name">
-                                <Template Context="item">
-                                    @_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.Name
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="ProjecttimeModel" Property="TimeSpent" Title="Time Spent (h)">
-                                <Template Context="item">
-                                    @item.TimeSpent.TotalHours.ToString("F2")
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="ProjecttimeModel" Title="Response Text">
-                                <Template Context="item">
-                                    @if (!string.IsNullOrEmpty(item.ResponseText))
-                                    {
-                                        <span
-                                            style="font-weight: bold; color: var(--rz-primary);">@item.ResponseText</span>
-                                    }
-                                    else
-                                    {
-                                        <span
-                                            style="font-style: italic; color: var(--rz-text-secondary-color);">@_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.DefaultResponseText</span>
-                                    }
-                                </Template>
-                            </RadzenDataGridColumn>
+<RadzenStack Orientation="Orientation.Vertical" Gap="10px">
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center"
+                 AlignItems="AlignItems.Center" Gap="0.5rem" class="rz-p-12">
+        <RadzenLabel Text="Select Week" Component="DatePickerYearWeek"/>
+        <RadzenDatePicker @bind-Value="@_selectedDate" ShowButton="false" DateFormat="dd/MM/yyyy"
+                          CurrentDateChanged="@OnCurrentDateChanged" Name="DatePickerYearWeek">
+            <FooterTemplate>
+                <RadzenButton Click="@(_ => OnCurrentDateChanged(DateTime.Now))" Text="Today"
+                              Style="width: 100%;" class="rz-my-4"/>
+            </FooterTemplate>
+        </RadzenDatePicker>
+        <RadzenButton Icon="chevron_left" ButtonStyle="ButtonStyle.Light" Click="@PrevWeek"
+                      Style="margin-left:0.5rem;"/>
+        <RadzenButton Icon="chevron_right" ButtonStyle="ButtonStyle.Light" Click="@NextWeek"/>
+        <div style="display:flex; align-items:center; margin-left:1rem;">
+            <strong>Week @CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(_selectedDate, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday):</strong>&nbsp;
+            <span>@_dateRangeStart.ToString("dd.MM.yyyy") - @_dateRangeEnd.ToString("dd.MM.yyyy")</span>
+        </div>
+    </RadzenStack>
+    
+    <RadzenTabs>
+        <Tabs>
+            <RadzenTabsItem Text="Daily SAP">
+                <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0.5rem"
+                             class="rz-p-4 rz-mb-6 rz-border-radius-1"
+                             Style="border: var(--rz-grid-cell-border, 1px solid rgba(0,0,0,0.12));">
+                    <RadzenLabel Text="Your Weekly Working Time:"/>
+                    <RadzenBadge Text="@(GetWorkingHoursAdjusted().ToString(CultureInfo.CurrentCulture) + "h")"/>
+                    <RadzenLabel Text="Total Working Time:"/>
+                    <RadzenBadge Text="@($"{_totalWorkingHours.TotalHours:F2}h")"/>
+                </RadzenStack>
+                <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0.5rem"
+                             class="rz-p-4 rz-mb-6 rz-border-radius-1"
+                             Style="border: var(--rz-grid-cell-border, 1px solid rgba(0,0,0,0.12));">
+                    <RadzenLabel Text="Project Times for the Week:"/>
+                    @if (_projecttimes.Count > 0)
+                    {
+                        <RadzenDataGrid Data="@_projecttimes"
+                                        TItem="ProjecttimeModel"
+                                        RowHover="true"
+                                        ShowPagingSummary="true"
+                                        PageSize="15"
+                                        AllowPaging="true"
+                                        AllowSorting="true"
+                                        AllowFiltering="true"
+                                        Style="width:100%;">
+                            <Columns>
+                                <RadzenDataGridColumn TItem="ProjecttimeModel" Title="Date">
+                                    <Template Context="item">
+                                        @_workdays.FirstOrDefault(w => w.WorkdayId == item.WorkdayId)?.Date.ToString("dd.MM.yyyy")
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="ProjecttimeModel" Property="Name" Title="Project Name">
+                                    <Template Context="item">
+                                        @_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.Name
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="ProjecttimeModel" Property="TimeSpent"
+                                                      Title="Time Spent (h)">
+                                    <Template Context="item">
+                                        @item.TimeSpent.TotalHours.ToString("F2")
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="ProjecttimeModel" Title="Response Text">
+                                    <Template Context="item">
+                                        @if (!string.IsNullOrEmpty(item.ResponseText))
+                                        {
+                                            <span
+                                                style="font-weight: bold; color: var(--rz-primary);">@item.ResponseText</span>
+                                        }
+                                        else
+                                        {
+                                            <span
+                                                style="font-style: italic; color: var(--rz-text-secondary-color);">@_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.DefaultResponseText</span>
+                                        }
+                                    </Template>
+                                </RadzenDataGridColumn>
 
-                        </Columns>
-                    </RadzenDataGrid>
-                }
-                else
-                {
-                    <RadzenLabel Text="No project times recorded for this week." Style="font-style: italic;"/>
-                }
-            </RadzenStack>
+                            </Columns>
+                        </RadzenDataGrid>
+                    }
+                    else
+                    {
+                        <RadzenLabel Text="No project times recorded for this week." Style="font-style: italic;"/>
+                    }
+                </RadzenStack>
+            </RadzenTabsItem>
 
-        </RadzenTabsItem>
+            <RadzenTabsItem Text="Weekly SAP">
 
-        <RadzenTabsItem Text="Monthly SAP">
-
-        </RadzenTabsItem>
-
-        <RadzenTabsItem Text="Yearly Stats">
-
-        </RadzenTabsItem>
-    </Tabs>
-</RadzenTabs>
+            </RadzenTabsItem>
+        </Tabs>
+    </RadzenTabs>
+</RadzenStack>
 
 @code {
     private DateTime _selectedDate = GetStartOfWeek(DateTime.Now);
@@ -156,7 +155,7 @@
         // Dictionary Lookups for better performance during sorting
         var workdayLookup = _workdays.ToDictionary(w => w.WorkdayId, w => w.Date);
         var projectLookup = _projects.ToDictionary(p => p.ProjectId, p => p.Name);
-        
+
         _projecttimes = _projecttimes
             .OrderBy(pt => workdayLookup.TryGetValue(pt.WorkdayId, out var date) ? date : DateTime.MaxValue)
             .ThenBy(pt => projectLookup.TryGetValue(pt.ProjectId, out var name) ? name : string.Empty)
