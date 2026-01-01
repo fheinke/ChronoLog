@@ -12,7 +12,7 @@
 
 <RadzenStack Orientation="Orientation.Vertical" Gap="10px">
     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center"
-                 AlignItems="AlignItems.Center" Gap="0.5rem" class="rz-p-12">
+                 AlignItems="AlignItems.Center" Gap="0.5rem" class="rz-p-3">
         <RadzenLabel Text="Select Week" Component="DatePickerYearWeek"/>
         <RadzenDatePicker @bind-Value="@_selectedDate" ShowButton="false" DateFormat="dd/MM/yyyy"
                           CurrentDateChanged="@OnCurrentDateChanged" Name="DatePickerYearWeek">
