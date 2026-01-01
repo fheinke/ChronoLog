@@ -61,10 +61,10 @@
                 <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0.5rem"
                              class="rz-p-4 rz-mb-6 rz-border-radius-1"
                              Style="border: var(--rz-grid-cell-border, 1px solid rgba(0,0,0,0.12));">
-                    <RadzenLabel Text="Project Times for the Week:"/>
+                    <RadzenLabel Text="Aggregated Project Times for the Week:"/>
                     @if (_projecttimes.Count > 0)
                     {
-                        <RadzenDataGrid Data="@_projecttimes"
+                        <RadzenDataGrid Data="@AggregateProjecttimes()"
                                         TItem="ProjecttimeModel"
                                         RowHover="true"
                                         ShowPagingSummary="true"
@@ -74,11 +74,6 @@
                                         AllowFiltering="true"
                                         Style="width:100%;">
                             <Columns>
-                                <RadzenDataGridColumn TItem="ProjecttimeModel" Title="Date">
-                                    <Template Context="item">
-                                        @_workdays.FirstOrDefault(w => w.WorkdayId == item.WorkdayId)?.Date.ToString("dd.MM.yyyy")
-                                    </Template>
-                                </RadzenDataGridColumn>
                                 <RadzenDataGridColumn TItem="ProjecttimeModel" Property="Name" Title="Project Name">
                                     <Template Context="item">
                                         @_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.Name
@@ -242,6 +237,32 @@
     private static string GetWorkdayEditPath(DateTime date)
     {
         return $"/?date={date:yyyy-MM-dd}";
+    }
+
+    // I want to aggregate the projecttimes by ProjectId and sum their TimeSpent if the ResponseText is the same or empty.
+    private List<ProjecttimeModel> AggregateProjecttimes()
+    {
+        var aggregated = new Dictionary<(Guid ProjectId, string ResponseText), ProjecttimeModel>();
+
+        foreach (var pt in _projecttimes)
+        {
+            var key = (pt.ProjectId, pt.ResponseText ?? string.Empty);
+            if (aggregated.ContainsKey(key))
+            {
+                aggregated[key].TimeSpent += pt.TimeSpent;
+            }
+            else
+            {
+                aggregated[key] = new ProjecttimeModel
+                {
+                    ProjectId = pt.ProjectId,
+                    ResponseText = pt.ResponseText,
+                    TimeSpent = pt.TimeSpent
+                };
+            }
+        }
+
+        return aggregated.Values.ToList();
     }
 
 }
