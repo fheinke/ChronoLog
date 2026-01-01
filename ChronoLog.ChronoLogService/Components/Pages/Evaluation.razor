@@ -64,7 +64,7 @@
                     <RadzenLabel Text="Aggregated Project Times for the Week:"/>
                     @if (_projecttimes.Count > 0)
                     {
-                        <RadzenDataGrid Data="@AggregateProjecttimes()"
+                        <RadzenDataGrid Data="@_projecttimes"
                                         TItem="ProjecttimeModel"
                                         RowHover="true"
                                         ShowPagingSummary="true"
@@ -109,9 +109,64 @@
                     }
                 </RadzenStack>
             </RadzenTabsItem>
+            
+            <RadzenTabsItem Text="Weekly SAP" Selected="true">
+                <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0.5rem"
+                             class="rz-p-4 rz-mb-6 rz-border-radius-1"
+                             Style="border: var(--rz-grid-cell-border, 1px solid rgba(0,0,0,0.12));">
+                    <RadzenLabel Text="Total Booked Working Time:"/>
+                    <RadzenBadge Text="@($"{_totalWorkingHours.TotalHours:F2}h")"/>
+                </RadzenStack>
+                <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0.5rem"
+                             class="rz-p-4 rz-mb-6 rz-border-radius-1"
+                             Style="border: var(--rz-grid-cell-border, 1px solid rgba(0,0,0,0.12));">
+                    <RadzenLabel Text="Aggregated Project Times for the Week:"/>
+                    @if (_projecttimes.Count > 0)
+                    {
+                        <RadzenDataGrid Data="@AggregateProjecttimes()"
+                                        TItem="ProjecttimeModel"
+                                        RowHover="true"
+                                        ShowPagingSummary="true"
+                                        PageSize="15"
+                                        AllowPaging="true"
+                                        AllowSorting="true"
+                                        AllowFiltering="true"
+                                        Style="width:100%;">
+                            <Columns>
+                                <RadzenDataGridColumn TItem="ProjecttimeModel" Property="Name" Title="Project Name">
+                                    <Template Context="item">
+                                        @_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.Name
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="ProjecttimeModel" Property="TimeSpent"
+                                                      Title="Time Spent (h)">
+                                    <Template Context="item">
+                                        @item.TimeSpent.TotalHours.ToString("F2")
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="ProjecttimeModel" Title="Response Text">
+                                    <Template Context="item">
+                                        @if (!string.IsNullOrEmpty(item.ResponseText))
+                                        {
+                                            <span
+                                                style="font-weight: bold; color: var(--rz-primary);">@item.ResponseText</span>
+                                        }
+                                        else
+                                        {
+                                            <span
+                                                style="font-style: italic; color: var(--rz-text-secondary-color);">@_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.DefaultResponseText</span>
+                                        }
+                                    </Template>
+                                </RadzenDataGridColumn>
 
-            <RadzenTabsItem Text="Weekly SAP">
-
+                            </Columns>
+                        </RadzenDataGrid>
+                    }
+                    else
+                    {
+                        <RadzenLabel Text="No project times recorded for this week." Style="font-style: italic;"/>
+                    }
+                </RadzenStack>
             </RadzenTabsItem>
         </Tabs>
     </RadzenTabs>
