@@ -84,7 +84,7 @@ else
                                     <EditTemplate Context="worktime">
                                         <RadzenTimeSpanPicker
                                             Value="@(worktime.BreakTime.HasValue ? worktime.BreakTime.Value : (TimeSpan?)null)"
-                                            ValueChanged="@((TimeSpan? ts) => worktime.BreakTime = ts.HasValue ? ts.Value : null)"
+                                            ValueChanged="@((TimeSpan? ts) => worktime.BreakTime = ts)"
                                             Min="@TimeSpan.Zero"
                                             Max="@TimeSpan.FromHours(12)"/>
                                     </EditTemplate>
