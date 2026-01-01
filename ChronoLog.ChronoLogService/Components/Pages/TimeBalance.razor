@@ -1,0 +1,122 @@
+@page "/timebalance"
+
+<PageTitle>Time Balance</PageTitle>
+
+<RadzenStack Gap="1rem">
+    <RadzenText TextStyle="TextStyle.H4" TagName="TagName.H1">Personal Time Balance</RadzenText>
+    
+    <!-- Overview Cards -->
+    <RadzenRow Gap="1rem">
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenCard>
+                <RadzenStack Gap="0.5rem">
+                    <RadzenText TextStyle="TextStyle.H6">Urlaub</RadzenText>
+                    <RadzenText TextStyle="TextStyle.H3" Style="color: var(--rz-primary)">
+                        @vacationDaysTaken / @totalVacationDays
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2">Verbleibend: @remainingVacationDays Tage</RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenCard>
+                <RadzenStack Gap="0.5rem">
+                    <RadzenText TextStyle="TextStyle.H6">Überstunden</RadzenText>
+                    <RadzenText TextStyle="TextStyle.H3" Style="@GetOvertimeColor()">
+                        @totalOvertime.ToString("F2") h
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2">Gesammelte Stunden</RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <!-- Vacation Details -->
+    <RadzenCard>
+        <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 1rem">Urlaubsübersicht</RadzenText>
+        <RadzenDataGrid Data="@vacationDays" TItem="VacationEntry" AllowPaging="true" PageSize="10">
+            <Columns>
+                <RadzenDataGridColumn TItem="VacationEntry" Property="Date" Title="Datum">
+                    <Template Context="data">
+                        @data.Date.ToShortDateString()
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="VacationEntry" Property="Type" Title="Art" />
+                <RadzenDataGridColumn TItem="VacationEntry" Property="Days" Title="Tage" />
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenCard>
+
+    <!-- Overtime Details -->
+    <RadzenCard>
+        <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 1rem">Überstundenübersicht</RadzenText>
+        <RadzenDataGrid Data="@overtimeEntries" TItem="OvertimeEntry" AllowPaging="true" PageSize="10">
+            <Columns>
+                <RadzenDataGridColumn TItem="OvertimeEntry" Property="Date" Title="Datum">
+                    <Template Context="data">
+                        @data.Date.ToShortDateString()
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="OvertimeEntry" Property="ExpectedHours" Title="Soll">
+                    <Template Context="data">
+                        @data.ExpectedHours h
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="OvertimeEntry" Property="ActualHours" Title="Ist">
+                    <Template Context="data">
+                        @data.ActualHours h
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="OvertimeEntry" Property="Difference" Title="Differenz">
+                    <Template Context="data">
+                        <RadzenText Style="@GetDifferenceColor(data.Difference)">
+                            @data.Difference.ToString("+0.00;-0.00") h
+                        </RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenCard>
+</RadzenStack>
+
+@code {
+    private int totalVacationDays = 30;
+    private int vacationDaysTaken = 0;
+    private int remainingVacationDays => totalVacationDays - vacationDaysTaken;
+
+    private double totalOvertime = 15.75; // Positive for overtime, negative for deficit
+
+    private List<VacationEntry> vacationDays = new()
+    {
+        new VacationEntry { Date = new DateTime(2024, 1, 15), Type = "Erholungsurlaub", Days = 2 },
+        new VacationEntry { Date = new DateTime(2024, 3, 10), Type = "Krankheit", Days = 1 },
+        // Add more entries as needed
+    };
+
+    private List<OvertimeEntry> overtimeEntries = new()
+    {
+        new OvertimeEntry { Date = new DateTime(2024, 2, 5), ExpectedHours = 8, ActualHours = 10 },
+        new OvertimeEntry { Date = new DateTime(2024, 2, 6), ExpectedHours = 8, ActualHours = 7 },
+        // Add more entries as needed
+    };
+    
+    private string GetOvertimeColor() => totalOvertime >= 0 ? "color: var(--rz-success)" : "color: var(--rz-danger)";
+    
+    private string GetDifferenceColor(double difference) => difference >= 0 ? "color: var(--rz-success)" : "color: var(--rz-danger)";
+
+    public class VacationEntry
+    {
+        public DateTime Date { get; set; }
+        public string Type { get; set; }
+        public int Days { get; set; }
+    }
+
+    public class OvertimeEntry
+    {
+        public DateTime Date { get; set; }
+        public double ExpectedHours { get; set; }
+        public double ActualHours { get; set; }
+        public double Difference => ActualHours - ExpectedHours;
+    }
+}
