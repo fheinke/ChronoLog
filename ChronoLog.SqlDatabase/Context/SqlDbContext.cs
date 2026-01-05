@@ -6,6 +6,7 @@ namespace ChronoLog.SqlDatabase.Context;
 
 public class SqlDbContext(DbContextOptions<SqlDbContext> options) : DbContext(options)
 {
+    public DbSet<EmployeeEntity> Employees { get; set; }
     public DbSet<WorkdayEntity> Workdays { get; set; }
     public DbSet<WorktimeEntity> Worktimes { get; set; }
     public DbSet<ProjecttimeEntity> Projecttimes { get; set; }
@@ -52,6 +53,10 @@ public class SqlDbContext(DbContextOptions<SqlDbContext> options) : DbContext(op
                     propBuilder.HasConversion(nullableTimeOnlyConverter);
             }
         }
+        
+        // Employee
+        modelBuilder.Entity<EmployeeEntity>()
+            .HasKey(x => x.EmployeeId);
         
         // Workday
         modelBuilder.Entity<WorkdayEntity>()

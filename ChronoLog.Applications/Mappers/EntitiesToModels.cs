@@ -65,4 +65,19 @@ public static class EntitiesToModels
             ResponseText = entity.ResponseText
         };
     }
+    
+    public static EmployeeModel ToModel(this EmployeeEntity entity)
+    {
+        return new EmployeeModel
+        {
+            EmployeeId = entity.EmployeeId,
+            ObjectId = entity.ObjectId,
+            Email = entity.Email,
+            Name = entity.Name,
+            Province = entity.Province,
+            Roles = entity.Roles,
+            VacationDaysPerYear = entity.VacationDaysPerYear,
+            OvertimeHours = entity.OvertimeHours
+        };
+    }
 }
