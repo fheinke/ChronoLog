@@ -38,10 +38,4 @@ public class UserService : IUserService
         return user.FindFirst("oid")?.Value // Entra AD Object ID
                ?? user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
     }
-
-    public async Task<List<string>> GetUserRolesAsync()
-    {
-        var user = await GetUserAsync();
-        return user.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
-    }
 }
