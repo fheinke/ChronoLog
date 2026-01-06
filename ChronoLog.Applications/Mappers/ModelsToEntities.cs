@@ -64,7 +64,7 @@ public static class ModelsToEntities
             Roles = model.Roles,
             VacationDaysPerYear = model.VacationDaysPerYear,
             OvertimeHours = model.OvertimeHours,
-            LastLogin = model.LastLogin,
+            LastSeen = model.LastSeen,
         };
     }
 }

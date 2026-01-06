@@ -80,7 +80,7 @@ public static class EntitiesToModels
             Roles = entity.Roles,
             VacationDaysPerYear = entity.VacationDaysPerYear,
             OvertimeHours = entity.OvertimeHours,
-            LastLogin = entity.LastLogin
+            LastSeen = entity.LastSeen
         };
     }
 }

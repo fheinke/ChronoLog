@@ -28,11 +28,19 @@ public class EmployeeContextService : IEmployeeContextService
         if (string.IsNullOrEmpty(userId))
             return null;
         
-        _cachedEmployee = await _sqlDbContext.Employees
+        var employee = await _sqlDbContext.Employees
             .AsNoTracking()
-            .Select(e => e.ObjectId == userId ? e.ToModel() : null)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(e => e.ObjectId == userId);
         
+        if (employee is null)
+            return null;
+        
+        employee.LastSeen = DateTime.UtcNow;
+        var affectedRows = await _sqlDbContext.SaveChangesAsync();
+        if (affectedRows == 0)
+            throw new Exception("Failed to update employee's last seen timestamp.");
+        
+        _cachedEmployee = employee.ToModel();
         return _cachedEmployee;
     }
 
@@ -55,7 +63,8 @@ public class EmployeeContextService : IEmployeeContextService
             Province = GermanProvince.ALL,
             Roles = "",
             VacationDaysPerYear = 30,
-            OvertimeHours = 0
+            OvertimeHours = 0,
+            LastSeen = DateTime.UtcNow,
         };
 
         await _sqlDbContext.Employees.AddAsync(newEmployee.ToEntity());

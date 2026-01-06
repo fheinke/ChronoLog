@@ -23,7 +23,7 @@ public class EmployeeEntity
     [Required] [Range(0, 365)] public int VacationDaysPerYear { get; set; }
     [Required] public double OvertimeHours { get; set; }
 
-    [Required] public DateTime LastLogin { get; set; }
+    [Required] public DateTime LastSeen { get; set; }
 
     public virtual ICollection<WorkdayEntity> Workdays { get; set; } = new List<WorkdayEntity>();
 
