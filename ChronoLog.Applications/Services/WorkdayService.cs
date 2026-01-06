@@ -10,10 +10,12 @@ namespace ChronoLog.Applications.Services;
 public class WorkdayService : IWorkdayService
 {
     private readonly SqlDbContext _sqlDbContext;
+    private readonly EmployeeContextService _employeeContextService;
     
-    public WorkdayService(SqlDbContext sqlDbContext)
+    public WorkdayService(SqlDbContext sqlDbContext, EmployeeContextService employeeContextService)
     {
         _sqlDbContext = sqlDbContext;
+        _employeeContextService = employeeContextService;
     }
 
     public async Task<bool> CreateWorkdayAsync(WorkdayPostModel workday)
@@ -21,6 +23,7 @@ public class WorkdayService : IWorkdayService
         var model = new WorkdayModel
         {
             WorkdayId = Guid.NewGuid(),
+            EmployeeId = await GetCurrentEmployeeIdAsync(),
             Date = workday.Date ?? DateTime.Now,
             Type = workday.Type
         };
@@ -34,6 +37,7 @@ public class WorkdayService : IWorkdayService
         var model = new WorkdayModel
         {
             WorkdayId = Guid.NewGuid(),
+            EmployeeId = await GetCurrentEmployeeIdAsync(),
             Date = workday.Date,
             Type = workday.Type
         };
@@ -44,8 +48,10 @@ public class WorkdayService : IWorkdayService
     
     public async Task<List<WorkdayViewModel>> GetWorkdaysAsync()
     {
+        var employeeId = await GetCurrentEmployeeIdAsync();
         var workdays = await _sqlDbContext.Workdays
             .AsNoTracking()
+            .Where(w => w.EmployeeId == employeeId)
             .Include(w => w.Worktimes)
             .Include(w => w.Projecttimes)
             .Select(w => w.ToViewModel())
@@ -61,8 +67,10 @@ public class WorkdayService : IWorkdayService
     
     public async Task<List<WorkdayViewModel>> GetWorkdaysAsync(DateTime startDate, DateTime endDate)
     {
+        var employeeId = await GetCurrentEmployeeIdAsync();
         var workdays = await _sqlDbContext.Workdays
             .AsNoTracking()
+            .Where(w => w.EmployeeId == employeeId)
             .Where(w => w.Date >= startDate && w.Date <= endDate)
             .Include(w => w.Worktimes)
             .Include(w => w.Projecttimes)
@@ -145,5 +153,11 @@ public class WorkdayService : IWorkdayService
         }
 
         return totalWorktime;
+    }
+    
+    private async Task<Guid> GetCurrentEmployeeIdAsync()
+    {
+        var employee = await _employeeContextService.GetCurrentEmployeeAsync();
+        return employee?.EmployeeId ?? throw new Exception("Current employee not found.");
     }
 }
