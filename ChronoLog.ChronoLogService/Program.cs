@@ -131,10 +131,13 @@ static void EnsureDatabaseConnection(WebApplication app)
         var sqlDbContext = scope.ServiceProvider.GetRequiredService<SqlDbContext>();
         sqlDbContext.Database.GetService<IRelationalDatabaseCreator>();
         
-        if (sqlDbContext.Database.CanConnect())
+        if (!sqlDbContext.Database.CanConnect())
         {
-            app.Logger.LogInformation("Database connection established successfully");
+            app.Logger.LogCritical("Unable to connect to the database");
+            throw new Exception("Unable to connect to the database");
         }
+        
+        app.Logger.LogInformation("Database connection established successfully");
     }
     catch (MySqlException ex)
     {
