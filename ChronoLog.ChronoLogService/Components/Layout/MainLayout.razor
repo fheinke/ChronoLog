@@ -90,14 +90,9 @@
     private bool _sidebarExpanded;
     private Popup? _userInfoPopup;
     private RadzenButton? _userInfoButton;
-    private EmployeeModel _currentEmployee = null!;
+    private EmployeeModel? _currentEmployee;
     
     private string ThemeIcon => ThemeService.Theme == "material" ? "dark_mode" : "light_mode";
-
-    protected override async Task OnInitializedAsync()
-    {
-        _currentEmployee = await EmployeeContextService.GetOrCreateCurrentEmployeeAsync();
-    }
 
     private void ToggleTheme()
     {
@@ -108,7 +103,7 @@
     
     private async Task ShowUserInfo(RadzenButton? button)
     {
-        _currentEmployee = await EmployeeContextService.GetOrCreateCurrentEmployeeAsync();
+        _currentEmployee ??= await EmployeeContextService.GetOrCreateCurrentEmployeeAsync();
         _userInfoPopup?.ToggleAsync(button!.Element);
     }
 }
