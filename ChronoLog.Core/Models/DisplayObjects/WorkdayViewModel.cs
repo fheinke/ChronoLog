@@ -3,6 +3,7 @@ namespace ChronoLog.Core.Models.DisplayObjects;
 public class WorkdayViewModel
 {
     public Guid WorkdayId { get; set; }
+    public Guid EmployeeId { get; set; }
     public DateTime Date { get; set; }
     public WorkdayType Type { get; set; }
     public List<WorktimeModel> Worktimes { get; set; }

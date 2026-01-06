@@ -63,7 +63,8 @@ public static class ModelsToEntities
             Province = model.Province,
             Roles = model.Roles,
             VacationDaysPerYear = model.VacationDaysPerYear,
-            OvertimeHours = model.OvertimeHours
+            OvertimeHours = model.OvertimeHours,
+            LastLogin = model.LastLogin,
         };
     }
 }

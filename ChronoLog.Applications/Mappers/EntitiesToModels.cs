@@ -23,6 +23,7 @@ public static class EntitiesToModels
         return new WorkdayModel
         {
             WorkdayId = entity.WorkdayId,
+            EmployeeId =  entity.EmployeeId,
             Date = entity.Date,
             Type = entity.Type
         };
@@ -35,10 +36,11 @@ public static class EntitiesToModels
         return new WorkdayViewModel
         {
             WorkdayId = entity.WorkdayId,
+            EmployeeId =  entity.EmployeeId,
             Date = entity.Date,
             Type = entity.Type,
-            Worktimes = entity.Worktimes?.Select(wt => wt.ToModel()).ToList() ?? [],
-            Projecttimes = entity.Projecttimes?.Select(pt => pt.ToModel()).ToList() ?? []
+            Worktimes = entity.Worktimes.Select(wt => wt.ToModel()).ToList(),
+            Projecttimes = entity.Projecttimes.Select(pt => pt.ToModel()).ToList()
         };
     }
 
@@ -77,7 +79,8 @@ public static class EntitiesToModels
             Province = entity.Province,
             Roles = entity.Roles,
             VacationDaysPerYear = entity.VacationDaysPerYear,
-            OvertimeHours = entity.OvertimeHours
+            OvertimeHours = entity.OvertimeHours,
+            LastLogin = entity.LastLogin
         };
     }
 }
