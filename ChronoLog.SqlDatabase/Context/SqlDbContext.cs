@@ -67,6 +67,18 @@ public class SqlDbContext(DbContextOptions<SqlDbContext> options) : DbContext(op
             .HasForeignKey(x => x.WorkdayId)
             .IsRequired(false)
             .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<WorkdayEntity>()
+            .HasMany<ProjecttimeEntity>(x => x.Projecttimes)
+            .WithOne(x => x.Workday)
+            .HasForeignKey(x => x.WorkdayId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<WorkdayEntity>()
+            .HasOne<EmployeeEntity>(x => x.Employee)
+            .WithMany(x => x.Workdays)
+            .HasForeignKey(x => x.EmployeeId)
+            .IsRequired()
+            .OnDelete(DeleteBehavior.Cascade);
         
         // Worktime
         modelBuilder.Entity<WorktimeEntity>()

@@ -6,19 +6,15 @@ namespace ChronoLog.SqlDatabase.Models;
 
 public class WorkdayEntity
 {
-    [Key]
-    public Guid WorkdayId { get; set; }
-    
+    [Key] public Guid WorkdayId { get; set; }
+
     [Required] public Guid EmployeeId { get; set; }
 
-    [ForeignKey(nameof(EmployeeId))]
-    public virtual EmployeeEntity Employee { get; set; } = null!;
-    
+    [ForeignKey(nameof(EmployeeId))] public EmployeeEntity Employee { get; set; } = null!;
+
     public virtual ICollection<WorktimeEntity> Worktimes { get; set; } = new List<WorktimeEntity>();
     public virtual ICollection<ProjecttimeEntity> Projecttimes { get; set; } = new List<ProjecttimeEntity>();
-    
-    [Required]
-    public DateTime Date { get; set; }
-    [Required]
-    public WorkdayType Type { get; set; }
+
+    [Required] public DateTime Date { get; set; }
+    [Required] public WorkdayType Type { get; set; }
 }

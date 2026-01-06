@@ -23,6 +23,7 @@ public static class ModelsToEntities
         return new WorkdayEntity
         {
             WorkdayId = model.WorkdayId,
+            EmployeeId =  model.EmployeeId,
             Date = model.Date,
             Type = model.Type
         };

@@ -10,9 +10,9 @@ namespace ChronoLog.Applications.Services;
 public class WorkdayService : IWorkdayService
 {
     private readonly SqlDbContext _sqlDbContext;
-    private readonly EmployeeContextService _employeeContextService;
+    private readonly IEmployeeContextService _employeeContextService;
     
-    public WorkdayService(SqlDbContext sqlDbContext, EmployeeContextService employeeContextService)
+    public WorkdayService(SqlDbContext sqlDbContext, IEmployeeContextService employeeContextService)
     {
         _sqlDbContext = sqlDbContext;
         _employeeContextService = employeeContextService;
@@ -157,7 +157,7 @@ public class WorkdayService : IWorkdayService
     
     private async Task<Guid> GetCurrentEmployeeIdAsync()
     {
-        var employee = await _employeeContextService.GetCurrentEmployeeAsync();
-        return employee?.EmployeeId ?? throw new Exception("Current employee not found.");
+        var employee = await _employeeContextService.GetOrCreateCurrentEmployeeAsync();
+        return employee?.EmployeeId ?? throw new InvalidOperationException("Current employee not found and could not be created.");
     }
 }
