@@ -1,90 +1,105 @@
 @page "/projects"
 @using ChronoLog.Core.Interfaces
 @using ChronoLog.Core.Models.DisplayObjects
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
 @inject DialogService DialogService
 @inject NotificationService NotificationService
+@inject NavigationManager NavigationManager
 @inject IProjectService ProjectService
+@inject IEmployeeContextService EmployeeContextService
 
 <PageTitle>Projects</PageTitle>
 
-<div style="display: flex; flex-direction: column; height: 100%; gap: 10px;">
+@if (!_isAuthorized)
+{
     <RadzenCard>
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <RadzenButton Text="Create Project" ButtonStyle="ButtonStyle.Success" Variant="Variant.Outlined" Click="OpenCreateProjectDialog"/>
-        </div>
+        <p>Sie haben keine Berechtigung, diese Seite anzuzeigen.</p>
     </RadzenCard>
-    <RadzenCard>
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div style="display: flex; gap: 10px;">
-                <RadzenTextBox @bind-Value="_searchText" Placeholder="Search" Change="OnSearchTextChanged"/>
+}
+else
+{
+    <div style="display: flex; flex-direction: column; height: 100%; gap: 10px;">
+        <RadzenCard>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <RadzenButton Text="Create Project" ButtonStyle="ButtonStyle.Success" Variant="Variant.Outlined" Click="OpenCreateProjectDialog"/>
             </div>
-            <div style="display: flex; gap: 10px; align-items: flex-end;">
-                <RadzenButton Text="Clear Filters" Click="ClearAllFilters"/>
-                <RadzenButton Icon="refresh" Variant="Variant.Outlined" Click="LoadData"/>
+        </RadzenCard>
+        <RadzenCard>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; gap: 10px;">
+                    <RadzenTextBox @bind-Value="_searchText" Placeholder="Search" Change="OnSearchTextChanged"/>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: flex-end;">
+                    <RadzenButton Text="Clear Filters" Click="ClearAllFilters"/>
+                    <RadzenButton Icon="refresh" Variant="Variant.Outlined" Click="LoadData"/>
+                </div>
             </div>
-        </div>
 
-        <div style="flex: 1; overflow: auto; height: calc(100% - 64px); margin: 10px 0 0 0;">
-            <RadzenDataGrid class="rz-data-grid"
-                            @ref="_grid"
-                            @bind-Value="_selectedProject"
-                            Data="@FilteredProjects"
-                            AllowFiltering="true"
-                            AllowColumnResize="true"
-                            AllowRowSelectOnRowClick="true"
-                            FilterMode="FilterMode.Advanced"
-                            PageSize="15"
-                            AllowPaging="true"
-                            AllowSorting="true"
-                            ColumnWidth="300px"
-                            PagerHorizontalAlign="HorizontalAlign.Left"
-                            ShowPagingSummary="true"
-                            GridLines="DataGridGridLines.Horizontal"
-                            SelectionMode="DataGridSelectionMode.Single"
-                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                            LogicalFilterOperator="LogicalFilterOperator.And"
-                            FilterPopupRenderMode="PopupRenderMode.OnDemand">
-                <Columns>
-                    <RadzenDataGridColumn Property="@nameof(ProjectModel.IsDefault)" Title="Default" Filterable="false" Sortable="false" Resizable="false" Width="30px" TextAlign="TextAlign.Center">
-                        <Template Context="item">
-                            @if (item.IsDefault)
-                            {
-                                <RadzenIcon Icon="check_circle" Style="color: green;"/>
-                            }
-                        </Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn Property="@nameof(ProjectModel.Name)" Title="Project Name">
-                        <Template Context="item">
-                            @item.Name
-                        </Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn Property="@nameof(ProjectModel.ResponseObject)" Title="Response Object">
-                        <Template Context="item">
-                            @item.ResponseObject
-                        </Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn Filterable="false" Sortable="false" Resizable="false" Width="40px" TextAlign="TextAlign.Center">
-                        <Template Context="item">
-                            <RadzenButton Icon="edit"
-                                          ButtonStyle="ButtonStyle.Light"
-                                          Variant="Variant.Flat"
-                                          Size="ButtonSize.Small"
-                                          Click="@(async _ => await OpenEditProjectDialog(item))"/>
-                            <RadzenButton Icon="delete"
-                                          ButtonStyle="ButtonStyle.Danger"
-                                            Variant="Variant.Flat"
-                                          Size="ButtonSize.Small"
-                                          Shade="Shade.Lighter"
-                                          Click="@(async _ => await ConfirmDelete(item))"/>
-                        </Template>
-                    </RadzenDataGridColumn>
-                </Columns>
-            </RadzenDataGrid>
-        </div>
-    </RadzenCard>
-</div>
+            <div style="flex: 1; overflow: auto; height: calc(100% - 64px); margin: 10px 0 0 0;">
+                <RadzenDataGrid class="rz-data-grid"
+                                @ref="_grid"
+                                @bind-Value="_selectedProject"
+                                Data="@FilteredProjects"
+                                AllowFiltering="true"
+                                AllowColumnResize="true"
+                                AllowRowSelectOnRowClick="true"
+                                FilterMode="FilterMode.Advanced"
+                                PageSize="15"
+                                AllowPaging="true"
+                                AllowSorting="true"
+                                ColumnWidth="300px"
+                                PagerHorizontalAlign="HorizontalAlign.Left"
+                                ShowPagingSummary="true"
+                                GridLines="DataGridGridLines.Horizontal"
+                                SelectionMode="DataGridSelectionMode.Single"
+                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                LogicalFilterOperator="LogicalFilterOperator.And"
+                                FilterPopupRenderMode="PopupRenderMode.OnDemand">
+                    <Columns>
+                        <RadzenDataGridColumn Property="@nameof(ProjectModel.IsDefault)" Title="Default" Filterable="false" Sortable="false" Resizable="false" Width="30px" TextAlign="TextAlign.Center">
+                            <Template Context="item">
+                                @if (item.IsDefault)
+                                {
+                                    <RadzenIcon Icon="check_circle" Style="color: green;"/>
+                                }
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn Property="@nameof(ProjectModel.Name)" Title="Project Name">
+                            <Template Context="item">
+                                @item.Name
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn Property="@nameof(ProjectModel.ResponseObject)" Title="Response Object">
+                            <Template Context="item">
+                                @item.ResponseObject
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn Filterable="false" Sortable="false" Resizable="false" Width="40px" TextAlign="TextAlign.Center">
+                            <Template Context="item">
+                                <RadzenButton Icon="edit"
+                                              ButtonStyle="ButtonStyle.Light"
+                                              Variant="Variant.Flat"
+                                              Size="ButtonSize.Small"
+                                              Click="@(async _ => await OpenEditProjectDialog(item))"/>
+                                <RadzenButton Icon="delete"
+                                              ButtonStyle="ButtonStyle.Danger"
+                                              Variant="Variant.Flat"
+                                              Size="ButtonSize.Small"
+                                              Shade="Shade.Lighter"
+                                              Click="@(async _ => await ConfirmDelete(item))"/>
+                            </Template>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+            </div>
+        </RadzenCard>
+    </div>
+}
 
 @code {
+    private bool _isAuthorized = false;
+    
     private List<ProjectModel> _projects = [];
     
     private RadzenDataGrid<ProjectModel>? _grid;
@@ -100,6 +115,15 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var employee = await EmployeeContextService.GetOrCreateCurrentEmployeeAsync();
+        _isAuthorized = employee.IsAdmin == true || employee.IsProjectManager == true;
+
+        if (!_isAuthorized)
+        {
+            NavigationManager.NavigateTo("/");
+            return;
+        }
+        
         await LoadData();
         if (_selectedProject is null || !_selectedProject.Any())
             _selectedProject = _projects.Take(1).ToList();
