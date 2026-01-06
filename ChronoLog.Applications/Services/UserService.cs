@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 
 namespace ChronoLog.Applications.Services;
 
-public class UserService :  IUserService
+public class UserService : IUserService
 {
     private readonly AuthenticationStateProvider _authenticationStateProvider;
 
@@ -16,19 +16,19 @@ public class UserService :  IUserService
     private async Task<ClaimsPrincipal> GetUserAsync()
     {
         var authState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-        return authState. User;
+        return authState.User;
     }
 
     public async Task<string?> GetUserNameAsync()
     {
         var user = await GetUserAsync();
-        return user.Identity?.Name ??  user.FindFirst("name")?.Value;
+        return user.Claims.FirstOrDefault(c => c.Type == "name")?.Value;
     }
 
     public async Task<string?> GetUserEmailAsync()
     {
         var user = await GetUserAsync();
-        return user.FindFirst("preferred_username")?.Value 
+        return user.FindFirst("preferred_username")?.Value
                ?? user.FindFirst(ClaimTypes.Email)?.Value;
     }
 

@@ -12,6 +12,7 @@ public class EmployeeContextService : IEmployeeContextService
 {
     private readonly IUserService _userService;
     private readonly SqlDbContext _sqlDbContext;
+    private readonly SemaphoreSlim _initializationLock = new(1, 1);
     private EmployeeModel? _cachedEmployee;
 
     public EmployeeContextService(IUserService userService, SqlDbContext sqlDbContext)
@@ -25,23 +26,38 @@ public class EmployeeContextService : IEmployeeContextService
         if (_cachedEmployee is not null)
             return _cachedEmployee;
 
-        var userId = await _userService.GetUserIdAsync();
-        if (string.IsNullOrEmpty(userId))
-            return null;
+        await _initializationLock.WaitAsync();
+        try
+        {
+            // Double-checked locking
+            if (_cachedEmployee is not null)
+                return _cachedEmployee;
 
-        var employee = await _sqlDbContext.Employees
-            .FirstOrDefaultAsync(e => e.ObjectId == userId);
+            var userId = await _userService.GetUserIdAsync();
+            if (string.IsNullOrEmpty(userId))
+                return null;
 
-        if (employee is null)
-            return null;
+            var employee = await _sqlDbContext.Employees
+                .FirstOrDefaultAsync(e => e.ObjectId == userId);
 
-        employee.LastSeen = DateTime.UtcNow;
-        var affectedRows = await _sqlDbContext.SaveChangesAsync();
-        if (affectedRows == 0)
-            throw new Exception("Failed to update employee's last seen timestamp.");
+            if (employee is null)
+                return null;
+            
+            // Check if Name has changed
+            var currentName = await _userService.GetUserNameAsync();
+            if (!string.IsNullOrEmpty(currentName) && employee.Name != currentName)
+                employee.Name = currentName;
 
-        _cachedEmployee = employee.ToModel();
-        return _cachedEmployee;
+            employee.LastSeen = DateTime.UtcNow;
+            await _sqlDbContext.SaveChangesAsync();
+
+            _cachedEmployee = employee.ToModel();
+            return _cachedEmployee;
+        }
+        finally
+        {
+            _initializationLock.Release();
+        }
     }
 
     public async Task<EmployeeModel> GetOrCreateCurrentEmployeeAsync()
@@ -50,28 +66,43 @@ public class EmployeeContextService : IEmployeeContextService
         if (employee is not null)
             return employee;
 
-        var userId = await _userService.GetUserIdAsync();
-
-        var newEmployee = new EmployeeEntity
+        await _initializationLock.WaitAsync();
+        try
         {
-            EmployeeId = Guid.NewGuid(),
-            ObjectId = userId!,
-            Email = await _userService.GetUserEmailAsync() ?? "",
-            Name = await _userService.GetUserNameAsync() ?? "",
-            Province = GermanProvince.ALL,
-            Roles = "",
-            VacationDaysPerYear = 30,
-            OvertimeHours = 0,
-            LastSeen = DateTime.UtcNow,
-        };
-        
-        await _sqlDbContext.Employees.AddAsync(newEmployee);
-        var affectedRows = await _sqlDbContext.SaveChangesAsync();
+            // Double-checked locking
+            var existingEmployee = await GetCurrentEmployeeAsync();
+            if (existingEmployee is not null)
+                return existingEmployee;
 
-        if (affectedRows == 0)
-            throw new Exception("Failed to create new employee.");
+            var userId = await _userService.GetUserIdAsync();
 
-        _cachedEmployee = newEmployee.ToModel();
-        return _cachedEmployee;
+            var newEmployee = new EmployeeEntity
+            {
+                EmployeeId = Guid.NewGuid(),
+                ObjectId = userId!,
+                Email = await _userService.GetUserEmailAsync() ?? "",
+                Name = await _userService.GetUserNameAsync() ?? "",
+                Province = GermanProvince.ALL,
+                Roles = "",
+                VacationDaysPerYear = 30,
+                OvertimeHours = 0,
+                LastSeen = DateTime.UtcNow,
+            };
+
+            await _sqlDbContext.Employees.AddAsync(newEmployee);
+            await _sqlDbContext.SaveChangesAsync();
+
+            _cachedEmployee = newEmployee.ToModel();
+            return _cachedEmployee;
+        }
+        finally
+        {
+            _initializationLock.Release();
+        }
+    }
+
+    public void Dispose()
+    {
+        _initializationLock.Dispose();
     }
 }
