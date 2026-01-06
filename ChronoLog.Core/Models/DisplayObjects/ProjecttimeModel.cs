@@ -1,10 +1,12 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace ChronoLog.Core.Models.DisplayObjects;
 
 public class ProjecttimeModel
 {
     public Guid ProjecttimeId { get; set; }
-    public Guid WorkdayId { get; set; }
-    public Guid ProjectId { get; set; }
-    public TimeSpan TimeSpent { get; set; }
-    public string? ResponseText { get; set; }
+    [Required] public Guid WorkdayId { get; set; }
+    [Required] public Guid ProjectId { get; set; }
+    [Required] public TimeSpan TimeSpent { get; set; }
+    [MaxLength(1024)] public string? ResponseText { get; set; }
 }
