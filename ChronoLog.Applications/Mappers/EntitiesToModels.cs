@@ -77,7 +77,8 @@ public static class EntitiesToModels
             Email = entity.Email,
             Name = entity.Name,
             Province = entity.Province,
-            Roles = entity.Roles,
+            IsAdmin = entity.IsAdmin,
+            IsProjectManager = entity.IsProjectManager,
             VacationDaysPerYear = entity.VacationDaysPerYear,
             OvertimeHours = entity.OvertimeHours,
             LastSeen = entity.LastSeen

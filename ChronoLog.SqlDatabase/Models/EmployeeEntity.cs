@@ -19,19 +19,12 @@ public class EmployeeEntity
 
     [Required] public GermanProvince Province { get; set; }
 
-    [Required] [MaxLength(500)] public string Roles { get; set; } = string.Empty;
+    public bool? IsAdmin { get; set; }
+    public bool? IsProjectManager { get; set; }
     [Required] [Range(0, 365)] public int VacationDaysPerYear { get; set; }
     [Required] public double OvertimeHours { get; set; }
 
     [Required] public DateTime LastSeen { get; set; }
 
     public virtual ICollection<WorkdayEntity> Workdays { get; set; } = new List<WorkdayEntity>();
-
-    [NotMapped]
-    public List<string> RoleList =>
-        Roles.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
-
-    [NotMapped] public string DisplayName => Name ?? Email;
-
-    [NotMapped] public bool IsAdmin => RoleList.Contains("Admin");
 }

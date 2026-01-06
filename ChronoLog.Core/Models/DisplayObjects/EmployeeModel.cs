@@ -17,7 +17,8 @@ public class EmployeeModel
 
     [Required] public GermanProvince Province { get; set; }
 
-    [Required] [MaxLength(500)] public string Roles { get; set; } = string.Empty;
+    public bool? IsAdmin { get; set; }
+    public bool? IsProjectManager { get; set; }
     [Required] [Range(0, 365)] public int VacationDaysPerYear { get; set; }
     [Required] public double OvertimeHours { get; set; }
     
