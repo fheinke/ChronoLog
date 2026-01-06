@@ -33,25 +33,7 @@ public class EmployeeContextService : IEmployeeContextService
             if (_cachedEmployee is not null)
                 return _cachedEmployee;
 
-            var userId = await _userService.GetUserIdAsync();
-            if (string.IsNullOrEmpty(userId))
-                return null;
-
-            var employee = await _sqlDbContext.Employees
-                .FirstOrDefaultAsync(e => e.ObjectId == userId);
-
-            if (employee is null)
-                return null;
-            
-            // Check if Name has changed
-            var currentName = await _userService.GetUserNameAsync();
-            if (!string.IsNullOrEmpty(currentName) && employee.Name != currentName)
-                employee.Name = currentName;
-
-            employee.LastSeen = DateTime.UtcNow;
-            await _sqlDbContext.SaveChangesAsync();
-
-            _cachedEmployee = employee.ToModel();
+            _cachedEmployee = await FetchAndUpdateEmployeeAsync();
             return _cachedEmployee;
         }
         finally
@@ -70,10 +52,9 @@ public class EmployeeContextService : IEmployeeContextService
         try
         {
             // Double-checked locking
-            var existingEmployee = await GetCurrentEmployeeAsync();
-            if (existingEmployee is not null)
-                return existingEmployee;
-
+            if (_cachedEmployee is not null)
+                return _cachedEmployee;
+            
             var userId = await _userService.GetUserIdAsync();
 
             var newEmployee = new EmployeeEntity
@@ -83,9 +64,7 @@ public class EmployeeContextService : IEmployeeContextService
                 Email = await _userService.GetUserEmailAsync() ?? "",
                 Name = await _userService.GetUserNameAsync() ?? "",
                 Province = GermanProvince.ALL,
-                Roles = "",
                 VacationDaysPerYear = 30,
-                OvertimeHours = 0,
                 LastSeen = DateTime.UtcNow,
             };
 
@@ -99,6 +78,29 @@ public class EmployeeContextService : IEmployeeContextService
         {
             _initializationLock.Release();
         }
+    }
+
+    private async Task<EmployeeModel?> FetchAndUpdateEmployeeAsync()
+    {
+        var userId = await _userService.GetUserIdAsync();
+        if (string.IsNullOrEmpty(userId))
+            return null;
+
+        var employee = await _sqlDbContext.Employees
+            .FirstOrDefaultAsync(e => e.ObjectId == userId);
+
+        if (employee is null)
+            return null;
+
+        // Check if Name has changed
+        var currentName = await _userService.GetUserNameAsync();
+        if (!string.IsNullOrEmpty(currentName) && employee.Name != currentName)
+            employee.Name = currentName;
+
+        employee.LastSeen = DateTime.UtcNow;
+        await _sqlDbContext.SaveChangesAsync();
+
+        return employee.ToModel();
     }
 
     public void Dispose()
