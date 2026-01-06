@@ -58,3 +58,23 @@ h1:focus {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+.user-avatar-small {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: var(--rz-button-light-background-color, var(--rz-base-200));
+    color: var(--rz-button-light-color, var(--rz-text-color));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border: none;
+    transition: all 0.2s ease;
+}
+
+.user-avatar-small:hover {
+    background-color: var(--rz-button-light-hover-background-color, var(--rz-base-300));
+}
+

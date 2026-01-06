@@ -1,65 +1,67 @@
 ﻿@using ChronoLog.Core.Interfaces
 @using ChronoLog.Core.Models.DisplayObjects
-@using Radzen.Blazor.Rendering
 @inherits LayoutComponentBase
 @inject CookieThemeService CookieThemeService
 @inject ThemeService ThemeService
+@inject NavigationManager NavigationManager
 @inject IEmployeeContextService EmployeeContextService
 
-<style>
-    .userInfo-popup {
-        display: none;
-        position: absolute;
-        overflow: hidden;
-        height: 300px;
-        width: 400px;
-        border: var(--rz-panel-border, 1px solid rgba(0,0,0,0.12));
-        background-color: var(--rz-panel-background-color, rgba(255,255,255,1));
-        box-shadow: var(--rz-panel-shadow, 1px 3px rgba(0,0,0,0.1));
-        border-radius: var(--rz-border-radius, 6px);
-    }
-</style>
-
-<RadzenComponents @rendermode="InteractiveServer" />
+<RadzenComponents @rendermode="InteractiveServer"/>
 
 <RadzenLayout>
     <RadzenHeader>
-        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Gap="0">
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center"
+                     JustifyContent="JustifyContent.SpaceBetween" Gap="0">
             <div style="display: flex; align-items: center;">
                 <RadzenSidebarToggle Click="@(() => _sidebarExpanded = !_sidebarExpanded)"/>
                 <!--<RadzenLabel Text="Header"/>-->
             </div>
-            
-            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="padding: 0.5rem;">
-                <RadzenButton Icon="@ThemeIcon" 
-                              ButtonStyle="ButtonStyle.Light" 
+
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem"
+                         Style="padding: 0.5rem;">
+                <RadzenButton Icon="@ThemeIcon"
+                              ButtonStyle="ButtonStyle.Light"
                               Variant="Variant.Flat"
                               Size="ButtonSize.Medium"
                               Click="ToggleTheme"
                               Style="border-radius: 50%; width: 40px; height: 40px;"/>
-            
-                <RadzenButton Icon="person"
-                              @ref="_userInfoButton"
-                              ButtonStyle="ButtonStyle.Light"
-                              Variant="Variant.Flat"
-                              Size="ButtonSize.Medium"
-                              Click="@(() => ShowUserInfo(_userInfoButton))"
-                              @onclick:stopPropagation="true"
-                              Style="border-radius: 50%; width: 40px; height: 40px;"/>
+
+                <RadzenProfileMenu>
+                    <Template>
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" class="rz-p-2">
+                            <div class="user-avatar-small">
+                                @GetInitials(_currentEmployee?.Name)
+                            </div>
+                        </RadzenStack>
+                    </Template>
+                    <ChildContent>
+                        <RadzenProfileMenuItem Text="@($"{_currentEmployee?.VacationDaysPerYear} Urlaubstage/Jahr")"
+                                               Icon="event"
+                                               Style="pointer-events: none; opacity: 0.9;"/>
+
+                        <RadzenProfileMenuItem Text="@($"{_currentEmployee?.OvertimeHours:F1} Überstunden")"
+                                               Icon="schedule"
+                                               Style="pointer-events: none; opacity: 0.9;"/>
+
+                        <RadzenProfileMenuItem/>
+        
+                        <RadzenProfileMenuItem Text="Logout" Icon="logout" Path="MicrosoftIdentity/Account/SignOut?returnUrl=/"/>
+                    </ChildContent>
+                </RadzenProfileMenu>
             </RadzenStack>
         </RadzenStack>
     </RadzenHeader>
-    
+
     <RadzenSidebar Responsive="true" Style="width: max-content">
-        <NavMenu IsExpanded="@_sidebarExpanded" />
+        <NavMenu IsExpanded="@_sidebarExpanded"/>
     </RadzenSidebar>
-    
+
     <RadzenBody>
         <div class="rz-p-4">
             @Body
         </div>
     </RadzenBody>
-    
+
     <RadzenFooter>
         <!--Footer-->
     </RadzenFooter>
@@ -71,28 +73,16 @@
     <span class="dismiss">🗙</span>
 </div>
 
-<Popup @ref="_userInfoPopup" Lazy="true" class="userInfo-popup"
-       style="position:absolute; top:100%; left:0; z-index:1000; display:block;">
-    <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
-        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Start" Gap="1rem" class="rz-p-4">
-            <RadzenStack Gap="0">
-                <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-2 rz-my-0">EMail</RadzenText>
-                <RadzenText TextStyle="TextStyle.Body1"><b>@_currentEmployee.Email</b></RadzenText>
-                <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-2 rz-my-0">Name</RadzenText>
-                <RadzenText TextStyle="TextStyle.Body1"><b>@_currentEmployee.Name</b></RadzenText>
-                <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0"></RadzenText>
-            </RadzenStack>
-        </RadzenStack>
-    </RadzenStack>
-</Popup>
-
 @code {
     private bool _sidebarExpanded;
-    private Popup? _userInfoPopup;
-    private RadzenButton? _userInfoButton;
     private EmployeeModel? _currentEmployee;
-    
+
     private string ThemeIcon => ThemeService.Theme == "material" ? "dark_mode" : "light_mode";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _currentEmployee ??= await EmployeeContextService.GetOrCreateCurrentEmployeeAsync();
+    }
 
     private void ToggleTheme()
     {
@@ -100,10 +90,19 @@
         ThemeService.SetTheme(newTheme);
         StateHasChanged();
     }
-    
-    private async Task ShowUserInfo(RadzenButton? button)
+
+    private static string GetInitials(string? name)
     {
-        _currentEmployee ??= await EmployeeContextService.GetOrCreateCurrentEmployeeAsync();
-        _userInfoPopup?.ToggleAsync(button!.Element);
+        if (string.IsNullOrWhiteSpace(name))
+            return "?";
+
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length >= 2 ? $"{parts[0][0]}{parts[1][0]}".ToUpper() : parts[0][0].ToString().ToUpper();
     }
+
+    private void Logout()
+    {
+        NavigationManager.NavigateTo("MicrosoftIdentity/Account/SignOut?returnUrl=/", true);
+    }
+
 }
