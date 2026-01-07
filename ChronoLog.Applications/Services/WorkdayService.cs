@@ -12,7 +12,7 @@ public class WorkdayService : IWorkdayService
 {
     private readonly SqlDbContext _sqlDbContext;
     private readonly IEmployeeContextService _employeeContextService;
-    
+
     public WorkdayService(SqlDbContext sqlDbContext, IEmployeeContextService employeeContextService)
     {
         _sqlDbContext = sqlDbContext;
@@ -32,7 +32,7 @@ public class WorkdayService : IWorkdayService
         var affectedRows = await _sqlDbContext.SaveChangesAsync();
         return affectedRows > 0;
     }
-    
+
     public async Task<Guid> CreateWorkdayAsync(WorkdayModel workday)
     {
         var model = new WorkdayModel
@@ -46,7 +46,7 @@ public class WorkdayService : IWorkdayService
         var affectedRows = await _sqlDbContext.SaveChangesAsync();
         return affectedRows > 0 ? model.WorkdayId : Guid.Empty;
     }
-    
+
     public async Task<List<WorkdayViewModel>> GetWorkdaysAsync()
     {
         var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
@@ -62,10 +62,10 @@ public class WorkdayService : IWorkdayService
         {
             workday.Worktimes = workday.Worktimes.OrderBy(x => x.StartTime).ToList();
         }
-        
+
         return workdays;
     }
-    
+
     public async Task<List<WorkdayViewModel>> GetWorkdaysAsync(DateTime startDate, DateTime endDate)
     {
         var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
@@ -82,7 +82,7 @@ public class WorkdayService : IWorkdayService
         {
             workday.Worktimes = workday.Worktimes.OrderBy(x => x.StartTime).ToList();
         }
-        
+
         return workdays;
     }
 
@@ -95,9 +95,9 @@ public class WorkdayService : IWorkdayService
             .Include(w => w.Projecttimes)
             .Select(w => w.ToViewModel())
             .FirstOrDefaultAsync();
-        
+
         workday?.Worktimes = workday.Worktimes.OrderBy(x => x.StartTime).ToList();
-        
+
         return workday ?? null;
     }
 
@@ -107,7 +107,7 @@ public class WorkdayService : IWorkdayService
             .FirstOrDefaultAsync(w => w.WorkdayId == workdayId);
         if (workday == null)
             return false;
-        
+
         workday.Date = date.ToDateTime(new TimeOnly(0, 0));
         workday.Type = type;
         _sqlDbContext.Workdays.Update(workday);
@@ -121,12 +121,12 @@ public class WorkdayService : IWorkdayService
             .FirstOrDefaultAsync(w => w.WorkdayId == workdayId);
         if (workday == null)
             return false;
-        
+
         _sqlDbContext.Workdays.Remove(workday);
         var affectedRows = await _sqlDbContext.SaveChangesAsync();
         return affectedRows > 0;
     }
-    
+
     public async Task<TimeSpan> GetTotalWorktimeAsync(Guid workdayId)
     {
         var worktimes = await _sqlDbContext.Worktimes
@@ -155,10 +155,16 @@ public class WorkdayService : IWorkdayService
 
         return totalWorktime;
     }
-    
-    public async Task<double> GetTotalWorktimeAsync()
+
+    public async Task<double> GetTotalOvertimeAsync()
     {
         var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
+        var employeeDailyWorkingTime = await _sqlDbContext.Employees
+            .AsNoTracking()
+            .Where(e => e.EmployeeId == employeeId)
+            .Select(e => e.DailyWorkingTimeInHours)
+            .FirstOrDefaultAsync();
+
         var worktimes = await _sqlDbContext.Worktimes
             .AsNoTracking()
             .Include(w => w.Workday)
@@ -167,9 +173,9 @@ public class WorkdayService : IWorkdayService
 
         if (worktimes.Count == 0)
             return 0.0;
-        
+
         var totalWorktime = 0.0;
-        
+
         foreach (var worktime in worktimes)
         {
             if (worktime.EndTime.HasValue)
@@ -182,6 +188,8 @@ public class WorkdayService : IWorkdayService
             {
                 totalWorktime -= worktime.BreakTime.Value.TotalHours;
             }
+
+            totalWorktime -= employeeDailyWorkingTime;
         }
 
         return totalWorktime;
