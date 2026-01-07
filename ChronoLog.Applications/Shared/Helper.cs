@@ -1,4 +1,5 @@
 using ChronoLog.Core.Interfaces;
+using ChronoLog.Core.Models;
 
 namespace ChronoLog.Applications.Shared;
 
