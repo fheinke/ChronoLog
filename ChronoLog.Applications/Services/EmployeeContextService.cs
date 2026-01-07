@@ -54,7 +54,7 @@ public class EmployeeContextService : IEmployeeContextService
             // Double-checked locking
             if (_cachedEmployee is not null)
                 return _cachedEmployee;
-            
+
             var userId = await _userService.GetUserIdAsync();
 
             var newEmployee = new EmployeeEntity
@@ -101,6 +101,62 @@ public class EmployeeContextService : IEmployeeContextService
         await _sqlDbContext.SaveChangesAsync();
 
         return employee.ToModel();
+    }
+
+    public async Task<List<AbsenceEntryModel>> GetEmployeeAbsenceDaysAsync(Guid employeeId, int year)
+    {
+        var reducingWorkdayTypes = Enum.GetValues<ReducingWorkdayType>()
+            .Select(w => w.ToString())
+            .ToList();
+
+        var absenceEntries = await _sqlDbContext.Workdays
+            .Where(w => w.EmployeeId == employeeId)
+            .Where(w => w.Date.Year == year)
+            .ToListAsync();
+
+        absenceEntries = absenceEntries
+            .Where(w => reducingWorkdayTypes.Contains(w.Type.ToString()))
+            .OrderBy(w => w.Date)
+            .ToList();
+
+        if (absenceEntries.Count == 0)
+            return [];
+
+        List<AbsenceEntryModel> absenceDays = [];
+
+        var currentGroup = new List<WorkdayEntity> { absenceEntries[0] };
+        for (var i = 1; i < absenceEntries.Count; i++)
+        {
+            var currentEntry = absenceEntries[i];
+            var lastEntryInGroup = absenceEntries[i - 1];
+
+            if ((currentEntry.Date - lastEntryInGroup.Date).Days == 1)
+            {
+                currentGroup.Add(currentEntry);
+            }
+            else
+            {
+                absenceDays.Add(new AbsenceEntryModel
+                {
+                    StartDate = currentGroup[0].Date,
+                    EndDate = currentGroup[^1].Date,
+                    AbsenceTypes = string.Join(", ", currentGroup.Select(e => e.Type.ToString()).Distinct()),
+                    DurationInDays = currentGroup.Count
+                });
+
+                currentGroup = [currentEntry];
+            }
+        }
+
+        absenceDays.Add(new AbsenceEntryModel
+        {
+            StartDate = currentGroup[0].Date,
+            EndDate = currentGroup[^1].Date,
+            AbsenceTypes = string.Join(", ", currentGroup.Select(e => e.Type.ToString()).Distinct()),
+            DurationInDays = currentGroup.Count
+        });
+
+        return absenceDays;
     }
 
     public void Dispose()
