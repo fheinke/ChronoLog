@@ -65,7 +65,7 @@ public static class ModelsToEntities
             IsAdmin = model.IsAdmin,
             IsProjectManager = model.IsProjectManager,
             VacationDaysPerYear = model.VacationDaysPerYear,
-            OvertimeHours = model.OvertimeHours,
+            DailyWorkingTimeInHours = model.DailyWorkingTimeInHours,
             LastSeen = model.LastSeen,
         };
     }

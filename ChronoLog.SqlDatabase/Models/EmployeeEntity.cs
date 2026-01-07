@@ -22,7 +22,7 @@ public class EmployeeEntity
     public bool? IsAdmin { get; set; }
     public bool? IsProjectManager { get; set; }
     [Required] [Range(0, 365)] public int VacationDaysPerYear { get; set; }
-    [Required] public double OvertimeHours { get; set; }
+    [Required] [Range(0.0, 24.0)] public double DailyWorkingTimeInHours { get; set; }
 
     [Required] public DateTime LastSeen { get; set; }
 
