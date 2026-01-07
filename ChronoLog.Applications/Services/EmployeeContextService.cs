@@ -65,6 +65,7 @@ public class EmployeeContextService : IEmployeeContextService
                 Name = await _userService.GetUserNameAsync() ?? "",
                 Province = GermanProvince.ALL,
                 VacationDaysPerYear = 30,
+                DailyWorkingTimeInHours = 8.0,
                 LastSeen = DateTime.UtcNow,
             };
 
@@ -108,53 +109,62 @@ public class EmployeeContextService : IEmployeeContextService
         var reducingWorkdayTypes = Enum.GetValues<ReducingWorkdayType>()
             .Select(w => w.ToString())
             .ToList();
-
-        var absenceEntries = await _sqlDbContext.Workdays
-            .Where(w => w.EmployeeId == employeeId)
-            .Where(w => w.Date.Year == year)
-            .ToListAsync();
-
-        absenceEntries = absenceEntries
-            .Where(w => reducingWorkdayTypes.Contains(w.Type.ToString()))
-            .OrderBy(w => w.Date)
-            .ToList();
-
-        if (absenceEntries.Count == 0)
-            return [];
-
+        
         List<AbsenceEntryModel> absenceDays = [];
-
-        var currentGroup = new List<WorkdayEntity> { absenceEntries[0] };
-        for (var i = 1; i < absenceEntries.Count; i++)
+        
+        await _initializationLock.WaitAsync();
+        try
         {
-            var currentEntry = absenceEntries[i];
-            var lastEntryInGroup = absenceEntries[i - 1];
 
-            if ((currentEntry.Date - lastEntryInGroup.Date).Days == 1)
+            var absenceEntries = await _sqlDbContext.Workdays
+                .Where(w => w.EmployeeId == employeeId)
+                .Where(w => w.Date.Year == year)
+                .ToListAsync();
+
+            absenceEntries = absenceEntries
+                .Where(w => reducingWorkdayTypes.Contains(w.Type.ToString()))
+                .OrderBy(w => w.Date)
+                .ToList();
+
+            if (absenceEntries.Count == 0)
+                return [];
+
+            var currentGroup = new List<WorkdayEntity> { absenceEntries[0] };
+            for (var i = 1; i < absenceEntries.Count; i++)
             {
-                currentGroup.Add(currentEntry);
-            }
-            else
-            {
-                absenceDays.Add(new AbsenceEntryModel
+                var currentEntry = absenceEntries[i];
+                var lastEntryInGroup = absenceEntries[i - 1];
+
+                if ((currentEntry.Date - lastEntryInGroup.Date).Days == 1)
                 {
-                    StartDate = currentGroup[0].Date,
-                    EndDate = currentGroup[^1].Date,
-                    AbsenceTypes = string.Join(", ", currentGroup.Select(e => e.Type.ToString()).Distinct()),
-                    DurationInDays = currentGroup.Count
-                });
+                    currentGroup.Add(currentEntry);
+                }
+                else
+                {
+                    absenceDays.Add(new AbsenceEntryModel
+                    {
+                        StartDate = currentGroup[0].Date,
+                        EndDate = currentGroup[^1].Date,
+                        AbsenceTypes = string.Join(", ", currentGroup.Select(e => e.Type.ToString()).Distinct()),
+                        DurationInDays = currentGroup.Count
+                    });
 
-                currentGroup = [currentEntry];
+                    currentGroup = [currentEntry];
+                }
             }
-        }
 
-        absenceDays.Add(new AbsenceEntryModel
+            absenceDays.Add(new AbsenceEntryModel
+            {
+                StartDate = currentGroup[0].Date,
+                EndDate = currentGroup[^1].Date,
+                AbsenceTypes = string.Join(", ", currentGroup.Select(e => e.Type.ToString()).Distinct()),
+                DurationInDays = currentGroup.Count
+            });
+        }
+        finally
         {
-            StartDate = currentGroup[0].Date,
-            EndDate = currentGroup[^1].Date,
-            AbsenceTypes = string.Join(", ", currentGroup.Select(e => e.Type.ToString()).Distinct()),
-            DurationInDays = currentGroup.Count
-        });
+            _initializationLock.Release();
+        }
 
         return absenceDays;
     }
