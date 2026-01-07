@@ -155,4 +155,35 @@ public class WorkdayService : IWorkdayService
 
         return totalWorktime;
     }
+    
+    public async Task<double> GetTotalWorktimeAsync()
+    {
+        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
+        var worktimes = await _sqlDbContext.Worktimes
+            .AsNoTracking()
+            .Include(w => w.Workday)
+            .Where(wt => wt.Workday.EmployeeId == employeeId)
+            .ToListAsync();
+
+        if (worktimes.Count == 0)
+            return 0.0;
+        
+        var totalWorktime = 0.0;
+        
+        foreach (var worktime in worktimes)
+        {
+            if (worktime.EndTime.HasValue)
+            {
+                var duration = worktime.EndTime.Value - worktime.StartTime;
+                totalWorktime += duration.TotalHours;
+            }
+
+            if (worktime.BreakTime.HasValue)
+            {
+                totalWorktime -= worktime.BreakTime.Value.TotalHours;
+            }
+        }
+
+        return totalWorktime;
+    }
 }
