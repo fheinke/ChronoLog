@@ -192,7 +192,7 @@
         SetWeekFromDate(_selectedDate);
         _projects = await ProjectService.GetProjectsAsync();
         _defaultProject = _projects.FirstOrDefault(p => p.IsDefault);
-        _reducingWorkdayTypes = GetReducingWorkdayTypes();
+        _reducingWorkdayTypes = GetReducingWorkdayTypeStrings();
         await UpdateWorkdayDataAsync();
     }
 
@@ -274,11 +274,10 @@
         SetWeekFromDate(_selectedDate);
         await UpdateWorkdayDataAsync();
     }
-
-    private static List<string> GetReducingWorkdayTypes()
+    
+    private static List<string> GetReducingWorkdayTypeStrings()
     {
-        return Enum.GetValues(typeof(ReducingWorkdayType))
-            .Cast<ReducingWorkdayType>()
+        return Enum.GetValues<ReducingWorkdayType>()
             .Select(x => x.ToString())
             .ToList();
     }
