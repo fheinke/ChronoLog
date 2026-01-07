@@ -1,4 +1,5 @@
 ﻿@using ChronoLog.Core.Interfaces
+@using ChronoLog.Core.Models
 @using ChronoLog.Core.Models.DisplayObjects
 @inherits LayoutComponentBase
 @inject CookieThemeService CookieThemeService
@@ -35,12 +36,8 @@
                         </RadzenStack>
                     </Template>
                     <ChildContent>
-                        <RadzenProfileMenuItem Text="@($"{_currentEmployee?.VacationDaysPerYear} Urlaubstage/Jahr")"
+                        <RadzenProfileMenuItem Text="@($"{_remainingVacationDays} / {_currentEmployee?.VacationDaysPerYear} Vacationdays")"
                                                Icon="event"
-                                               Style="pointer-events: none; opacity: 0.9;"/>
-
-                        <RadzenProfileMenuItem Text="@($"{_currentEmployee?.OvertimeHours:F1} Überstunden")"
-                                               Icon="schedule"
                                                Style="pointer-events: none; opacity: 0.9;"/>
 
                         <RadzenProfileMenuItem/>
@@ -75,13 +72,17 @@
 
 @code {
     private bool _sidebarExpanded;
+    
     private EmployeeModel? _currentEmployee;
+    private int _remainingVacationDays;
 
     private string ThemeIcon => ThemeService.Theme == "material" ? "dark_mode" : "light_mode";
 
     protected override async Task OnInitializedAsync()
     {
         _currentEmployee ??= await EmployeeContextService.GetOrCreateCurrentEmployeeAsync();
+        var absenceDays = await EmployeeContextService.GetEmployeeAbsenceDaysAsync(_currentEmployee.EmployeeId, DateTime.UtcNow.Year);
+        _remainingVacationDays = absenceDays.Count(a => a.AbsenceTypes.Split(", ").Contains(nameof(ReducingWorkdayType.Urlaub)));
     }
 
     private void ToggleTheme()

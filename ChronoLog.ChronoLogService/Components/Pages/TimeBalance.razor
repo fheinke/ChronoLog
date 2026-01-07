@@ -37,17 +37,17 @@
         </RadzenColumn>
     </RadzenRow>
 
-    <!-- Vacation Details -->
+    <!-- Absence Details -->
     <RadzenCard>
-        <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 1rem">Vacation overview</RadzenText>
+        <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 1rem">Absence overview</RadzenText>
         <RadzenDataGrid Data="@_absenceDays" TItem="AbsenceEntryModel" AllowPaging="true" PageSize="10">
             <Columns>
-                <RadzenDataGridColumn TItem="AbsenceEntryModel" Property="StartDate" Title="Start Date">
+                <RadzenDataGridColumn TItem="AbsenceEntryModel" Property="StartDate" Title="First Day">
                     <Template Context="data">
                         @data.StartDate.ToShortDateString()
                     </Template>
                 </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="AbsenceEntryModel" Property="EndDate" Title="End Date">
+                <RadzenDataGridColumn TItem="AbsenceEntryModel" Property="EndDate" Title="Last Day">
                     <Template Context="data">
                         @data.EndDate.ToShortDateString()
                     </Template>
@@ -72,7 +72,7 @@
         _currentEmployee = await EmployeeContextService.GetOrCreateCurrentEmployeeAsync();
         _vacationDaysPerYear = _currentEmployee.VacationDaysPerYear;
         _absenceDays = await EmployeeContextService.GetEmployeeAbsenceDaysAsync(_currentEmployee.EmployeeId, DateTime.UtcNow.Year);
-        _totalOvertime = await WorkdayService.GetTotalWorktimeAsync();
+        _totalOvertime = await WorkdayService.GetTotalOvertimeAsync();
     }
     
     private string GetOvertimeColor() => _totalOvertime >= 0 ? "color: var(--rz-success)" : "color: var(--rz-danger)";
