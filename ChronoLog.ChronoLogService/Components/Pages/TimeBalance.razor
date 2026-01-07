@@ -1,20 +1,25 @@
 @page "/timebalance"
+@using ChronoLog.Core.Interfaces
+@using ChronoLog.Core.Models
+@using ChronoLog.Core.Models.DisplayObjects
+@inject IEmployeeContextService EmployeeContextService
+@inject IWorkdayService WorkdayService
 
 <PageTitle>Time Balance</PageTitle>
 
 <RadzenStack Gap="1rem">
     <RadzenText TextStyle="TextStyle.H4" TagName="TagName.H1">Personal Time Balance</RadzenText>
-    
+
     <!-- Overview Cards -->
     <RadzenRow Gap="1rem">
         <RadzenColumn Size="12" SizeMD="6">
             <RadzenCard>
                 <RadzenStack Gap="0.5rem">
-                    <RadzenText TextStyle="TextStyle.H6">Urlaub</RadzenText>
+                    <RadzenText TextStyle="TextStyle.H6">Vacation</RadzenText>
                     <RadzenText TextStyle="TextStyle.H3" Style="color: var(--rz-primary)">
-                        @vacationDaysTaken / @totalVacationDays
+                        @(_absenceDays.Count(a => a.AbsenceTypes.Split(", ").Contains(nameof(ReducingWorkdayType.Urlaub)))) / @_vacationDaysPerYear
                     </RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body2">Verbleibend: @remainingVacationDays Tage</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2">Remaining: @RemainingVacationDays Days</RadzenText>
                 </RadzenStack>
             </RadzenCard>
         </RadzenColumn>
@@ -22,11 +27,11 @@
         <RadzenColumn Size="12" SizeMD="6">
             <RadzenCard>
                 <RadzenStack Gap="0.5rem">
-                    <RadzenText TextStyle="TextStyle.H6">Überstunden</RadzenText>
+                    <RadzenText TextStyle="TextStyle.H6">Overtime</RadzenText>
                     <RadzenText TextStyle="TextStyle.H3" Style="@GetOvertimeColor()">
-                        @totalOvertime.ToString("F2") h
+                        @_totalOvertime.ToString("F2") h
                     </RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body2">Gesammelte Stunden</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2">Hours collected</RadzenText>
                 </RadzenStack>
             </RadzenCard>
         </RadzenColumn>
@@ -34,89 +39,41 @@
 
     <!-- Vacation Details -->
     <RadzenCard>
-        <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 1rem">Urlaubsübersicht</RadzenText>
-        <RadzenDataGrid Data="@vacationDays" TItem="VacationEntry" AllowPaging="true" PageSize="10">
+        <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 1rem">Vacation overview</RadzenText>
+        <RadzenDataGrid Data="@_absenceDays" TItem="AbsenceEntryModel" AllowPaging="true" PageSize="10">
             <Columns>
-                <RadzenDataGridColumn TItem="VacationEntry" Property="Date" Title="Datum">
+                <RadzenDataGridColumn TItem="AbsenceEntryModel" Property="StartDate" Title="Start Date">
                     <Template Context="data">
-                        @data.Date.ToShortDateString()
+                        @data.StartDate.ToShortDateString()
                     </Template>
                 </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="VacationEntry" Property="Type" Title="Art" />
-                <RadzenDataGridColumn TItem="VacationEntry" Property="Days" Title="Tage" />
-            </Columns>
-        </RadzenDataGrid>
-    </RadzenCard>
-
-    <!-- Overtime Details -->
-    <RadzenCard>
-        <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 1rem">Überstundenübersicht</RadzenText>
-        <RadzenDataGrid Data="@overtimeEntries" TItem="OvertimeEntry" AllowPaging="true" PageSize="10">
-            <Columns>
-                <RadzenDataGridColumn TItem="OvertimeEntry" Property="Date" Title="Datum">
+                <RadzenDataGridColumn TItem="AbsenceEntryModel" Property="EndDate" Title="End Date">
                     <Template Context="data">
-                        @data.Date.ToShortDateString()
+                        @data.EndDate.ToShortDateString()
                     </Template>
                 </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="OvertimeEntry" Property="ExpectedHours" Title="Soll">
-                    <Template Context="data">
-                        @data.ExpectedHours h
-                    </Template>
-                </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="OvertimeEntry" Property="ActualHours" Title="Ist">
-                    <Template Context="data">
-                        @data.ActualHours h
-                    </Template>
-                </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="OvertimeEntry" Property="Difference" Title="Differenz">
-                    <Template Context="data">
-                        <RadzenText Style="@GetDifferenceColor(data.Difference)">
-                            @data.Difference.ToString("+0.00;-0.00") h
-                        </RadzenText>
-                    </Template>
-                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="AbsenceEntryModel" Property="AbsenceTypes" Title="Type"/>
+                <RadzenDataGridColumn TItem="AbsenceEntryModel" Property="DurationInDays" Title="Days"/>
             </Columns>
         </RadzenDataGrid>
     </RadzenCard>
 </RadzenStack>
 
 @code {
-    private int totalVacationDays = 30;
-    private int vacationDaysTaken = 0;
-    private int remainingVacationDays => totalVacationDays - vacationDaysTaken;
+    private EmployeeModel? _currentEmployee;
 
-    private double totalOvertime = 15.75; // Positive for overtime, negative for deficit
+    private List<AbsenceEntryModel> _absenceDays = [];
+    private int _vacationDaysPerYear;
+    private int RemainingVacationDays => _vacationDaysPerYear - _absenceDays.Count(a => a.AbsenceTypes.Split(", ").Contains(nameof(ReducingWorkdayType.Urlaub)));
+    private double _totalOvertime;
 
-    private List<VacationEntry> vacationDays = new()
+    protected override async Task OnInitializedAsync()
     {
-        new VacationEntry { Date = new DateTime(2024, 1, 15), Type = "Erholungsurlaub", Days = 2 },
-        new VacationEntry { Date = new DateTime(2024, 3, 10), Type = "Krankheit", Days = 1 },
-        // Add more entries as needed
-    };
-
-    private List<OvertimeEntry> overtimeEntries = new()
-    {
-        new OvertimeEntry { Date = new DateTime(2024, 2, 5), ExpectedHours = 8, ActualHours = 10 },
-        new OvertimeEntry { Date = new DateTime(2024, 2, 6), ExpectedHours = 8, ActualHours = 7 },
-        // Add more entries as needed
-    };
-    
-    private string GetOvertimeColor() => totalOvertime >= 0 ? "color: var(--rz-success)" : "color: var(--rz-danger)";
-    
-    private string GetDifferenceColor(double difference) => difference >= 0 ? "color: var(--rz-success)" : "color: var(--rz-danger)";
-
-    public class VacationEntry
-    {
-        public DateTime Date { get; set; }
-        public string Type { get; set; }
-        public int Days { get; set; }
+        _currentEmployee = await EmployeeContextService.GetOrCreateCurrentEmployeeAsync();
+        _vacationDaysPerYear = _currentEmployee.VacationDaysPerYear;
+        _absenceDays = await EmployeeContextService.GetEmployeeAbsenceDaysAsync(_currentEmployee.EmployeeId, DateTime.UtcNow.Year);
+        _totalOvertime = await WorkdayService.GetTotalWorktimeAsync();
     }
-
-    public class OvertimeEntry
-    {
-        public DateTime Date { get; set; }
-        public double ExpectedHours { get; set; }
-        public double ActualHours { get; set; }
-        public double Difference => ActualHours - ExpectedHours;
-    }
+    
+    private string GetOvertimeColor() => _totalOvertime >= 0 ? "color: var(--rz-success)" : "color: var(--rz-danger)";
 }
