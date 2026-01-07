@@ -1,4 +1,5 @@
 using ChronoLog.Applications.Mappers;
+using ChronoLog.Applications.Shared;
 using ChronoLog.Core.Interfaces;
 using ChronoLog.Core.Models;
 using ChronoLog.Core.Models.DisplayObjects;
@@ -23,7 +24,7 @@ public class WorkdayService : IWorkdayService
         var model = new WorkdayModel
         {
             WorkdayId = Guid.NewGuid(),
-            EmployeeId = await GetCurrentEmployeeIdAsync(),
+            EmployeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService),
             Date = workday.Date ?? DateTime.Now,
             Type = workday.Type
         };
@@ -37,7 +38,7 @@ public class WorkdayService : IWorkdayService
         var model = new WorkdayModel
         {
             WorkdayId = Guid.NewGuid(),
-            EmployeeId = await GetCurrentEmployeeIdAsync(),
+            EmployeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService),
             Date = workday.Date,
             Type = workday.Type
         };
@@ -48,7 +49,7 @@ public class WorkdayService : IWorkdayService
     
     public async Task<List<WorkdayViewModel>> GetWorkdaysAsync()
     {
-        var employeeId = await GetCurrentEmployeeIdAsync();
+        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
         var workdays = await _sqlDbContext.Workdays
             .AsNoTracking()
             .Where(w => w.EmployeeId == employeeId)
@@ -67,7 +68,7 @@ public class WorkdayService : IWorkdayService
     
     public async Task<List<WorkdayViewModel>> GetWorkdaysAsync(DateTime startDate, DateTime endDate)
     {
-        var employeeId = await GetCurrentEmployeeIdAsync();
+        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
         var workdays = await _sqlDbContext.Workdays
             .AsNoTracking()
             .Where(w => w.EmployeeId == employeeId)
@@ -153,11 +154,5 @@ public class WorkdayService : IWorkdayService
         }
 
         return totalWorktime;
-    }
-    
-    private async Task<Guid> GetCurrentEmployeeIdAsync()
-    {
-        var employee = await _employeeContextService.GetOrCreateCurrentEmployeeAsync();
-        return employee?.EmployeeId ?? throw new InvalidOperationException("Current employee not found and could not be created.");
     }
 }

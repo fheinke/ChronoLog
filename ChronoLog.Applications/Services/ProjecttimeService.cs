@@ -1,4 +1,5 @@
 using ChronoLog.Applications.Mappers;
+using ChronoLog.Applications.Shared;
 using ChronoLog.Core.Interfaces;
 using ChronoLog.Core.Models.DisplayObjects;
 using ChronoLog.SqlDatabase.Context;
@@ -9,10 +10,12 @@ namespace ChronoLog.Applications.Services;
 public class ProjecttimeService : IProjecttimeService
 {
     private readonly SqlDbContext _sqlDbContext;
+    private readonly IEmployeeContextService _employeeContextService;
     
-    public ProjecttimeService(SqlDbContext sqlDbContext)
+    public ProjecttimeService(SqlDbContext sqlDbContext, IEmployeeContextService employeeContextService)
     {
         _sqlDbContext = sqlDbContext;
+        _employeeContextService = employeeContextService;
     }
     
     public async Task<Guid> CreateProjecttimeAsync(ProjecttimeModel projecttime)
@@ -32,8 +35,10 @@ public class ProjecttimeService : IProjecttimeService
     
     public async Task<List<ProjecttimeModel>> GetProjecttimesAsync()
     {
+        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
         var projecttimes = await _sqlDbContext.Projecttimes
             .AsNoTracking()
+            .Where(p => p.Workday.EmployeeId == employeeId)
             .Select(p => p.ToModel())
             .ToListAsync();
         return projecttimes;
@@ -44,8 +49,10 @@ public class ProjecttimeService : IProjecttimeService
         if (projecttimeIds.Count == 0)
             return [];
         
+        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
         var projecttimes = await _sqlDbContext.Projecttimes
             .AsNoTracking()
+            .Where(p => p.Workday.EmployeeId == employeeId)
             .Where(p => projecttimeIds.Contains(p.ProjecttimeId))
             .Select(p => p.ToModel())
             .ToListAsync();
@@ -54,8 +61,10 @@ public class ProjecttimeService : IProjecttimeService
     
     public async Task<List<ProjecttimeModel>> GetProjecttimesAsync(DateTime startDate, DateTime endDate)
     {
+        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
         var projecttimes = await _sqlDbContext.Projecttimes
             .AsNoTracking()
+            .Where(p => p.Workday.EmployeeId == employeeId)
             .Where(pt => pt.Workday.Date >= startDate && pt.Workday.Date <= endDate)
             .Select(p => p.ToModel())
             .ToListAsync();
@@ -66,8 +75,10 @@ public class ProjecttimeService : IProjecttimeService
 
     public async Task<ProjecttimeModel?> GetProjecttimeAsync(Guid projecttimeId)
     {
+        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
         var projecttime = await _sqlDbContext.Projecttimes
             .AsNoTracking()
+            .Where(p => p.Workday.EmployeeId == employeeId)
             .Where(p => p.ProjecttimeId == projecttimeId)
             .Select(p => p.ToModel())
             .FirstOrDefaultAsync();

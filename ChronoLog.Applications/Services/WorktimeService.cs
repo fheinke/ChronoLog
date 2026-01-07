@@ -1,4 +1,5 @@
 using ChronoLog.Applications.Mappers;
+using ChronoLog.Applications.Shared;
 using ChronoLog.Core.Interfaces;
 using ChronoLog.Core.Models.DisplayObjects;
 using ChronoLog.SqlDatabase.Context;
@@ -9,10 +10,12 @@ namespace ChronoLog.Applications.Services;
 public class WorktimeService : IWorktimeService
 {
     private readonly SqlDbContext _sqlDbContext;
+    private readonly IEmployeeContextService _employeeContextService;
     
-    public WorktimeService(SqlDbContext sqlDbContext)
+    public WorktimeService(SqlDbContext sqlDbContext, IEmployeeContextService employeeContextService)
     {
         _sqlDbContext = sqlDbContext;
+        _employeeContextService = employeeContextService;
     }
     
     public async Task<bool> CreateWorktimeAsync(WorktimePostModel worktime)
@@ -47,8 +50,10 @@ public class WorktimeService : IWorktimeService
     
     public async Task<List<WorktimeModel>> GetWorktimesAsync()
     {
+        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
         var worktimes = await _sqlDbContext.Worktimes
             .AsNoTracking()
+            .Where(w => w.Workday.EmployeeId == employeeId)
             .Select(w => w.ToModel())
             .ToListAsync();
         return worktimes;
@@ -59,8 +64,10 @@ public class WorktimeService : IWorktimeService
         if (worktimeIds.Count == 0)
             return [];
         
+        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
         var worktimes = await _sqlDbContext.Worktimes
             .AsNoTracking()
+            .Where(w => w.Workday.EmployeeId == employeeId)
             .Where(w => worktimeIds.Contains(w.WorktimeId))
             .Select(w => w.ToModel())
             .ToListAsync();
@@ -69,8 +76,10 @@ public class WorktimeService : IWorktimeService
     
     public async Task<List<WorktimeModel>> GetWorktimesAsync(DateTime startDate, DateTime endDate)
     {
+        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
         var worktimes = await _sqlDbContext.Worktimes
             .AsNoTracking()
+            .Where(w => w.Workday.EmployeeId == employeeId)
             .Where(wt => wt.Workday.Date >= startDate && wt.Workday.Date <= endDate)
             .Select(w => w.ToModel())
             .ToListAsync();
@@ -80,8 +89,10 @@ public class WorktimeService : IWorktimeService
     
     public async Task<WorktimeModel?> GetWorktimeAsync(Guid worktimeId)
     {
+        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
         var worktime = await _sqlDbContext.Worktimes
             .AsNoTracking()
+            .Where(w => w.Workday.EmployeeId == employeeId)
             .Where(w => w.WorktimeId == worktimeId)
             .Select(w => w.ToModel())
             .FirstOrDefaultAsync();
@@ -119,9 +130,11 @@ public class WorktimeService : IWorktimeService
     
     public async Task<TimeSpan?> GetTotalWorktimeAsync(DateTime startDate, DateTime endDate)
     {
+        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
         var worktimes = await _sqlDbContext.Worktimes
             .AsNoTracking()
             .Include(w => w.Workday)
+            .Where(w => w.Workday.EmployeeId == employeeId)
             .Where(wt => wt.Workday.Date >= startDate && wt.Workday.Date <= endDate)
             .ToListAsync();
 
