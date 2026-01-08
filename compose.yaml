@@ -1,17 +1,6 @@
 ﻿services:
-  chronoLogMigrate:
-    image: ghcr.io/chronolog/chronolog:latest
-    container_name: chronolog-migrate
-    restart: no
-    command: [ "dotnet", "ef", "database", "update", "--no-build" ]
-    environment:
-      ConnectionStrings__SqlDatabase: "server=chronolog-database;uid=chronolog;pwd=changeme;database=ChronoLog"
-    depends_on:
-      chronoLogDatabase:
-        condition: service_healthy
-    
   chronoLog:
-    image: ghcr.io/chronolog/chronolog:latest
+    image: ghcr.io/fheinke/chronolog:latest
     container_name: chronolog
     restart: unless-stopped
     ports:
@@ -26,6 +15,15 @@
       AzureAd__TenantId: "your-tenant-id"
       AzureAd__ClientId: "your-client-id"
       AzureAd__CallbackPath: "/signin-oidc"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:80/.well-known/readiness || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      chronoLogDatabase:
+        condition: service_healthy
     
   chronoLogDatabase:
     image: mysql:8
