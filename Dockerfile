@@ -12,6 +12,7 @@ COPY ["ChronoLog.Applications/", "ChronoLog.Applications/"]
 COPY ["ChronoLog.ChronoLogService/", "ChronoLog.ChronoLogService/"]
 COPY ["ChronoLog.Core/", "ChronoLog.Core/"]
 COPY ["ChronoLog.SqlDatabase/", "ChronoLog.SqlDatabase/"]
+RUN ls -la /src
 RUN dotnet restore "ChronoLog.ChronoLogService/ChronoLog.ChronoLogService.csproj"
 
 COPY . .
