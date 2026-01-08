@@ -21,6 +21,7 @@ public class EmployeeModel
     public bool? IsProjectManager { get; set; }
     [Required] [Range(0, 365)] public int VacationDaysPerYear { get; set; }
     [Required] public double DailyWorkingTimeInHours { get; set; }
+    public double OvertimeCorrectionInHours { get; set; }
     
     [Required] public DateTime LastSeen { get; set; }
 }

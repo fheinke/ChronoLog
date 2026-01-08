@@ -81,6 +81,7 @@ public static class EntitiesToModels
             IsProjectManager = entity.IsProjectManager,
             VacationDaysPerYear = entity.VacationDaysPerYear,
             DailyWorkingTimeInHours = entity.DailyWorkingTimeInHours,
+            OvertimeCorrectionInHours = entity.OvertimeCorrectionInHours,
             LastSeen = entity.LastSeen
         };
     }
