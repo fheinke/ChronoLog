@@ -1,4 +1,4 @@
-namespace ChronoLog.Core.Models.DisplayObjects;
+namespace ChronoLog.Core.Models.HelperObjects;
 
 public class AbsenceEntryModel
 {
