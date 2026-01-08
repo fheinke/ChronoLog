@@ -7,6 +7,7 @@ using MySql.Data.MySqlClient;
 using ChronoLog.SqlDatabase;
 using ChronoLog.SqlDatabase.Context;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Identity.Web;
@@ -78,6 +79,13 @@ var app = builder.Build();
 
 // Database initialization check
 EnsureDatabaseConnection(app);
+
+// Apply pending migrations
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<SqlDbContext>();
+    await db.Database.MigrateAsync();
+}
 
 // Middleware pipeline
 if (app.Environment.IsDevelopment())

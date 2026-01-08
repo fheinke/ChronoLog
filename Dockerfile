@@ -8,15 +8,11 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
 COPY ["ChronoLog.sln", "./"]
-COPY ["ChronoLog.Applications/", "ChronoLog.Applications/"]
-COPY ["ChronoLog.ChronoLogService/", "ChronoLog.ChronoLogService/"]
-COPY ["ChronoLog.Core/", "ChronoLog.Core/"]
-COPY ["ChronoLog.SqlDatabase/", "ChronoLog.SqlDatabase/"]
-RUN ls -la /src
-RUN ls -la /src/ChronoLog.Applications
-RUN ls -la /src/ChronoLog.ChronoLogService
-RUN ls -la /src/ChronoLog.Core
-RUN ls -la /src/ChronoLog.SqlDatabase
+COPY ["ChronoLog.Applications/ChronoLog.Applications.csproj", "ChronoLog.Applications/"]
+COPY ["ChronoLog.ChronoLogService/ChronoLog.ChronoLogService.csproj", "ChronoLog.ChronoLogService/"]
+COPY ["ChronoLog.Core/ChronoLog.Core.csproj", "ChronoLog.Core/"]
+COPY ["ChronoLog.SqlDatabase/ChronoLog.SqlDatabase.csproj", "ChronoLog.SqlDatabase/"]
+
 RUN dotnet restore "ChronoLog.ChronoLogService/ChronoLog.ChronoLogService.csproj"
 
 COPY . .
@@ -31,6 +27,4 @@ RUN dotnet publish "ChronoLog.ChronoLogService.csproj" -c $BUILD_CONFIGURATION -
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-RUN dotnet tool install --global dotnet-ef --version 10.0.0
-ENV PATH="$PATH:/root/.dotnet/tools"
 ENTRYPOINT ["dotnet", "ChronoLog.ChronoLogService.dll"]
