@@ -2,6 +2,7 @@ using ChronoLog.Applications.Mappers;
 using ChronoLog.Core.Interfaces;
 using ChronoLog.Core.Models;
 using ChronoLog.Core.Models.DisplayObjects;
+using ChronoLog.Core.Models.HelperObjects;
 using ChronoLog.SqlDatabase.Context;
 using ChronoLog.SqlDatabase.Models;
 using Microsoft.EntityFrameworkCore;
@@ -81,29 +82,6 @@ public class EmployeeContextService : IEmployeeContextService
         }
     }
 
-    private async Task<EmployeeModel?> FetchAndUpdateEmployeeAsync()
-    {
-        var userId = await _userService.GetUserIdAsync();
-        if (string.IsNullOrEmpty(userId))
-            return null;
-
-        var employee = await _sqlDbContext.Employees
-            .FirstOrDefaultAsync(e => e.ObjectId == userId);
-
-        if (employee is null)
-            return null;
-
-        // Check if Name has changed
-        var currentName = await _userService.GetUserNameAsync();
-        if (!string.IsNullOrEmpty(currentName) && employee.Name != currentName)
-            employee.Name = currentName;
-
-        employee.LastSeen = DateTime.UtcNow;
-        await _sqlDbContext.SaveChangesAsync();
-
-        return employee.ToModel();
-    }
-
     public async Task<List<AbsenceEntryModel>> GetEmployeeAbsenceDaysAsync(Guid employeeId, int year)
     {
         var reducingWorkdayTypes = Enum.GetValues<ReducingWorkdayType>()
@@ -169,8 +147,42 @@ public class EmployeeContextService : IEmployeeContextService
         return absenceDays;
     }
 
-    public void Dispose()
+    public async Task<bool> UpdateEmployeeAsync(EmployeeModel employee)
     {
-        _initializationLock.Dispose();
+        var existingEmployee = await _sqlDbContext.Employees
+            .FirstOrDefaultAsync(e => e.EmployeeId == employee.EmployeeId);
+        
+        if (existingEmployee is null)
+            return false;
+        
+        existingEmployee.Province = employee.Province;
+        existingEmployee.VacationDaysPerYear = employee.VacationDaysPerYear;
+        existingEmployee.DailyWorkingTimeInHours = employee.DailyWorkingTimeInHours;
+        
+        var affectedRows = await _sqlDbContext.SaveChangesAsync();
+        return affectedRows > 0;
+    }
+    
+    private async Task<EmployeeModel?> FetchAndUpdateEmployeeAsync()
+    {
+        var userId = await _userService.GetUserIdAsync();
+        if (string.IsNullOrEmpty(userId))
+            return null;
+
+        var employee = await _sqlDbContext.Employees
+            .FirstOrDefaultAsync(e => e.ObjectId == userId);
+
+        if (employee is null)
+            return null;
+
+        // Check if Name has changed
+        var currentName = await _userService.GetUserNameAsync();
+        if (!string.IsNullOrEmpty(currentName) && employee.Name != currentName)
+            employee.Name = currentName;
+
+        employee.LastSeen = DateTime.UtcNow;
+        await _sqlDbContext.SaveChangesAsync();
+
+        return employee.ToModel();
     }
 }
