@@ -17,6 +17,11 @@ var builder = WebApplication.CreateBuilder(args);
 // Authentication & Authorization
 builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
     .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"));
+builder.Services.Configure<CookiePolicyOptions>(options =>
+{
+    options.MinimumSameSitePolicy = SameSiteMode.None;
+    options.Secure = CookieSecurePolicy.Always;
+});
 builder.Services.AddAuthorization(options => { options.FallbackPolicy = options.DefaultPolicy; });
 
 // MVC & Razor
@@ -93,18 +98,26 @@ if (useReverseProxy)
     var baseUrl = builder.Configuration.GetValue<string>("ReverseProxy:BaseUrl");
     builder.Services.PostConfigure<OpenIdConnectOptions>(OpenIdConnectDefaults.AuthenticationScheme, options =>
     {
-        options.Events = new OpenIdConnectEvents
+        options.ProtocolValidator.RequireNonce = false;
+        options.UsePkce = true;
+
+        options.NonceCookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.NonceCookie.SameSite = SameSiteMode.None;
+        options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.CorrelationCookie.SameSite = SameSiteMode.None;
+
+        var originalOnRedirectToIdentityProvider = options.Events.OnRedirectToIdentityProvider;
+        options.Events.OnRedirectToIdentityProvider = async context =>
         {
-            OnRedirectToIdentityProvider = context =>
-            {
-                context.ProtocolMessage.RedirectUri = $"{baseUrl}/signin-oidc";
-                return Task.CompletedTask;
-            },
-            OnRedirectToIdentityProviderForSignOut = context =>
-            {
-                context.ProtocolMessage.PostLogoutRedirectUri = $"{baseUrl}/signout-callback-oidc";
-                return Task.CompletedTask;
-            }
+            context.ProtocolMessage.RedirectUri = $"{baseUrl}/signin-oidc";
+            await originalOnRedirectToIdentityProvider(context);
+        };
+
+        var originalOnRedirectToIdentityProviderForSignOut = options.Events.OnRedirectToIdentityProviderForSignOut;
+        options.Events.OnRedirectToIdentityProviderForSignOut = async context =>
+        {
+            context.ProtocolMessage.PostLogoutRedirectUri = $"{baseUrl}/signout-callback-oidc";
+            await originalOnRedirectToIdentityProviderForSignOut(context);
         };
     });
 }
