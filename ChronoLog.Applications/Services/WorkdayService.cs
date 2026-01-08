@@ -47,41 +47,27 @@ public class WorkdayService : IWorkdayService
         return affectedRows > 0 ? model.WorkdayId : Guid.Empty;
     }
 
-    public async Task<List<WorkdayViewModel>> GetWorkdaysAsync()
+    public async Task<List<WorkdayViewModel>> GetWorkdaysAsync() =>
+        await GetWorkdaysInternalAsync(null, null);
+
+    public async Task<List<WorkdayViewModel>> GetWorkdaysAsync(DateTime startDate, DateTime endDate) =>
+        await GetWorkdaysInternalAsync(startDate, endDate);
+
+    private async Task<List<WorkdayViewModel>> GetWorkdaysInternalAsync(DateTime? startDate, DateTime? endDate)
     {
         var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
-        var workdays = await _sqlDbContext.Workdays
+        var query = _sqlDbContext.Workdays
             .AsNoTracking()
-            .Where(w => w.EmployeeId == employeeId)
-            .Include(w => w.Worktimes)
+            .Where(w => w.EmployeeId == employeeId);
+
+        if (startDate.HasValue && endDate.HasValue)
+            query = query.Where(w => w.Date >= startDate.Value && w.Date <= endDate.Value);
+
+        var workdays = await query
+            .Include(w => w.Worktimes.OrderBy(x => x.StartTime))
             .Include(w => w.Projecttimes)
             .Select(w => w.ToViewModel())
             .ToListAsync();
-
-        foreach (var workday in workdays.Where(workday => workday.Worktimes.Count != 0))
-        {
-            workday.Worktimes = workday.Worktimes.OrderBy(x => x.StartTime).ToList();
-        }
-
-        return workdays;
-    }
-
-    public async Task<List<WorkdayViewModel>> GetWorkdaysAsync(DateTime startDate, DateTime endDate)
-    {
-        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
-        var workdays = await _sqlDbContext.Workdays
-            .AsNoTracking()
-            .Where(w => w.EmployeeId == employeeId)
-            .Where(w => w.Date >= startDate && w.Date <= endDate)
-            .Include(w => w.Worktimes)
-            .Include(w => w.Projecttimes)
-            .Select(w => w.ToViewModel())
-            .ToListAsync();
-
-        foreach (var workday in workdays.Where(workday => workday.Worktimes.Count != 0))
-        {
-            workday.Worktimes = workday.Worktimes.OrderBy(x => x.StartTime).ToList();
-        }
 
         return workdays;
     }
@@ -159,11 +145,13 @@ public class WorkdayService : IWorkdayService
     public async Task<double> GetTotalOvertimeAsync()
     {
         var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
-        var employeeDailyWorkingTime = await _sqlDbContext.Employees
+        var employee = await _sqlDbContext.Employees
             .AsNoTracking()
-            .Where(e => e.EmployeeId == employeeId)
-            .Select(e => e.DailyWorkingTimeInHours)
+            .Where(w => w.EmployeeId == employeeId)
+            .Select(e => new { e.DailyWorkingTimeInHours, e.OvertimeCorrectionInHours })
             .FirstOrDefaultAsync();
+        if (employee == null)
+            return 0.0;
 
         var worktimes = await _sqlDbContext.Worktimes
             .AsNoTracking()
@@ -172,26 +160,18 @@ public class WorkdayService : IWorkdayService
             .ToListAsync();
 
         if (worktimes.Count == 0)
-            return 0.0;
+            return employee.OvertimeCorrectionInHours;
 
-        var totalWorktime = 0.0;
-
-        foreach (var worktime in worktimes)
+        var totalWorktime = worktimes.Sum(wt =>
         {
-            if (worktime.EndTime.HasValue)
-            {
-                var duration = worktime.EndTime.Value - worktime.StartTime;
-                totalWorktime += duration.TotalHours;
-            }
+            if (!wt.EndTime.HasValue)
+                return -employee.DailyWorkingTimeInHours;
 
-            if (worktime.BreakTime.HasValue)
-            {
-                totalWorktime -= worktime.BreakTime.Value.TotalHours;
-            }
-
-            totalWorktime -= employeeDailyWorkingTime;
-        }
-
-        return totalWorktime;
+            var duration = (wt.EndTime.Value - wt.StartTime).TotalHours;
+            var breakTime = wt.BreakTime?.TotalHours ?? 0.0;
+            return duration - breakTime - employee.DailyWorkingTimeInHours;
+        });
+        
+        return totalWorktime + employee.OvertimeCorrectionInHours;
     }
 }
