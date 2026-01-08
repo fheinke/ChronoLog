@@ -81,6 +81,7 @@
                         <RadzenButton Text="Save Changes" 
                                       Icon="save" 
                                       Click="@SaveChanges" 
+                                      Disabled="@(!HasChanges)"
                                       ButtonStyle="ButtonStyle.Primary"
                                       Size="ButtonSize.Large"/>
                     </RadzenStack>
@@ -93,6 +94,10 @@
 @code {
     private EmployeeModel _employee = new();
     private GermanProvince _selectedProvince;
+    
+    private GermanProvince _originalProvince;
+    private int _originalVacationDaysPerYear;
+    private double _originalDailyWorkingTimeInHours;
     
     private readonly List<ProvinceItemModel> _provinces =
     [
@@ -115,9 +120,17 @@
         new() { Name = "Thüringen", Value = GermanProvince.TH }
     ];
 
+    private bool HasChanges =>
+        _originalProvince != _selectedProvince ||
+        _originalVacationDaysPerYear != _employee.VacationDaysPerYear ||
+        Math.Abs(_originalDailyWorkingTimeInHours - _employee.DailyWorkingTimeInHours) > 0.01;
+
     protected override async Task OnInitializedAsync()
     {
         _employee = await EmployeeContextService.GetOrCreateCurrentEmployeeAsync();
+        _originalProvince = _employee.Province;
+        _originalVacationDaysPerYear = _employee.VacationDaysPerYear;
+        _originalDailyWorkingTimeInHours = _employee.DailyWorkingTimeInHours;
         _selectedProvince = _employee.Province;
     }
 
@@ -125,8 +138,15 @@
     {
         _employee.Province = _selectedProvince;
         if (await EmployeeContextService.UpdateEmployeeAsync(_employee))
-            NotificationService.Notify(NotificationSeverity.Success, "Personal settings updated successfully.", duration: 4000);
+        {
+            _originalProvince = _employee.Province;
+            _originalVacationDaysPerYear = _employee.VacationDaysPerYear;
+            _originalDailyWorkingTimeInHours = _employee.DailyWorkingTimeInHours;
+            NotificationService.Notify(NotificationSeverity.Success, "Personal settings updated successfully.", duration: 4000);   
+        }
         else
+        {
             NotificationService.Notify(NotificationSeverity.Error, "Update of personal settings failed.", duration: 4000);
+        }
     }
 }
