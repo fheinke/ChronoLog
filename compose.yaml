@@ -5,10 +5,9 @@
     restart: unless-stopped
     ports:
       - "8080:80"
-      - "8443:443"
     environment:
       ASPNETCORE_ENVIRONMENT: "Production"
-      ASPNETCORE_URLS: "http://+:80;https://+:443"
+      ASPNETCORE_URLS: "http://+:80"
       ConnectionStrings__SqlDatabase: "server=${MYSQL_HOST};uid=${MYSQL_USER};pwd=${MYSQL_PASSWORD};database=${MYSQL_DATABASE}"
       AzureAd__Instance: "https://login.microsoftonline.com/"
       AzureAd__Domain: ${AZURE_AD_DOMAIN}
@@ -34,8 +33,7 @@
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-    ports:
-      - "3306:3306"
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
     volumes:
       - chronolog-data:/var/lib/mysql
     healthcheck:
