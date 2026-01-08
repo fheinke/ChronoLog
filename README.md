@@ -45,7 +45,9 @@ To install ChronoLog, follow these steps:
    - `MYSQL_ROOT_PASSWORD`: Root database password
    - `MYSQL_DATABASE`: Database name (default: ChronoLog)
    - `MYSQL_HOST`: Database host (default: chronoLogDatabase for Docker Compose)
-3. Run the following command to start the application using Docker Compose:
+3. If you are using a **reverse Proxy**, make sure to add the following environment variable as well:
+   - `ReverseProxy__Enabled`: Set to `true`
+4. Run the following command to start the application using Docker Compose:
    ```bash
    docker compose up -d
    ```

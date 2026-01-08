@@ -73,12 +73,22 @@ builder.Services.AddLogging(options =>
 // Header Progagation
 builder.Services.AddHeaderPropagation(options => { options.Headers.Add("x-auth-request-access-token"); });
 
+var useReverseProxy = builder.Configuration.GetValue<bool>("ReverseProxy:Enabled");
+if (useReverseProxy)
+{
+    builder.Services.Configure<ForwardedHeadersOptions>(options =>
+    {
+        options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto |
+                                   ForwardedHeaders.XForwardedHost;
+        options.KnownProxies.Add(System.Net.IPAddress.Parse("127.0.0.1"));
+    });
+}
+
 var app = builder.Build();
 
-app.UseForwardedHeaders(new ForwardedHeadersOptions
-{
-    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
-});
+// Configure Forwarded Headers Middleware
+if (useReverseProxy)
+    app.UseForwardedHeaders();
 
 // Apply pending migrations
 using (var scope = app.Services.CreateScope())
@@ -112,7 +122,8 @@ else
 }
 
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
-app.UseHttpsRedirection();
+if (!useReverseProxy)
+    app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseAuthentication();
