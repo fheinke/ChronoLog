@@ -42,6 +42,7 @@ To install ChronoLog, follow these steps:
    - `AZURE_AD_DOMAIN`: Your Azure AD domain (e.g., yourdomain.onmicrosoft.com)
    - `MYSQL_USER`: Database username (default: chronolog)
    - `MYSQL_PASSWORD`: Database password
+   - `MYSQL_ROOT_PASSWORD`: Root database password
    - `MYSQL_DATABASE`: Database name (default: ChronoLog)
    - `MYSQL_HOST`: Database host
 3. Run the following command to start the application using Docker Compose:
