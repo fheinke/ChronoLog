@@ -6,6 +6,7 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using ChronoLog.SqlDatabase;
 using ChronoLog.SqlDatabase.Context;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
@@ -73,6 +74,11 @@ builder.Services.AddLogging(options =>
 builder.Services.AddHeaderPropagation(options => { options.Headers.Add("x-auth-request-access-token"); });
 
 var app = builder.Build();
+
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
 
 // Apply pending migrations
 using (var scope = app.Services.CreateScope())
