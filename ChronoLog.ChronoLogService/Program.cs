@@ -3,13 +3,10 @@ using ChronoLog.ChronoLogService.Components;
 using ChronoLog.ChronoLogService.Extensions;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using MySql.Data.MySqlClient;
 using ChronoLog.SqlDatabase;
 using ChronoLog.SqlDatabase.Context;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
 using Radzen;
@@ -77,14 +74,23 @@ builder.Services.AddHeaderPropagation(options => { options.Headers.Add("x-auth-r
 
 var app = builder.Build();
 
-// Database initialization check
-EnsureDatabaseConnection(app);
-
 // Apply pending migrations
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<SqlDbContext>();
-    await db.Database.MigrateAsync();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    try
+    {
+        logger.LogInformation("Checking for pending migrations...");
+        await db.Database.MigrateAsync();
+        logger.LogInformation("Database migrations applied successfully");
+    }
+    catch (Exception ex)
+    {
+        logger.LogCritical(ex, "An error occurred while applying database migrations. Application will terminate.");
+        throw;
+    }
 }
 
 // Middleware pipeline
@@ -129,27 +135,3 @@ app.MapHealthChecks("/.well-known/readiness", new HealthCheckOptions
 });
 
 app.Run();
-return;
-
-static void EnsureDatabaseConnection(WebApplication app)
-{
-    using var scope = app.Services.CreateScope();
-    try
-    {
-        var sqlDbContext = scope.ServiceProvider.GetRequiredService<SqlDbContext>();
-        sqlDbContext.Database.GetService<IRelationalDatabaseCreator>();
-        
-        if (!sqlDbContext.Database.CanConnect())
-        {
-            app.Logger.LogCritical("Unable to connect to the database");
-            throw new Exception("Unable to connect to the database");
-        }
-        
-        app.Logger.LogInformation("Database connection established successfully");
-    }
-    catch (MySqlException ex)
-    {
-        app.Logger.LogCritical(ex, "Failed to connect to database. Application will terminate.");
-        throw;
-    }
-}
