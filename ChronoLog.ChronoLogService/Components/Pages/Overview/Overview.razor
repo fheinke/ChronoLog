@@ -6,6 +6,7 @@
 @using ChronoLog.Core.Models.DisplayObjects
 @using PublicHoliday
 @inject IWorkdayService WorkdayService
+@inject IEmployeeContextService EmployeeContextService
 
 <PageTitle>Overview</PageTitle>
 
@@ -33,7 +34,8 @@
 @code {
     private RadzenScheduler<WorkdayViewModel>? _scheduler;
     private List<WorkdayViewModel>? _workdays;
-    private static readonly GermanPublicHoliday Holidays = new() { State = GermanPublicHoliday.States.HE };
+    private GermanPublicHoliday _holidays = new() { State = GermanPublicHoliday.States.ALL };
+    private EmployeeModel _employee = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -43,6 +45,8 @@
     private async Task LoadData()
     {
         _workdays = (await WorkdayService.GetWorkdaysAsync()).ToList();
+        _employee = await EmployeeContextService.GetOrCreateCurrentEmployeeAsync();
+        _holidays = new GermanPublicHoliday { State = ParseProvinceToState(_employee.Province) };
         StateHasChanged();
     }
     
@@ -68,13 +72,13 @@
     {
     }
 
-    private static void OnSlotRender(SchedulerSlotRenderEventArgs args)
+    private void OnSlotRender(SchedulerSlotRenderEventArgs args)
     {
-        var holidayNames = Holidays.PublicHolidayNames(args.Start.Year);
-        var isHoliday = holidayNames.ContainsKey(args.Start.Date);
-        
         var existingStyle = args.Attributes.TryGetValue("style", out var style) ? style?.ToString() ?? string.Empty : string.Empty;
         var styleBuilder = existingStyle.TrimEnd(';');
+        
+        var holidayNames = _holidays.PublicHolidayNames(args.Start.Year);
+        var isHoliday = holidayNames.ContainsKey(args.Start.Date);
 
         // Dim non-working days (Saturday and Sunday)
         if (args.Start.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday)
@@ -231,6 +235,30 @@
             };
             await OnSlotSelect(slotArgs);
         }
+    }
+    
+    private static GermanPublicHoliday.States ParseProvinceToState(GermanProvince province)
+    {
+        return province switch
+        {
+            GermanProvince.BW => GermanPublicHoliday.States.BW,
+            GermanProvince.BY => GermanPublicHoliday.States.BY,
+            GermanProvince.BE => GermanPublicHoliday.States.BE,
+            GermanProvince.BB => GermanPublicHoliday.States.BB,
+            GermanProvince.HB => GermanPublicHoliday.States.HB,
+            GermanProvince.HH => GermanPublicHoliday.States.HH,
+            GermanProvince.HE => GermanPublicHoliday.States.HE,
+            GermanProvince.MV => GermanPublicHoliday.States.MV,
+            GermanProvince.NI => GermanPublicHoliday.States.NI,
+            GermanProvince.NW => GermanPublicHoliday.States.NW,
+            GermanProvince.RP => GermanPublicHoliday.States.RP,
+            GermanProvince.SL => GermanPublicHoliday.States.SL,
+            GermanProvince.SN => GermanPublicHoliday.States.SN,
+            GermanProvince.ST => GermanPublicHoliday.States.ST,
+            GermanProvince.SH => GermanPublicHoliday.States.SH,
+            GermanProvince.TH => GermanPublicHoliday.States.TH,
+            _ => GermanPublicHoliday.States.ALL
+        };
     }
 
 }
