@@ -158,6 +158,7 @@ public class EmployeeContextService : IEmployeeContextService
         existingEmployee.Province = employee.Province;
         existingEmployee.VacationDaysPerYear = employee.VacationDaysPerYear;
         existingEmployee.DailyWorkingTimeInHours = employee.DailyWorkingTimeInHours;
+        existingEmployee.OvertimeCorrectionInHours = employee.OvertimeCorrectionInHours;
         
         var affectedRows = await _sqlDbContext.SaveChangesAsync();
         return affectedRows > 0;

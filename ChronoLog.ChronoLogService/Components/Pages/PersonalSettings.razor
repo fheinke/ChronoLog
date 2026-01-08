@@ -73,6 +73,20 @@
                         </Helper>
                     </RadzenFormField>
                 </RadzenColumn>
+                
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenFormField Text="Overtime Correction (Hours)" Variant="Variant.Outlined" Style="width: 100%;">
+                        <ChildContent>
+                            <RadzenNumeric Name="OvertimeCorrectionInHours" @bind-Value="@_employee.OvertimeCorrectionInHours"
+                                           Step="0.25" ShowUpDown="true" Format="0.00"/>
+                        </ChildContent>
+                        <Helper>
+                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                Manual correction for overtime balance (positive or negative values)
+                            </RadzenText>
+                        </Helper>
+                    </RadzenFormField>
+                </RadzenColumn>
             </RadzenRow>
 
             <RadzenRow Style="margin-top: 1rem;">
@@ -98,6 +112,7 @@
     private GermanProvince _originalProvince;
     private int _originalVacationDaysPerYear;
     private double _originalDailyWorkingTimeInHours;
+    private double _originalOvertimeCorrectionInHours;
     
     private readonly List<ProvinceItemModel> _provinces =
     [
@@ -123,7 +138,8 @@
     private bool HasChanges =>
         _originalProvince != _selectedProvince ||
         _originalVacationDaysPerYear != _employee.VacationDaysPerYear ||
-        Math.Abs(_originalDailyWorkingTimeInHours - _employee.DailyWorkingTimeInHours) > 0.01;
+        Math.Abs(_originalDailyWorkingTimeInHours - _employee.DailyWorkingTimeInHours) > 0.01 ||
+        Math.Abs(_originalOvertimeCorrectionInHours - _employee.OvertimeCorrectionInHours) > 0.01;
 
     protected override async Task OnInitializedAsync()
     {
@@ -131,6 +147,7 @@
         _originalProvince = _employee.Province;
         _originalVacationDaysPerYear = _employee.VacationDaysPerYear;
         _originalDailyWorkingTimeInHours = _employee.DailyWorkingTimeInHours;
+        _originalOvertimeCorrectionInHours = _employee.OvertimeCorrectionInHours;
         _selectedProvince = _employee.Province;
     }
 
@@ -142,6 +159,7 @@
             _originalProvince = _employee.Province;
             _originalVacationDaysPerYear = _employee.VacationDaysPerYear;
             _originalDailyWorkingTimeInHours = _employee.DailyWorkingTimeInHours;
+            _originalOvertimeCorrectionInHours = _employee.OvertimeCorrectionInHours;
             NotificationService.Notify(NotificationSeverity.Success, "Personal settings updated successfully.", duration: 4000);   
         }
         else
