@@ -61,7 +61,7 @@
                 <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0.5rem"
                              class="rz-p-4 rz-mb-6 rz-border-radius-1"
                              Style="border: var(--rz-grid-cell-border, 1px solid rgba(0,0,0,0.12));">
-                    <RadzenLabel Text="Aggregated Project Times for the Week:"/>
+                    <RadzenLabel Text="Project Times for this Week:"/>
                     @if (_projecttimes.Count > 0)
                     {
                         <RadzenDataGrid Data="@_projecttimes"
@@ -74,6 +74,15 @@
                                         AllowFiltering="true"
                                         Style="width:100%;">
                             <Columns>
+                                <RadzenDataGridColumn TItem="ProjecttimeModel" Title="Date" Sortable="true">
+                                    <Template Context="item">
+                                        @{
+                                            var workday = _workdays.FirstOrDefault(w => w.WorkdayId == item.WorkdayId);
+                                        }
+                                        @workday?.Date.ToString("dd.MM.yyyy")
+                                    </Template>
+                                </RadzenDataGridColumn>
+
                                 <RadzenDataGridColumn TItem="ProjecttimeModel" Property="Name" Title="Project Name">
                                     <Template Context="item">
                                         @_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.Name
@@ -120,7 +129,7 @@
                 <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0.5rem"
                              class="rz-p-4 rz-mb-6 rz-border-radius-1"
                              Style="border: var(--rz-grid-cell-border, 1px solid rgba(0,0,0,0.12));">
-                    <RadzenLabel Text="Aggregated Project Times for the Week:"/>
+                    <RadzenLabel Text="Aggregated Project Times for this Week:"/>
                     @if (_projecttimes.Count > 0)
                     {
                         <RadzenDataGrid Data="@AggregateProjecttimes()"
