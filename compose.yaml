@@ -1,0 +1,49 @@
+﻿services:
+  chronoLogMigrate:
+    image: ghcr.io/chronolog/chronolog:latest
+    container_name: chronolog-migrate
+    restart: no
+    command: [ "dotnet", "ef", "database", "update", "--no-build" ]
+    environment:
+      ConnectionStrings__SqlDatabase: "server=chronolog-database;uid=chronolog;pwd=changeme;database=ChronoLog"
+    depends_on:
+      chronoLogDatabase:
+        condition: service_healthy
+    
+  chronoLog:
+    image: ghcr.io/chronolog/chronolog:latest
+    container_name: chronolog
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+      - "8443:443"
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Production"
+      ASPNETCORE_URLS: "http://+:80;https://+:443"
+      ConnectionStrings__SqlDatabase: "server=127.0.0.1;uid=chronolog;pwd=changeme;database=ChronoLog"
+      AzureAd__Instance: "https://login.microsoftonline.com/"
+      AzureAd__Domain: "yourdomain.onmicrosoft.com"
+      AzureAd__TenantId: "your-tenant-id"
+      AzureAd__ClientId: "your-client-id"
+      AzureAd__CallbackPath: "/signin-oidc"
+    
+  chronoLogDatabase:
+    image: mysql:8
+    container_name: chronolog-database
+    restart: unless-stopped
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_USER: chronolog
+      MYSQL_PASSWORD: changeme
+    ports:
+      - "3306:3306"
+    volumes:
+      - chronolog-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  chronolog-data:
