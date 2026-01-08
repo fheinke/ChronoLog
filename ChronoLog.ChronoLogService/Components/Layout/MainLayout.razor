@@ -2,9 +2,7 @@
 @using ChronoLog.Core.Models
 @using ChronoLog.Core.Models.DisplayObjects
 @inherits LayoutComponentBase
-@inject CookieThemeService CookieThemeService
 @inject ThemeService ThemeService
-@inject NavigationManager NavigationManager
 @inject IEmployeeContextService EmployeeContextService
 
 <RadzenComponents @rendermode="InteractiveServer"/>
@@ -15,7 +13,6 @@
                      JustifyContent="JustifyContent.SpaceBetween" Gap="0">
             <div style="display: flex; align-items: center;">
                 <RadzenSidebarToggle Click="@(() => _sidebarExpanded = !_sidebarExpanded)"/>
-                <!--<RadzenLabel Text="Header"/>-->
             </div>
 
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem"
@@ -101,10 +98,4 @@
         var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         return parts.Length >= 2 ? $"{parts[0][0]}{parts[1][0]}".ToUpper() : parts[0][0].ToString().ToUpper();
     }
-
-    private void Logout()
-    {
-        NavigationManager.NavigateTo("MicrosoftIdentity/Account/SignOut?returnUrl=/", true);
-    }
-
 }

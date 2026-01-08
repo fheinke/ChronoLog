@@ -62,18 +62,13 @@
 
 @code {
     [Parameter]
-    public ProjectModel Project { get; set; }
+    public ProjectModel Project { get; set; } = null!;
 
     private ProjectModel _originalProjectModel = new();
     private bool _isInvalid;
 
     protected override void OnInitialized()
     {
-        if (Project is null)
-        {
-            Project = new ProjectModel();
-        }
-
         _originalProjectModel = new ProjectModel
         {
             Name = Project.Name,

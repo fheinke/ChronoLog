@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi;
 
 namespace ChronoLog.ChronoLogService.Extensions;
@@ -22,7 +21,7 @@ public static class SwaggerExtension
                     {
                         Name = "Felix Heinke"
                     },
-                    License = new OpenApiLicense { Name = "Propritary" }
+                    License = new OpenApiLicense { Name = "WTFPL" }
                 });
         });
         return services;
