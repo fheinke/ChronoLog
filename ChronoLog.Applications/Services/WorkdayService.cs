@@ -159,8 +159,13 @@ public class WorkdayService : IWorkdayService
             .Where(wt => wt.Workday.EmployeeId == employeeId)
             .ToListAsync();
 
+        var flexDays = await _sqlDbContext.Workdays
+            .AsNoTracking()
+            .Where(wd => wd.EmployeeId == employeeId && wd.Type == WorkdayType.Gleitzeittag)
+            .CountAsync();
+        
         if (worktimes.Count == 0)
-            return employee.OvertimeCorrectionInHours;
+            return employee.OvertimeCorrectionInHours - flexDays * employee.DailyWorkingTimeInHours;
 
         var totalWorktime = worktimes.Sum(wt =>
         {
@@ -172,6 +177,6 @@ public class WorkdayService : IWorkdayService
             return duration - breakTime - employee.DailyWorkingTimeInHours;
         });
         
-        return totalWorktime + employee.OvertimeCorrectionInHours;
+        return totalWorktime + employee.OvertimeCorrectionInHours - flexDays * employee.DailyWorkingTimeInHours;
     }
 }
