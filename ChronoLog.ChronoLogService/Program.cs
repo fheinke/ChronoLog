@@ -78,9 +78,39 @@ if (useReverseProxy)
 {
     builder.Services.Configure<ForwardedHeadersOptions>(options =>
     {
-        options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto |
+        options.ForwardedHeaders = ForwardedHeaders.XForwardedFor |
+                                   ForwardedHeaders.XForwardedProto |
                                    ForwardedHeaders.XForwardedHost;
+
+        options.KnownIPNetworks.Clear();
+        options.KnownProxies.Clear();
         options.KnownProxies.Add(System.Net.IPAddress.Parse("127.0.0.1"));
+
+        options.ForwardLimit = 1;
+
+        options.RequireHeaderSymmetry = false;
+    });
+
+    var baseUrl = builder.Configuration.GetValue<string>("ReverseProxy:BaseUrl");
+    builder.Services.PostConfigure<OpenIdConnectOptions>(OpenIdConnectDefaults.AuthenticationScheme, options =>
+    {
+        options.Events = new OpenIdConnectEvents
+        {
+            OnRedirectToIdentityProvider = context =>
+            {
+                context.ProtocolMessage.RedirectUri = $"{baseUrl}/signin-oidc";
+                return Task.CompletedTask;
+            },
+            OnMessageReceived = context =>
+            {
+                if (!string.IsNullOrEmpty(context.ProtocolMessage.RedirectUri) &&
+                    !context.ProtocolMessage.RedirectUri.StartsWith(baseUrl!, StringComparison.OrdinalIgnoreCase))
+                {
+                    context.Fail("Invalid redirect URI");
+                }
+                return Task.CompletedTask;
+            }
+        };
     });
 }
 

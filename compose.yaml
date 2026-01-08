@@ -14,9 +14,11 @@
       AzureAd__TenantId: ${AZURE_AD_TENANT_ID}
       AzureAd__ClientId: ${AZURE_AD_CLIENT_ID}
       AzureAd__CallbackPath: "/signin-oidc"
-      ReverseProxy__Enabled: "false"
+      AzureAd__SignedOutCallbackPath: "/signout-callback-oidc"
+      ReverseProxy__Enabled: ${REVERSE_PROXY_ENABLED}
+      ReverseProxy__BaseUrl: ${REVERSE_PROXY_BASE_URL}
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:80/.well-known/readiness || exit 1"]
+      test: [ "CMD-SHELL", "curl -f http://localhost:80/.well-known/readiness || exit 1" ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -24,7 +26,7 @@
     depends_on:
       chronoLogDatabase:
         condition: service_healthy
-    
+
   chronoLogDatabase:
     image: mysql:8
     container_name: chronolog-database
@@ -38,7 +40,7 @@
     volumes:
       - chronolog-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
       interval: 10s
       timeout: 5s
       retries: 10
