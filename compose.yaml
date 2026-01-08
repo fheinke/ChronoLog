@@ -9,11 +9,11 @@
     environment:
       ASPNETCORE_ENVIRONMENT: "Production"
       ASPNETCORE_URLS: "http://+:80;https://+:443"
-      ConnectionStrings__SqlDatabase: "server=127.0.0.1;uid=chronolog;pwd=changeme;database=ChronoLog"
+      ConnectionStrings__SqlDatabase: "server=${MYSQL_HOST};uid=${MYSQL_USER};pwd=${MYSQL_PASSWORD};database=${MYSQL_DATABASE}"
       AzureAd__Instance: "https://login.microsoftonline.com/"
-      AzureAd__Domain: "yourdomain.onmicrosoft.com"
-      AzureAd__TenantId: "your-tenant-id"
-      AzureAd__ClientId: "your-client-id"
+      AzureAd__Domain: ${AZURE_AD_DOMAIN}
+      AzureAd__TenantId: ${AZURE_AD_TENANT_ID}
+      AzureAd__ClientId: ${AZURE_AD_CLIENT_ID}
       AzureAd__CallbackPath: "/signin-oidc"
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:80/.well-known/readiness || exit 1"]
@@ -31,8 +31,8 @@
     restart: unless-stopped
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     environment:
-      MYSQL_USER: chronolog
-      MYSQL_PASSWORD: changeme
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     ports:
       - "3306:3306"
     volumes:
