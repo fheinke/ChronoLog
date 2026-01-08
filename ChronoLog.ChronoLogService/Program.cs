@@ -87,7 +87,6 @@ if (useReverseProxy)
         options.KnownProxies.Add(System.Net.IPAddress.Parse("127.0.0.1"));
 
         options.ForwardLimit = 1;
-
         options.RequireHeaderSymmetry = false;
     });
 
@@ -101,13 +100,9 @@ if (useReverseProxy)
                 context.ProtocolMessage.RedirectUri = $"{baseUrl}/signin-oidc";
                 return Task.CompletedTask;
             },
-            OnMessageReceived = context =>
+            OnRedirectToIdentityProviderForSignOut = context =>
             {
-                if (!string.IsNullOrEmpty(context.ProtocolMessage.RedirectUri) &&
-                    !context.ProtocolMessage.RedirectUri.StartsWith(baseUrl!, StringComparison.OrdinalIgnoreCase))
-                {
-                    context.Fail("Invalid redirect URI");
-                }
+                context.ProtocolMessage.PostLogoutRedirectUri = $"{baseUrl}/signout-callback-oidc";
                 return Task.CompletedTask;
             }
         };
@@ -161,6 +156,14 @@ app.UseAuthorization();
 
 app.UseHeaderPropagation();
 app.UseAntiforgery();
+
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Append("X-Frame-Options", "SAMEORIGIN");
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+    await next();
+});
 
 // Endpoints
 app.MapStaticAssets();
