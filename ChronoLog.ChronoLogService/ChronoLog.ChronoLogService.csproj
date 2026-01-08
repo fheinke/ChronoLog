@@ -32,9 +32,9 @@
     </ItemGroup>
     
     <ItemGroup>
-        <ProjectReference Include="..\ChronoLog.Applications\Chronolog.Applications.csproj"/>
-        <ProjectReference Include="..\ChronoLog.Core\Chronolog.Core.csproj"/>
-        <ProjectReference Include="..\ChronoLog.SqlDatabase\Chronolog.SqlDatabase.csproj"/>
+        <ProjectReference Include="..\ChronoLog.Applications\ChronoLog.Applications.csproj"/>
+        <ProjectReference Include="..\ChronoLog.Core\ChronoLog.Core.csproj"/>
+        <ProjectReference Include="..\ChronoLog.SqlDatabase\ChronoLog.SqlDatabase.csproj"/>
     </ItemGroup>
 
 </Project>
