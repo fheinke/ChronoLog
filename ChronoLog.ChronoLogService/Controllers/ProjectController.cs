@@ -1,5 +1,6 @@
 using ChronoLog.Core.Interfaces;
 using ChronoLog.Core.Models.DisplayObjects;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ChronoLog.ChronoLogService.Controllers;
@@ -7,6 +8,7 @@ namespace ChronoLog.ChronoLogService.Controllers;
 /// <summary>
 /// Managing Projects API Controller: CRUD operations for projects.
 /// </summary>
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class ProjectController : ControllerBase

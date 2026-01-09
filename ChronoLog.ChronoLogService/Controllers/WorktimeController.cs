@@ -1,9 +1,11 @@
 using ChronoLog.Core.Interfaces;
 using ChronoLog.Core.Models.DisplayObjects;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ChronoLog.ChronoLogService.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class WorktimeController : ControllerBase
