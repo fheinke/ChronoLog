@@ -29,7 +29,19 @@
 
     <!-- Overview Cards -->
     <RadzenRow Gap="1rem">
-        <RadzenColumn Size="12" SizeMD="6">
+        <RadzenColumn Size="12" SizeMD="4">
+            <RadzenCard>
+                <RadzenStack Gap="0.5rem">
+                    <RadzenText TextStyle="TextStyle.H6">Office Days @_selectedYear</RadzenText>
+                    <RadzenText TextStyle="TextStyle.H3" Style="color: rgba(33, 150, 243, 1)">
+                        @_officeDays
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2">Days worked in office</RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+        
+        <RadzenColumn Size="12" SizeMD="4">
             <RadzenCard>
                 <RadzenStack Gap="0.5rem">
                     <RadzenText TextStyle="TextStyle.H6">Vacation @_selectedYear</RadzenText>
@@ -41,7 +53,7 @@
             </RadzenCard>
         </RadzenColumn>
 
-        <RadzenColumn Size="12" SizeMD="6">
+        <RadzenColumn Size="12" SizeMD="4">
             <RadzenCard>
                 <RadzenStack Gap="0.5rem">
                     <RadzenText TextStyle="TextStyle.H6">Total Overtime</RadzenText>
@@ -93,6 +105,7 @@
     private int _vacationDaysPerYear;
     private int RemainingVacationDays => _vacationDaysPerYear - _absenceDays.Count(a => a.AbsenceTypes.Split(", ").Contains(nameof(ReducingWorkdayType.Urlaub)));
     private double _totalOvertime;
+    private int _officeDays;
 
     protected override async Task OnInitializedAsync()
     {
@@ -100,6 +113,7 @@
         _vacationDaysPerYear = _currentEmployee.VacationDaysPerYear;
         _totalOvertime = await WorkdayService.GetTotalOvertimeAsync();
         await LoadAbsenceDaysAsync();
+        await LoadOfficeDaysAsync();
     }
 
     private async Task LoadAbsenceDaysAsync()
@@ -107,11 +121,17 @@
         if (_currentEmployee != null)
             _absenceDays = await EmployeeContextService.GetEmployeeAbsenceDaysAsync(_currentEmployee.EmployeeId, _selectedYear);
     }
+    
+    private async Task LoadOfficeDaysAsync()
+    {
+        _officeDays = await WorkdayService.GetOfficeDaysCountAsync(_selectedYear);
+    }
 
     private async Task OnYearChanged(int year)
     {
         _selectedYear = year;
         await LoadAbsenceDaysAsync();
+        await LoadOfficeDaysAsync();
     }
 
     private async Task PrevYear()

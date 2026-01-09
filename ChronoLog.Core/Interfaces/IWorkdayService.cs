@@ -14,4 +14,5 @@ public interface IWorkdayService
     Task<bool> DeleteWorkdayAsync(Guid workdayId);
     Task<TimeSpan> GetTotalWorktimeAsync(Guid workdayId);
     Task<double> GetTotalOvertimeAsync();
+    Task<int> GetOfficeDaysCountAsync(int year);
 }

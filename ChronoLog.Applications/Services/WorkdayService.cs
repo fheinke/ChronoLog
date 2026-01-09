@@ -163,7 +163,7 @@ public class WorkdayService : IWorkdayService
             .AsNoTracking()
             .Where(wd => wd.EmployeeId == employeeId && wd.Type == WorkdayType.Gleitzeittag)
             .CountAsync();
-        
+
         if (worktimes.Count == 0)
             return employee.OvertimeCorrectionInHours - flexDays * employee.DailyWorkingTimeInHours;
 
@@ -176,7 +176,19 @@ public class WorkdayService : IWorkdayService
             var breakTime = wt.BreakTime?.TotalHours ?? 0.0;
             return duration - breakTime - employee.DailyWorkingTimeInHours;
         });
-        
+
         return totalWorktime + employee.OvertimeCorrectionInHours - flexDays * employee.DailyWorkingTimeInHours;
+    }
+
+    public async Task<int> GetOfficeDaysCountAsync(int year)
+    {
+        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
+        var officeDaysCount = await _sqlDbContext.Workdays
+            .AsNoTracking()
+            .Where(w => w.EmployeeId == employeeId &&
+                        w.Type == WorkdayType.Office &&
+                        w.Date.Year == year)
+            .CountAsync();
+        return officeDaysCount;
     }
 }
