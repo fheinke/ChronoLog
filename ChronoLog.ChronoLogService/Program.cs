@@ -65,6 +65,7 @@ if (builder.Environment.IsDevelopment())
     builder.Services.AddSwaggerExtension();
     builder.Services.AddSwaggerGen(options =>
     {
+        options.DocInclusionPredicate((docName, apiDesc) => !apiDesc.RelativePath?.StartsWith("MicrosoftIdentity") ?? true);
         var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
         var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
         if (File.Exists(xmlPath)) options.IncludeXmlComments(xmlPath);
