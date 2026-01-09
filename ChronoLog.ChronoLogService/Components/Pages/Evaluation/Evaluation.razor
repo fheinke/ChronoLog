@@ -31,7 +31,7 @@
             <span>@_dateRangeStart.ToString("dd.MM.yyyy") - @_dateRangeEnd.ToString("dd.MM.yyyy")</span>
         </div>
     </RadzenStack>
-    
+
     @if (_missingWorktimeDates.Any())
     {
         <RadzenAlert AlertStyle="AlertStyle.Warning"
@@ -43,14 +43,15 @@
                 @foreach (var date in _missingWorktimeDates)
                 {
                     <li>
-                        <RadzenLink Path="@GetWorkdayEditPath(date)" Text="@date.ToString("dd.MM.yyyy")" Style="margin-left:0.5rem;"/>
+                        <RadzenLink Path="@GetWorkdayEditPath(date)" Text="@date.ToString("dd.MM.yyyy")"
+                                    Style="margin-left:0.5rem;"/>
                     </li>
                 }
             </ul>
             For accurate evaluation, please ensure all worktime entries are recorded.
         </RadzenAlert>
     }
-    
+
     <RadzenTabs>
         <Tabs>
             <RadzenTabsItem Text="Daily SAP">
@@ -66,84 +67,14 @@
                     <RadzenLabel Text="Project Times for this Week:"/>
                     @if (_projecttimes.Count > 0)
                     {
-                        <RadzenDataGrid Data="@_projecttimes"
-                                        TItem="ProjecttimeModel"
-                                        RowHover="true"
-                                        ShowPagingSummary="true"
-                                        PageSize="15"
-                                        AllowPaging="true"
-                                        AllowSorting="true"
-                                        AllowFiltering="true"
-                                        Style="width:100%;">
-                            <Columns>
-                                <RadzenDataGridColumn TItem="ProjecttimeModel" Title="Date" Sortable="true">
-                                    <Template Context="item">
-                                        @{
-                                            var workday = _workdays.FirstOrDefault(w => w.WorkdayId == item.WorkdayId);
-                                        }
-                                        @workday?.Date.ToString("dd.MM.yyyy")
-                                    </Template>
-                                </RadzenDataGridColumn>
-
-                                <RadzenDataGridColumn TItem="ProjecttimeModel" Property="Name" Title="Project Name">
-                                    <Template Context="item">
-                                        <div @onclick="@(() => CopyToClipboard(_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.Name ?? string.Empty))"
-                                             style="cursor: pointer;"
-                                             title="Click to copy">
-                                            @_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.Name
-                                        </div>
-                                    </Template>
-                                </RadzenDataGridColumn>
-                                
-                                <RadzenDataGridColumn TItem="ProjecttimeModel" Property="Name" Title="Response Object">
-                                    <Template Context="item">
-                                        <div @onclick="@(() => CopyToClipboard(_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.ResponseObject ?? string.Empty))"
-                                             style="cursor: pointer;"
-                                             title="Click to copy">
-                                            @_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.ResponseObject
-                                        </div>
-                                    </Template>
-                                </RadzenDataGridColumn>
-                                
-                                <RadzenDataGridColumn TItem="ProjecttimeModel" Property="TimeSpent"
-                                                      Title="Time Spent (h)">
-                                    <Template Context="item">
-                                        <div @onclick="@(() => CopyToClipboard(item.TimeSpent.TotalHours.ToString("F2")))"
-                                             style="cursor: pointer;"
-                                             title="Click to copy">
-                                            @item.TimeSpent.TotalHours.ToString("F2")
-                                        </div>
-                                    </Template>
-                                    <FooterTemplate>
-                                        Total: <strong>@GetTotalTimeSpent().ToString("F2") h</strong>
-                                    </FooterTemplate>
-                                </RadzenDataGridColumn>
-                                
-                                <RadzenDataGridColumn TItem="ProjecttimeModel" Title="Response Text">
-                                    <Template Context="item">
-                                        @if (!string.IsNullOrEmpty(item.ResponseText))
-                                        {
-                                            <div @onclick="@(() => CopyToClipboard(item.ResponseText))"
-                                                 style="cursor: pointer;"
-                                                 title="Click to copy">
-                                                <span
-                                                    style="font-weight: bold; color: var(--rz-primary);">@item.ResponseText</span>
-                                            </div>
-                                        }
-                                        else
-                                        {
-                                            <div @onclick="@(() => CopyToClipboard(_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.DefaultResponseText ?? string.Empty))"
-                                                 style="cursor: pointer;"
-                                                 title="Click to copy">
-                                                <span
-                                                    style="font-style: italic; color: var(--rz-text-secondary-color);">@_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.DefaultResponseText</span>
-                                            </div>
-                                        }
-                                    </Template>
-                                </RadzenDataGridColumn>
-
-                            </Columns>
-                        </RadzenDataGrid>
+                        <ProjectTimeDataGrid Data="@_projecttimes"
+                                             ShowDateColumn="true"
+                                             DateColumnTemplate="@DateTemplate"
+                                             ProjectNameTemplate="@ProjectNameTemplate"
+                                             ResponseObjectTemplate="@ResponseObjectTemplate"
+                                             TimeSpentTemplate="@TimeSpentTemplate"
+                                             ResponseTextTemplate="@ResponseTextTemplate"
+                                             TotalTimeSpent="@GetTotalTimeSpent()"/>
                     }
                     else
                     {
@@ -151,7 +82,7 @@
                     }
                 </RadzenStack>
             </RadzenTabsItem>
-            
+
             <RadzenTabsItem Text="Weekly SAP" Selected="true">
                 <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0.5rem"
                              class="rz-p-4 rz-mb-6 rz-border-radius-1"
@@ -165,75 +96,13 @@
                     <RadzenLabel Text="Aggregated Project Times for this Week:"/>
                     @if (_projecttimes.Count > 0)
                     {
-                        <RadzenDataGrid Data="@AggregateProjecttimes()"
-                                        TItem="ProjecttimeModel"
-                                        RowHover="true"
-                                        ShowPagingSummary="true"
-                                        PageSize="15"
-                                        AllowPaging="true"
-                                        AllowSorting="true"
-                                        AllowFiltering="true"
-                                        Style="width:100%;">
-                            <Columns>
-                                <RadzenDataGridColumn TItem="ProjecttimeModel" Property="Name" Title="Project Name">
-                                    <Template Context="item">
-                                        <div @onclick="@(() => CopyToClipboard(_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.Name ?? string.Empty))"
-                                             style="cursor: pointer;"
-                                             title="Click to copy">
-                                            @_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.Name
-                                        </div>
-                                    </Template>
-                                </RadzenDataGridColumn>
-                                
-                                <RadzenDataGridColumn TItem="ProjecttimeModel" Property="Name" Title="Response Object">
-                                    <Template Context="item">
-                                        <div @onclick="@(() => CopyToClipboard(_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.ResponseObject ?? string.Empty))"
-                                             style="cursor: pointer;"
-                                             title="Click to copy">
-                                            @_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.ResponseObject
-                                        </div>
-                                    </Template>
-                                </RadzenDataGridColumn>
-                                
-                                <RadzenDataGridColumn TItem="ProjecttimeModel" Property="TimeSpent"
-                                                      Title="Time Spent (h)">
-                                    <Template Context="item">
-                                        <div @onclick="@(() => CopyToClipboard(item.TimeSpent.TotalHours.ToString("F2")))"
-                                             style="cursor: pointer;"
-                                             title="Click to copy">
-                                            @item.TimeSpent.TotalHours.ToString("F2")
-                                        </div>
-                                    </Template>
-                                    <FooterTemplate>
-                                        Total: <strong>@GetAggregatedTotalTimeSpent().ToString("F2") h</strong>
-                                    </FooterTemplate>
-                                </RadzenDataGridColumn>
-                                
-                                <RadzenDataGridColumn TItem="ProjecttimeModel" Title="Response Text">
-                                    <Template Context="item">
-                                        @if (!string.IsNullOrEmpty(item.ResponseText))
-                                        {
-                                            <div @onclick="@(() => CopyToClipboard(item.ResponseText))"
-                                                 style="cursor: pointer;"
-                                                 title="Click to copy">
-                                                <span
-                                                    style="font-weight: bold; color: var(--rz-primary);">@item.ResponseText</span>
-                                            </div>
-                                        }
-                                        else
-                                        {
-                                            <div @onclick="@(() => CopyToClipboard(_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.DefaultResponseText ?? string.Empty))"
-                                                 style="cursor: pointer;"
-                                                 title="Click to copy">
-                                                <span
-                                                    style="font-style: italic; color: var(--rz-text-secondary-color);">@_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.DefaultResponseText</span>
-                                            </div>
-                                        }
-                                    </Template>
-                                </RadzenDataGridColumn>
-
-                            </Columns>
-                        </RadzenDataGrid>
+                        <ProjectTimeDataGrid Data="@AggregateProjecttimes()"
+                                             ShowDateColumn="false"
+                                             ProjectNameTemplate="@ProjectNameTemplate"
+                                             ResponseObjectTemplate="@ResponseObjectTemplate"
+                                             TimeSpentTemplate="@TimeSpentTemplate"
+                                             ResponseTextTemplate="@ResponseTextTemplate"
+                                             TotalTimeSpent="@GetAggregatedTotalTimeSpent()"/>
                     }
                     else
                     {
@@ -256,14 +125,77 @@
 
     private ProjectModel? _defaultProject;
     private List<ProjectModel> _projects = [];
+    private Dictionary<Guid, ProjectModel> _projectLookup = [];
     private List<WorkdayViewModel> _workdays = [];
     private List<ProjecttimeModel> _projecttimes = [];
     private List<DateTime> _missingWorktimeDates = [];
+
+    private RenderFragment<ProjecttimeModel> DateTemplate => item => __builder =>
+    {
+        var workday = _workdays.FirstOrDefault(w => w.WorkdayId == item.WorkdayId);
+        if (workday != null)
+        {
+            <text>@workday.Date.ToString("dd.MM.yyyy")</text>
+        }
+    };
+
+    private RenderFragment<ProjecttimeModel> ProjectNameTemplate => item => __builder =>
+    {
+        <div
+            @onclick="@(() => CopyToClipboard(_projectLookup.GetValueOrDefault(item.ProjectId)?.Name ?? string.Empty))"
+            style="cursor: pointer;"
+            title="Click to copy">
+            @_projectLookup.GetValueOrDefault(item.ProjectId)?.Name
+        </div>
+    };
+
+    private RenderFragment<ProjecttimeModel> ResponseObjectTemplate => item => __builder =>
+    {
+        <div
+            @onclick="@(() => CopyToClipboard(_projectLookup.GetValueOrDefault(item.ProjectId)?.ResponseObject ?? string.Empty))"
+            style="cursor: pointer;"
+            title="Click to copy">
+            @_projectLookup.GetValueOrDefault(item.ProjectId)?.ResponseObject
+        </div>
+    };
+
+    private RenderFragment<ProjecttimeModel> TimeSpentTemplate => item => __builder =>
+    {
+        <div @onclick="@(() => CopyToClipboard(item.TimeSpent.TotalHours.ToString("F2")))"
+             style="cursor: pointer;"
+             title="Click to copy">
+            @item.TimeSpent.TotalHours.ToString("F2")
+        </div>
+    };
+
+    private RenderFragment<ProjecttimeModel> ResponseTextTemplate => item => __builder =>
+    {
+        @if (!string.IsNullOrEmpty(item.ResponseText))
+        {
+            <div @onclick="@(() => CopyToClipboard(item.ResponseText))"
+                 style="cursor: pointer;"
+                 title="Click to copy">
+                <span style="font-weight: bold; color: var(--rz-primary);">@item.ResponseText</span>
+            </div>
+        }
+        else
+        {
+            <div
+                @onclick="@(() => CopyToClipboard(_projectLookup.GetValueOrDefault(item.ProjectId)?.DefaultResponseText ?? string.Empty))"
+                style="cursor: pointer;"
+                title="Click to copy">
+                <span style="font-style: italic; color: var(--rz-text-secondary-color);">
+                    @_projectLookup.GetValueOrDefault(item.ProjectId)?.DefaultResponseText
+                </span>
+            </div>
+        }
+    };
 
     protected override async Task OnInitializedAsync()
     {
         SetWeekFromDate(_selectedDate);
         _projects = await ProjectService.GetProjectsAsync();
+        _projectLookup = _projects.ToDictionary(p => p.ProjectId);
         _defaultProject = _projects.FirstOrDefault(p => p.IsDefault);
         _reducingWorkdayTypes = GetReducingWorkdayTypeStrings();
         await UpdateWorkdayDataAsync();
@@ -274,7 +206,7 @@
         _workdays = await WorkdayService.GetWorkdaysAsync(_dateRangeStart, _dateRangeEnd);
         _projecttimes = await ProjecttimeService.GetProjecttimesAsync(_dateRangeStart, _dateRangeEnd);
         _missingWorktimeDates.Clear();
-        
+
         foreach (var workday in _workdays)
         {
             if (_reducingWorkdayTypes!.Contains(workday.TypeText))
@@ -288,10 +220,10 @@
             var totalDailyProjecttime = _projecttimes
                 .Where(pt => pt.WorkdayId == workday.WorkdayId)
                 .Sum(pt => pt.TimeSpent.TotalHours);
-            
+
             if (totalDailyProjecttime >= actualWorktimeHours)
                 continue;
-            
+
             var defaultProjecttime = new ProjecttimeModel
             {
                 WorkdayId = workday.WorkdayId,
@@ -347,7 +279,7 @@
         SetWeekFromDate(_selectedDate);
         await UpdateWorkdayDataAsync();
     }
-    
+
     private static List<string> GetReducingWorkdayTypeStrings()
     {
         return Enum.GetValues<ReducingWorkdayType>()
@@ -360,7 +292,7 @@
         var totalHours = await WorktimeService.GetTotalWorktimeAsync(_dateRangeStart, _dateRangeEnd);
         return totalHours ?? TimeSpan.Zero;
     }
-    
+
     private static string GetWorkdayEditPath(DateTime date)
     {
         return $"/?date={date:yyyy-MM-dd}";
@@ -396,18 +328,19 @@
     {
         if (string.IsNullOrEmpty(text))
             return;
-        
+
         await JsRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
         NotificationService.Notify(NotificationSeverity.Info, $"Copied to clipboard: {text}", duration: 3000);
     }
-    
+
     private double GetTotalTimeSpent()
     {
         return _projecttimes.Sum(pt => pt.TimeSpent.TotalHours);
     }
-    
+
     private double GetAggregatedTotalTimeSpent()
     {
         return AggregateProjecttimes().Sum(pt => pt.TimeSpent.TotalHours);
     }
+
 }

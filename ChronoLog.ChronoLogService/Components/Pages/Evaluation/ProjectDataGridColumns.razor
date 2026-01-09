@@ -1,0 +1,36 @@
+@typeparam TItem
+
+<RadzenDataGridColumn TItem="TItem" Property="Name" Title="Project Name">
+    <Template Context="item">
+        @ProjectNameTemplate(item)
+    </Template>
+</RadzenDataGridColumn>
+
+<RadzenDataGridColumn TItem="TItem" Property="Name" Title="Response Object">
+    <Template Context="item">
+        @ResponseObjectTemplate(item)
+    </Template>
+</RadzenDataGridColumn>
+
+<RadzenDataGridColumn TItem="TItem" Property="TimeSpent" Title="Time Spent (h)">
+    <Template Context="item">
+        @TimeSpentTemplate(item)
+    </Template>
+    <FooterTemplate>
+        Total: <strong>@FooterText</strong>
+    </FooterTemplate>
+</RadzenDataGridColumn>
+
+<RadzenDataGridColumn TItem="TItem" Title="Response Text">
+    <Template Context="item">
+        @ResponseTextTemplate(item)
+    </Template>
+</RadzenDataGridColumn>
+
+@code {
+    [Parameter] public RenderFragment<TItem> ProjectNameTemplate { get; set; } = null!;
+    [Parameter] public RenderFragment<TItem> ResponseObjectTemplate { get; set; } = null!;
+    [Parameter] public RenderFragment<TItem> TimeSpentTemplate { get; set; } = null!;
+    [Parameter] public RenderFragment<TItem> ResponseTextTemplate { get; set; } = null!;
+    [Parameter] public string FooterText { get; set; } = string.Empty;
+}

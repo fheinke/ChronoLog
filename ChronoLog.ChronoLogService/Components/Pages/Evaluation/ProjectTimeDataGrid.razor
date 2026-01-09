@@ -1,0 +1,52 @@
+@using ChronoLog.Core.Models.DisplayObjects
+
+<RadzenDataGrid Data="@Data"
+                TItem="ProjecttimeModel"
+                RowHover="true"
+                ShowPagingSummary="true"
+                PageSize="15"
+                AllowPaging="true"
+                AllowSorting="true"
+                AllowFiltering="true"
+                Style="width:100%;">
+    <Columns>
+        @if (ShowDateColumn)
+        {
+            <RadzenDataGridColumn TItem="ProjecttimeModel" Title="Date" Sortable="true">
+                <Template Context="item">
+                    @DateColumnTemplate(item)
+                </Template>
+            </RadzenDataGridColumn>
+        }
+
+        <RadzenDataGridColumn TItem="ProjecttimeModel" Property="Name" Title="Project Name">
+            <Template Context="item">@ProjectNameTemplate(item)</Template>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn TItem="ProjecttimeModel" Property="Name" Title="Response Object">
+            <Template Context="item">@ResponseObjectTemplate(item)</Template>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn TItem="ProjecttimeModel" Property="TimeSpent" Title="Time Spent (h)">
+            <Template Context="item">@TimeSpentTemplate(item)</Template>
+            <FooterTemplate>
+                Total: <strong>@TotalTimeSpent.ToString("F2") h</strong>
+            </FooterTemplate>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn TItem="ProjecttimeModel" Title="Response Text">
+            <Template Context="item">@ResponseTextTemplate(item)</Template>
+        </RadzenDataGridColumn>
+    </Columns>
+</RadzenDataGrid>
+
+@code {
+    [Parameter] public List<ProjecttimeModel> Data { get; set; } = [];
+    [Parameter] public bool ShowDateColumn { get; set; }
+    [Parameter] public RenderFragment<ProjecttimeModel> DateColumnTemplate { get; set; } = null!;
+    [Parameter] public RenderFragment<ProjecttimeModel> ProjectNameTemplate { get; set; } = null!;
+    [Parameter] public RenderFragment<ProjecttimeModel> ResponseObjectTemplate { get; set; } = null!;
+    [Parameter] public RenderFragment<ProjecttimeModel> TimeSpentTemplate { get; set; } = null!;
+    [Parameter] public RenderFragment<ProjecttimeModel> ResponseTextTemplate { get; set; } = null!;
+    [Parameter] public double TotalTimeSpent { get; set; }
+}
