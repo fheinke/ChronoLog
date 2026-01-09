@@ -89,6 +89,7 @@ public class EmployeeContextService : IEmployeeContextService
         {
             var employees = await _sqlDbContext.Employees
                 .AsNoTracking()
+                .OrderBy(e => e.Email)
                 .Select(e => e.ToModel())
                 .ToListAsync();
             return employees;

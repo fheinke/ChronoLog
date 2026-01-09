@@ -45,7 +45,7 @@ else
                 </RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="EmployeeModel" Property="IsAdmin" Title="Admin">
                     <Template Context="employee">
-                        <RadzenCheckBox Value="@employee.IsAdmin" Disabled="true"/>
+                        <RadzenCheckBox Value="@(employee.IsAdmin ?? false)" Disabled="true"/>
                     </Template>
                     <EditTemplate Context="employee">
                         <RadzenCheckBox @bind-Value="@employee.IsAdmin"/>
@@ -71,10 +71,10 @@ else
                                       Click="@(() => StartEdit(employee))"/>
                     </Template>
                     <EditTemplate Context="employee">
-                        <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
-                                      Click="@(() => SaveEdit(employee))"/>
                         <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
                                       Click="@(() => _grid.CancelEditRow(employee))"/>
+                        <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
+                                      Click="@(() => SaveEdit(employee))"/>
                     </EditTemplate>
                 </RadzenDataGridColumn>
             </Columns>
