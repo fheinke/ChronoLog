@@ -3,6 +3,8 @@
 @using ChronoLog.Core.Interfaces
 @using ChronoLog.Core.Models
 @using ChronoLog.Core.Models.DisplayObjects
+@inject IJSRuntime JsRuntime
+@inject NotificationService NotificationService
 @inject IWorkdayService WorkdayService
 @inject IWorktimeService WorktimeService
 @inject IProjectService ProjectService
@@ -85,26 +87,57 @@
 
                                 <RadzenDataGridColumn TItem="ProjecttimeModel" Property="Name" Title="Project Name">
                                     <Template Context="item">
-                                        @_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.Name
+                                        <div @onclick="@(() => CopyToClipboard(_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.Name ?? string.Empty))"
+                                             style="cursor: pointer;"
+                                             title="Click to copy">
+                                            @_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.Name
+                                        </div>
                                     </Template>
                                 </RadzenDataGridColumn>
+                                
+                                <RadzenDataGridColumn TItem="ProjecttimeModel" Property="Name" Title="Response Object">
+                                    <Template Context="item">
+                                        <div @onclick="@(() => CopyToClipboard(_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.ResponseObject ?? string.Empty))"
+                                             style="cursor: pointer;"
+                                             title="Click to copy">
+                                            @_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.ResponseObject
+                                        </div>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                
                                 <RadzenDataGridColumn TItem="ProjecttimeModel" Property="TimeSpent"
                                                       Title="Time Spent (h)">
                                     <Template Context="item">
-                                        @item.TimeSpent.TotalHours.ToString("F2")
+                                        <div @onclick="@(() => CopyToClipboard(item.TimeSpent.TotalHours.ToString("F2")))"
+                                             style="cursor: pointer;"
+                                             title="Click to copy">
+                                            @item.TimeSpent.TotalHours.ToString("F2")
+                                        </div>
                                     </Template>
+                                    <FooterTemplate>
+                                        Total: <strong>@GetTotalTimeSpent().ToString("F2") h</strong>
+                                    </FooterTemplate>
                                 </RadzenDataGridColumn>
+                                
                                 <RadzenDataGridColumn TItem="ProjecttimeModel" Title="Response Text">
                                     <Template Context="item">
                                         @if (!string.IsNullOrEmpty(item.ResponseText))
                                         {
-                                            <span
-                                                style="font-weight: bold; color: var(--rz-primary);">@item.ResponseText</span>
+                                            <div @onclick="@(() => CopyToClipboard(item.ResponseText))"
+                                                 style="cursor: pointer;"
+                                                 title="Click to copy">
+                                                <span
+                                                    style="font-weight: bold; color: var(--rz-primary);">@item.ResponseText</span>
+                                            </div>
                                         }
                                         else
                                         {
-                                            <span
-                                                style="font-style: italic; color: var(--rz-text-secondary-color);">@_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.DefaultResponseText</span>
+                                            <div @onclick="@(() => CopyToClipboard(_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.DefaultResponseText ?? string.Empty))"
+                                                 style="cursor: pointer;"
+                                                 title="Click to copy">
+                                                <span
+                                                    style="font-style: italic; color: var(--rz-text-secondary-color);">@_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.DefaultResponseText</span>
+                                            </div>
                                         }
                                     </Template>
                                 </RadzenDataGridColumn>
@@ -144,26 +177,57 @@
                             <Columns>
                                 <RadzenDataGridColumn TItem="ProjecttimeModel" Property="Name" Title="Project Name">
                                     <Template Context="item">
-                                        @_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.Name
+                                        <div @onclick="@(() => CopyToClipboard(_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.Name ?? string.Empty))"
+                                             style="cursor: pointer;"
+                                             title="Click to copy">
+                                            @_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.Name
+                                        </div>
                                     </Template>
                                 </RadzenDataGridColumn>
+                                
+                                <RadzenDataGridColumn TItem="ProjecttimeModel" Property="Name" Title="Response Object">
+                                    <Template Context="item">
+                                        <div @onclick="@(() => CopyToClipboard(_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.ResponseObject ?? string.Empty))"
+                                             style="cursor: pointer;"
+                                             title="Click to copy">
+                                            @_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.ResponseObject
+                                        </div>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                
                                 <RadzenDataGridColumn TItem="ProjecttimeModel" Property="TimeSpent"
                                                       Title="Time Spent (h)">
                                     <Template Context="item">
-                                        @item.TimeSpent.TotalHours.ToString("F2")
+                                        <div @onclick="@(() => CopyToClipboard(item.TimeSpent.TotalHours.ToString("F2")))"
+                                             style="cursor: pointer;"
+                                             title="Click to copy">
+                                            @item.TimeSpent.TotalHours.ToString("F2")
+                                        </div>
                                     </Template>
+                                    <FooterTemplate>
+                                        Total: <strong>@GetAggregatedTotalTimeSpent().ToString("F2") h</strong>
+                                    </FooterTemplate>
                                 </RadzenDataGridColumn>
+                                
                                 <RadzenDataGridColumn TItem="ProjecttimeModel" Title="Response Text">
                                     <Template Context="item">
                                         @if (!string.IsNullOrEmpty(item.ResponseText))
                                         {
-                                            <span
-                                                style="font-weight: bold; color: var(--rz-primary);">@item.ResponseText</span>
+                                            <div @onclick="@(() => CopyToClipboard(item.ResponseText))"
+                                                 style="cursor: pointer;"
+                                                 title="Click to copy">
+                                                <span
+                                                    style="font-weight: bold; color: var(--rz-primary);">@item.ResponseText</span>
+                                            </div>
                                         }
                                         else
                                         {
-                                            <span
-                                                style="font-style: italic; color: var(--rz-text-secondary-color);">@_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.DefaultResponseText</span>
+                                            <div @onclick="@(() => CopyToClipboard(_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.DefaultResponseText ?? string.Empty))"
+                                                 style="cursor: pointer;"
+                                                 title="Click to copy">
+                                                <span
+                                                    style="font-style: italic; color: var(--rz-text-secondary-color);">@_projects.FirstOrDefault(p => p.ProjectId == item.ProjectId)?.DefaultResponseText</span>
+                                            </div>
                                         }
                                     </Template>
                                 </RadzenDataGridColumn>
@@ -328,4 +392,22 @@
         return aggregated.Values.ToList();
     }
 
+    private async Task CopyToClipboard(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+            return;
+        
+        await JsRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+        NotificationService.Notify(NotificationSeverity.Info, $"Copied to clipboard: {text}", duration: 3000);
+    }
+    
+    private double GetTotalTimeSpent()
+    {
+        return _projecttimes.Sum(pt => pt.TimeSpent.TotalHours);
+    }
+    
+    private double GetAggregatedTotalTimeSpent()
+    {
+        return AggregateProjecttimes().Sum(pt => pt.TimeSpent.TotalHours);
+    }
 }
