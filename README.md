@@ -25,6 +25,7 @@ To install ChronoLog, follow these steps:
    - Name: ChronoLog
    - Supported account types: Accounts in this organizational directory only
    - Redirect URI: `Web` https://localhost:5001/signin-oidc (for the development environment, otherwise use your own domain)
+   - Redirect URI: `Web` https://localhost:5001/signout-callback-oidc (for the development environment, otherwise use your own domain)
 4. Click "Register"
 5. After registration, go to "Certificates & secrets" and create a new client secret. Note down the secret value.
 6. Go to "API permissions" and add the following Microsoft Graph permissions:
