@@ -1,3 +1,4 @@
+using System.Globalization;
 using ChronoLog.Applications;
 using ChronoLog.ChronoLogService.Components;
 using ChronoLog.ChronoLogService.Extensions;
@@ -13,6 +14,11 @@ using Microsoft.Identity.Web.UI;
 using Radzen;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Set default culture to de-DE
+var cultureInfo = new CultureInfo("de-DE");
+CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 
 // Authentication & Authorization
 builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
