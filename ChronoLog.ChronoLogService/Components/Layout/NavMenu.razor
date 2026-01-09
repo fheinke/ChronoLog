@@ -1,22 +1,23 @@
 ﻿@using ChronoLog.Core.Interfaces
 @inject IEmployeeContextService EmployeeContextService
 
-<RadzenPanelMenu DisplayStyle="@(IsExpanded ? MenuItemDisplayStyle.IconAndText : MenuItemDisplayStyle.Icon)" ShowArrow="false">
-    <RadzenPanelMenuItem Text="Overview" Icon="calendar_month" Path="/" />
+<RadzenPanelMenu DisplayStyle="@(IsExpanded ? MenuItemDisplayStyle.IconAndText : MenuItemDisplayStyle.Icon)" 
+                 ShowArrow="false">
+    <RadzenPanelMenuItem Text="Overview" Icon="calendar_today" Path="/" />
     @if (_showProjects)
     {
-        <RadzenPanelMenuItem Text="Projects" Icon="library_add" Path="projects" />
+        <RadzenPanelMenuItem Text="Projects" Icon="work" Path="projects" />
     }
-    <RadzenPanelMenuItem Text="Evaluation" Icon="account_balance_wallet" Path="evaluation" />
-    <RadzenPanelMenuItem Text="Time Balance" Icon="avg_time" Path="timebalance" />
+    <RadzenPanelMenuItem Text="Evaluation" Icon="assessment" Path="evaluation" />
+    <RadzenPanelMenuItem Text="Time Balance" Icon="schedule" Path="timebalance" />
 </RadzenPanelMenu>
 
 @code {
     [Parameter]
     public bool IsExpanded { get; set; }
-    
+
     private bool _showProjects;
-    
+
     protected override async Task OnInitializedAsync()
     {
         var employee = await EmployeeContextService.GetOrCreateCurrentEmployeeAsync();
