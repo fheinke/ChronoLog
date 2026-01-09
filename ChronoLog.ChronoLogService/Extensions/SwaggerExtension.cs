@@ -21,7 +21,7 @@ public static class SwaggerExtension
                     {
                         Name = "Felix Heinke"
                     },
-                    License = new OpenApiLicense { Name = "WTFPL" }
+                    License = new OpenApiLicense { Name = "MIT License" }
                 });
         });
         return services;
