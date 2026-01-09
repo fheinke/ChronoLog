@@ -55,7 +55,7 @@ To install ChronoLog, follow these steps:
    ```
 
 #### 3. User Configuration
-Currently you have to manually set a specific User as an Admin in the database to manage the Projects. You can do this by executing the following SQL command:
+You have to manually set an initial user as admin **after** the first login. To do this, execute the following command, replacing `<your_email_address>` with the email address of the user you want to set as admin:
 ```bash
 docker exec -it chronolog-database mysql -u<MYSQL_USER> -p<MYSQL_PASSWORD> <MYSQL_DATABASE> -e "UPDATE Employees SET IsAdmin = 1 WHERE Email = '<your_email_address>';"
 ```
