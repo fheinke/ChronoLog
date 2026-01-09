@@ -82,18 +82,34 @@ public class EmployeeContextService : IEmployeeContextService
         }
     }
 
+    public async Task<List<EmployeeModel>> GetAllEmployeesAsync()
+    {
+        await _initializationLock.WaitAsync();
+        try
+        {
+            var employees = await _sqlDbContext.Employees
+                .AsNoTracking()
+                .Select(e => e.ToModel())
+                .ToListAsync();
+            return employees;
+        }
+        finally
+        {
+            _initializationLock.Release();
+        }
+    }
+
     public async Task<List<AbsenceEntryModel>> GetEmployeeAbsenceDaysAsync(Guid employeeId, int year)
     {
         var reducingWorkdayTypes = Enum.GetValues<ReducingWorkdayType>()
             .Select(w => w.ToString())
             .ToList();
-        
+
         List<AbsenceEntryModel> absenceDays = [];
-        
+
         await _initializationLock.WaitAsync();
         try
         {
-
             var absenceEntries = await _sqlDbContext.Workdays
                 .Where(w => w.EmployeeId == employeeId)
                 .Where(w => w.Date.Year == year)
@@ -151,19 +167,19 @@ public class EmployeeContextService : IEmployeeContextService
     {
         var existingEmployee = await _sqlDbContext.Employees
             .FirstOrDefaultAsync(e => e.EmployeeId == employee.EmployeeId);
-        
+
         if (existingEmployee is null)
             return false;
-        
+
         existingEmployee.Province = employee.Province;
         existingEmployee.VacationDaysPerYear = employee.VacationDaysPerYear;
         existingEmployee.DailyWorkingTimeInHours = employee.DailyWorkingTimeInHours;
         existingEmployee.OvertimeCorrectionInHours = employee.OvertimeCorrectionInHours;
-        
+
         var affectedRows = await _sqlDbContext.SaveChangesAsync();
         return affectedRows > 0;
     }
-    
+
     private async Task<EmployeeModel?> FetchAndUpdateEmployeeAsync()
     {
         var userId = await _userService.GetUserIdAsync();
