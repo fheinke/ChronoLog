@@ -98,9 +98,6 @@ if (useReverseProxy)
     var baseUrl = builder.Configuration.GetValue<string>("ReverseProxy:BaseUrl");
     builder.Services.PostConfigure<OpenIdConnectOptions>(OpenIdConnectDefaults.AuthenticationScheme, options =>
     {
-        options.ProtocolValidator.RequireNonce = false;
-        options.UsePkce = true;
-
         options.NonceCookie.SecurePolicy = CookieSecurePolicy.Always;
         options.NonceCookie.SameSite = SameSiteMode.None;
         options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
