@@ -58,7 +58,13 @@
     </RadzenBody>
 
     <RadzenFooter>
-        <!--Footer-->
+        <RadzenStack Orientation="Orientation.Horizontal" 
+                     AlignItems="AlignItems.Center" 
+                     JustifyContent="JustifyContent.Center">
+            <RadzenText TextStyle="TextStyle.Caption">
+                © @DateTime.Now.Year ChronoLog. All rights reserved.
+            </RadzenText>
+        </RadzenStack>
     </RadzenFooter>
 </RadzenLayout>
 
