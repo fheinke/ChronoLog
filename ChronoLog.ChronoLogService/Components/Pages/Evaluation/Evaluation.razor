@@ -77,6 +77,18 @@
                 </RadzenStack>
             </RadzenCard>
         </RadzenColumn>
+        
+        <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
+            <RadzenCard>
+                <RadzenStack Gap="0.5rem">
+                    <RadzenText TextStyle="TextStyle.H6">Office Days</RadzenText>
+                    <RadzenText TextStyle="TextStyle.H3" Style="color: var(--rz-primary)">
+                        @_officeDays
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2">Days in Office this week</RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
 
         <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
             <RadzenCard>
@@ -168,6 +180,7 @@
     private TimeSpan _totalWorkingHours;
     private TimeSpan _weeklyOvertime;
     private TimeSpan _monthlyOvertime;
+    private int _officeDays;
 
     private ProjectModel? _defaultProject;
     private List<ProjectModel> _projects = [];
@@ -252,6 +265,7 @@
     {
         _workdays = await WorkdayService.GetWorkdaysAsync(_dateRangeStart, _dateRangeEnd);
         _projecttimes = await ProjecttimeService.GetProjecttimesAsync(_dateRangeStart, _dateRangeEnd);
+        _officeDays = await WorkdayService.GetOfficeDaysCountAsync(_dateRangeStart, _dateRangeEnd);
         _missingWorktimeDates.Clear();
 
         foreach (var workday in _workdays)

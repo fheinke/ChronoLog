@@ -15,4 +15,5 @@ public interface IWorkdayService
     Task<TimeSpan> GetTotalWorktimeAsync(Guid workdayId);
     Task<double> GetTotalOvertimeAsync();
     Task<int> GetOfficeDaysCountAsync(int year);
+    Task<int> GetOfficeDaysCountAsync(DateTime startDate, DateTime endDate);
 }

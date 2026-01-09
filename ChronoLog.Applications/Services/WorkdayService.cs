@@ -191,4 +191,17 @@ public class WorkdayService : IWorkdayService
             .CountAsync();
         return officeDaysCount;
     }
+    
+    public async Task<int> GetOfficeDaysCountAsync(DateTime startDate, DateTime endDate)
+    {
+        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
+        var officeDaysCount = await _sqlDbContext.Workdays
+            .AsNoTracking()
+            .Where(w => w.EmployeeId == employeeId &&
+                        w.Type == WorkdayType.Office &&
+                        w.Date >= startDate &&
+                        w.Date <= endDate)
+            .CountAsync();
+        return officeDaysCount;
+    }
 }
