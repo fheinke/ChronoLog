@@ -10,26 +10,60 @@
 
 <PageTitle>Overview</PageTitle>
 
-<div style="display: flex; flex-direction: column; height: 100%; gap: 10px;">
-    <RadzenScheduler @ref="@_scheduler"
-                     SlotRender="@OnSlotRender"
-                     SelectedIndex="1"
-                     Style="height: 760px;"
-                     TItem="WorkdayViewModel"
-                     Data="@_workdays"
-                     StartProperty="Start"
-                     EndProperty="End"
-                     TextProperty="TypeText"
-                     SlotSelect="@OnSlotSelect"
-                     AppointmentSelect="@OnAppointmentSelect"
-                     AppointmentRender="@OnAppointmentRender"
-                     DaySelect="@OnDaySelect">
-        <RadzenYearView/>
-        <RadzenMonthView/>
-        <RadzenWeekView StartTime="@(new TimeSpan(0, 0, 0))" EndTime="@(new TimeSpan(24, 0, 0))"/>
-        <RadzenDayView StartTime="@(new TimeSpan(0, 0, 0))" EndTime="@(new TimeSpan(24, 0, 0))"/>
-    </RadzenScheduler>
-</div>
+<RadzenStack Gap="1rem" Style="height: 100%;">
+    <RadzenText TextStyle="TextStyle.H4" TagName="TagName.H1">Work Calendar</RadzenText>
+
+    <!-- Calendar Card -->
+    <RadzenCard>
+        <RadzenScheduler @ref="@_scheduler"
+                         SlotRender="@OnSlotRender"
+                         SelectedIndex="1"
+                         Style="height: 600px;"
+                         TItem="WorkdayViewModel"
+                         Data="@_workdays"
+                         StartProperty="Start"
+                         EndProperty="End"
+                         TextProperty="TypeText"
+                         SlotSelect="@OnSlotSelect"
+                         AppointmentSelect="@OnAppointmentSelect"
+                         AppointmentRender="@OnAppointmentRender"
+                         DaySelect="@OnDaySelect">
+            <RadzenYearView/>
+            <RadzenMonthView/>
+            <RadzenWeekView StartTime="@(new TimeSpan(0, 0, 0))" EndTime="@(new TimeSpan(24, 0, 0))"/>
+            <RadzenDayView StartTime="@(new TimeSpan(0, 0, 0))" EndTime="@(new TimeSpan(24, 0, 0))"/>
+        </RadzenScheduler>
+    </RadzenCard>
+
+    <!-- Legend Card -->
+    <RadzenCard>
+        <RadzenStack Gap="0.5rem">
+            <RadzenText TextStyle="TextStyle.H6">Legend</RadzenText>
+            <RadzenStack Orientation="Orientation.Horizontal" Wrap="FlexWrap.Wrap" Gap="1rem">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                    <div style="width: 16px; height: 16px; background-color: #1976d2; border-radius: 2px;"></div>
+                    <RadzenText TextStyle="TextStyle.Body2">Home Office</RadzenText>
+                </RadzenStack>
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                    <div style="width: 16px; height: 16px; background-color: #d32f2f; border-radius: 2px;"></div>
+                    <RadzenText TextStyle="TextStyle.Body2">Office</RadzenText>
+                </RadzenStack>
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                    <div style="width: 16px; height: 16px; background-color: #8e24aa; border-radius: 2px;"></div>
+                    <RadzenText TextStyle="TextStyle.Body2">Vacation / Flextime</RadzenText>
+                </RadzenStack>
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                    <div style="width: 16px; height: 16px; background-color: #fdd835; border-radius: 2px;"></div>
+                    <RadzenText TextStyle="TextStyle.Body2">Sick Leave</RadzenText>
+                </RadzenStack>
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                    <div style="width: 16px; height: 16px; background-color: #388e3c; border-radius: 2px;"></div>
+                    <RadzenText TextStyle="TextStyle.Body2">Public Holiday</RadzenText>
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenStack>
+    </RadzenCard>
+</RadzenStack>
 
 @code {
     private RadzenScheduler<WorkdayViewModel>? _scheduler;
@@ -49,7 +83,7 @@
         _holidays = new GermanPublicHoliday { State = ParseProvinceToState(_employee.Province) };
         StateHasChanged();
     }
-    
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         await base.OnAfterRenderAsync(firstRender);
@@ -76,19 +110,16 @@
     {
         var existingStyle = args.Attributes.TryGetValue("style", out var style) ? style?.ToString() ?? string.Empty : string.Empty;
         var styleBuilder = existingStyle.TrimEnd(';');
-        
+
         var holidayNames = _holidays.PublicHolidayNames(args.Start.Year);
         var isHoliday = holidayNames.ContainsKey(args.Start.Date);
 
-        // Dim non-working days (Saturday and Sunday)
         if (args.Start.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday)
             styleBuilder = AppendStyle(styleBuilder, "background: var(--rz-base-300)");
-        
-        // Highlight holidays
+
         if (isHoliday)
             styleBuilder = AppendStyle(styleBuilder, "background: var(--rz-warning-lighter)");
 
-        // Add holiday tooltip
         if (isHoliday && holidayNames.TryGetValue(args.Start.Date, out var holidayName))
         {
             args.Attributes["title"] = $"{holidayName} (Feiertag)";
@@ -96,14 +127,12 @@
 
         switch (args.View.Text)
         {
-            // Highlight today in year and month view
             case "Year" or "Month" when args.Start.Date == DateTime.Today:
-            // Highlight working hours
-            case "Week" or "Day" when args.Start.Hour is > 7 and < 16:
+            case "Week" or "Day" when args.Start.Hour is >= 6 and < 17:
                 styleBuilder = AppendStyle(styleBuilder, "background: var(--rz-primary-lighter)");
                 break;
         }
-        
+
         if (!string.IsNullOrWhiteSpace(styleBuilder))
         {
             args.Attributes["style"] = styleBuilder;
@@ -120,7 +149,6 @@
 
     private static void OnAppointmentRender(SchedulerAppointmentRenderEventArgs<WorkdayViewModel> args)
     {
-        // Change background and text color based on WorkdayType
         var (bg, fg) = args.Data.Type switch
         {
             WorkdayType.Homeoffice => ("#1976d2", "white"),
@@ -131,7 +159,6 @@
             _ => (null, "inherit")
         };
 
-        // Keep existing styles and append new styles
         var existingStyle = args.Attributes.TryGetValue("style", out var style) ? style?.ToString() ?? string.Empty : string.Empty;
         var styleBuilder = existingStyle.TrimEnd(';');
 
@@ -142,7 +169,6 @@
                 styleBuilder += ";";
             }
 
-            // Add important colors to override default styles
             styleBuilder += $"background-color: {bg} !important; border-color: {bg} !important; color: {fg} !important;";
         }
 
@@ -211,7 +237,7 @@
         await _scheduler?.Reload()!;
         await LoadData();
     }
-    
+
     private async Task OpenEditDialogForDate(DateTime date)
     {
         var workday = _workdays?.FirstOrDefault(w => w.Date.Date == date.Date);
@@ -236,7 +262,7 @@
             await OnSlotSelect(slotArgs);
         }
     }
-    
+
     private static GermanPublicHoliday.States ParseProvinceToState(GermanProvince province)
     {
         return province switch
@@ -260,5 +286,4 @@
             _ => GermanPublicHoliday.States.ALL
         };
     }
-
 }
