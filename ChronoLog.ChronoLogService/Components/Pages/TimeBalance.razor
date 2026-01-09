@@ -11,13 +11,29 @@
 <RadzenStack Gap="1rem">
     <RadzenText TextStyle="TextStyle.H4" TagName="TagName.H1">Personal Time Balance</RadzenText>
 
+    <!-- Year Selector Card -->
+    <RadzenCard>
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween"
+                     AlignItems="AlignItems.Center" Gap="1rem" Wrap="FlexWrap.Wrap">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenLabel Text="Select Year"/>
+                <RadzenButton Icon="chevron_left" ButtonStyle="ButtonStyle.Light" Click="@PrevYear"/>
+                <RadzenText TextStyle="TextStyle.H6" Style="min-width: 80px; text-align: center;">
+                    @_selectedYear
+                </RadzenText>
+                <RadzenButton Icon="chevron_right" ButtonStyle="ButtonStyle.Light" Click="@NextYear"/>
+                <RadzenButton Text="Current Year" ButtonStyle="ButtonStyle.Secondary" Click="@(() => OnYearChanged(DateTime.UtcNow.Year))"/>
+            </RadzenStack>
+        </RadzenStack>
+    </RadzenCard>
+
     <!-- Overview Cards -->
     <RadzenRow Gap="1rem">
         <RadzenColumn Size="12" SizeMD="6">
             <RadzenCard>
                 <RadzenStack Gap="0.5rem">
-                    <RadzenText TextStyle="TextStyle.H6">Vacation</RadzenText>
-                    <RadzenText TextStyle="TextStyle.H3" Style="color: var(--rz-primary)">
+                    <RadzenText TextStyle="TextStyle.H6">Vacation @_selectedYear</RadzenText>
+                    <RadzenText TextStyle="TextStyle.H3" Style="color: rgba(103, 58, 183, 1)">
                         @(_absenceDays.Count(a => a.AbsenceTypes.Split(", ").Contains(nameof(ReducingWorkdayType.Urlaub)))) / @_vacationDaysPerYear
                     </RadzenText>
                     <RadzenText TextStyle="TextStyle.Body2">Remaining: @RemainingVacationDays Days</RadzenText>
@@ -28,11 +44,11 @@
         <RadzenColumn Size="12" SizeMD="6">
             <RadzenCard>
                 <RadzenStack Gap="0.5rem">
-                    <RadzenText TextStyle="TextStyle.H6">Overtime</RadzenText>
+                    <RadzenText TextStyle="TextStyle.H6">Total Overtime</RadzenText>
                     <RadzenText TextStyle="TextStyle.H3" Style="@GetOvertimeColor()">
-                        @_totalOvertime.ToString("F2") h
+                        @(_totalOvertime >= 0 ? "+" : "")@_totalOvertime.ToString("F2") h
                     </RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body2">Hours collected</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2">Hours collected (all time)</RadzenText>
                 </RadzenStack>
             </RadzenCard>
         </RadzenColumn>
@@ -40,28 +56,38 @@
 
     <!-- Absence Details -->
     <RadzenCard>
-        <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 1rem">Absence overview</RadzenText>
-        <RadzenDataGrid Data="@_absenceDays" TItem="AbsenceEntryModel" AllowPaging="true" PageSize="10">
-            <Columns>
-                <RadzenDataGridColumn TItem="AbsenceEntryModel" Property="StartDate" Title="First Day">
-                    <Template Context="data">
-                        @data.StartDate.ToShortDateString()
-                    </Template>
-                </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="AbsenceEntryModel" Property="EndDate" Title="Last Day">
-                    <Template Context="data">
-                        @data.EndDate.ToShortDateString()
-                    </Template>
-                </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="AbsenceEntryModel" Property="AbsenceTypes" Title="Type"/>
-                <RadzenDataGridColumn TItem="AbsenceEntryModel" Property="DurationInDays" Title="Days"/>
-            </Columns>
-        </RadzenDataGrid>
+        <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 1rem">Absence overview for @_selectedYear</RadzenText>
+        @if (_absenceDays.Any())
+        {
+            <RadzenDataGrid Data="@_absenceDays" TItem="AbsenceEntryModel" AllowPaging="true" PageSize="10">
+                <Columns>
+                    <RadzenDataGridColumn TItem="AbsenceEntryModel" Property="StartDate" Title="First Day">
+                        <Template Context="data">
+                            @data.StartDate.ToShortDateString()
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="AbsenceEntryModel" Property="EndDate" Title="Last Day">
+                        <Template Context="data">
+                            @data.EndDate.ToShortDateString()
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="AbsenceEntryModel" Property="AbsenceTypes" Title="Type"/>
+                    <RadzenDataGridColumn TItem="AbsenceEntryModel" Property="DurationInDays" Title="Days"/>
+                </Columns>
+            </RadzenDataGrid>
+        }
+        else
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat">
+                No absences recorded for @_selectedYear.
+            </RadzenAlert>
+        }
     </RadzenCard>
 </RadzenStack>
 
 @code {
     private EmployeeModel? _currentEmployee;
+    private int _selectedYear = DateTime.UtcNow.Year;
 
     private List<AbsenceEntryModel> _absenceDays = [];
     private int _vacationDaysPerYear;
@@ -72,9 +98,31 @@
     {
         _currentEmployee = await EmployeeContextService.GetOrCreateCurrentEmployeeAsync();
         _vacationDaysPerYear = _currentEmployee.VacationDaysPerYear;
-        _absenceDays = await EmployeeContextService.GetEmployeeAbsenceDaysAsync(_currentEmployee.EmployeeId, DateTime.UtcNow.Year);
         _totalOvertime = await WorkdayService.GetTotalOvertimeAsync();
+        await LoadAbsenceDaysAsync();
     }
-    
-    private string GetOvertimeColor() => _totalOvertime >= 0 ? "color: var(--rz-success)" : "color: var(--rz-danger)";
+
+    private async Task LoadAbsenceDaysAsync()
+    {
+        if (_currentEmployee != null)
+            _absenceDays = await EmployeeContextService.GetEmployeeAbsenceDaysAsync(_currentEmployee.EmployeeId, _selectedYear);
+    }
+
+    private async Task OnYearChanged(int year)
+    {
+        _selectedYear = year;
+        await LoadAbsenceDaysAsync();
+    }
+
+    private async Task PrevYear()
+    {
+        await OnYearChanged(_selectedYear - 1);
+    }
+
+    private async Task NextYear()
+    {
+        await OnYearChanged(_selectedYear + 1);
+    }
+
+    private string GetOvertimeColor() => _totalOvertime >= 0 ? "color: rgba(76, 175, 80, 1)" : "color: rgba(244, 67, 54, 1)";
 }
