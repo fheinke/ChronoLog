@@ -2,6 +2,7 @@
 @using ChronoLog.Core.Models
 @using ChronoLog.Core.Models.DisplayObjects
 @inherits LayoutComponentBase
+@inject IJSRuntime JsRuntime
 @inject ThemeService ThemeService
 @inject IEmployeeContextService EmployeeContextService
 
@@ -33,23 +34,34 @@
                         </RadzenStack>
                     </Template>
                     <ChildContent>
-                        <RadzenProfileMenuItem Text="@($"{_remainingVacationDays} / {_currentEmployee?.VacationDaysPerYear} Vacationdays")"
-                                               Icon="event"
-                                               Style="pointer-events: none; opacity: 0.9;"/>
+                        <RadzenProfileMenuItem
+                            Text="@($"{_remainingVacationDays} / {_currentEmployee?.VacationDaysPerYear} Vacationdays")"
+                            Icon="event"
+                            Style="pointer-events: none; opacity: 0.9;"/>
 
                         <RadzenProfileMenuItem/>
-        
+
                         <RadzenProfileMenuItem Text="Personal Settings" Icon="manage_accounts" Path="personalsettings"/>
-                        <RadzenProfileMenuItem Text="Logout" Icon="logout" Path="MicrosoftIdentity/Account/SignOut?returnUrl=/"/>
+                        <RadzenProfileMenuItem Text="Logout" Icon="logout"
+                                               Path="MicrosoftIdentity/Account/SignOut?returnUrl=/"/>
                     </ChildContent>
                 </RadzenProfileMenu>
             </RadzenStack>
         </RadzenStack>
     </RadzenHeader>
 
-    <RadzenSidebar Responsive="true" Style="width: max-content">
-        <NavMenu IsExpanded="@_sidebarExpanded"/>
-    </RadzenSidebar>
+    @if (_isMobile)
+    {
+        <RadzenSidebar Responsive="true" Expanded="@_sidebarExpanded" Style="width: max-content">
+            <NavMenu IsExpanded="true"/>
+        </RadzenSidebar>
+    }
+    else
+    {
+        <RadzenSidebar Responsive="@_sidebarExpanded" Style="width: max-content">
+            <NavMenu IsExpanded="@_sidebarExpanded"/>
+        </RadzenSidebar>
+    }
 
     <RadzenBody>
         <div class="rz-p-4">
@@ -58,8 +70,8 @@
     </RadzenBody>
 
     <RadzenFooter>
-        <RadzenStack Orientation="Orientation.Horizontal" 
-                     AlignItems="AlignItems.Center" 
+        <RadzenStack Orientation="Orientation.Horizontal"
+                     AlignItems="AlignItems.Center"
                      JustifyContent="JustifyContent.Center">
             <RadzenText TextStyle="TextStyle.Caption">
                 © @DateTime.Now.Year ChronoLog. All rights reserved.
@@ -76,7 +88,8 @@
 
 @code {
     private bool _sidebarExpanded;
-    
+    private bool _isMobile;
+
     private EmployeeModel? _currentEmployee;
     private int _remainingVacationDays;
 
@@ -87,6 +100,16 @@
         _currentEmployee ??= await EmployeeContextService.GetOrCreateCurrentEmployeeAsync();
         var absenceDays = await EmployeeContextService.GetEmployeeAbsenceDaysAsync(_currentEmployee.EmployeeId, DateTime.UtcNow.Year);
         _remainingVacationDays = absenceDays.Count(a => a.AbsenceTypes.Split(", ").Contains(nameof(ReducingWorkdayType.Urlaub)));
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await base.OnAfterRenderAsync(firstRender);
+            _isMobile = await JsRuntime.InvokeAsync<bool>("eval", "window.innerWidth < 768");
+            StateHasChanged();
+        }
     }
 
     private void ToggleTheme()
@@ -104,4 +127,5 @@
         var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         return parts.Length >= 2 ? $"{parts[0][0]}{parts[1][0]}".ToUpper() : parts[0][0].ToString().ToUpper();
     }
+
 }
