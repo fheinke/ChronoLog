@@ -5,6 +5,7 @@
 @using ChronoLog.Core.Models.DisplayObjects
 @inject IJSRuntime JsRuntime
 @inject NotificationService NotificationService
+@inject IEmployeeContextService EmployeeContextService
 @inject IWorkdayService WorkdayService
 @inject IWorktimeService WorktimeService
 @inject IProjectService ProjectService
@@ -12,106 +13,149 @@
 
 <PageTitle>Evaluation</PageTitle>
 
-<RadzenStack Orientation="Orientation.Vertical" Gap="10px">
-    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center"
-                 AlignItems="AlignItems.Center" Gap="0.5rem" class="rz-p-3">
-        <RadzenLabel Text="Select Week" Component="DatePickerYearWeek"/>
-        <RadzenDatePicker @bind-Value="@_selectedDate" ShowButton="false" DateFormat="dd/MM/yyyy"
-                          CurrentDateChanged="@OnCurrentDateChanged" Name="DatePickerYearWeek">
-            <FooterTemplate>
-                <RadzenButton Click="@(_ => OnCurrentDateChanged(DateTime.Now))" Text="Today"
-                              Style="width: 100%;" class="rz-my-4"/>
-            </FooterTemplate>
-        </RadzenDatePicker>
-        <RadzenButton Icon="chevron_left" ButtonStyle="ButtonStyle.Light" Click="@PrevWeek"
-                      Style="margin-left:0.5rem;"/>
-        <RadzenButton Icon="chevron_right" ButtonStyle="ButtonStyle.Light" Click="@NextWeek"/>
-        <div style="display:flex; align-items:center; margin-left:1rem;">
-            <strong>Week @CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(_selectedDate, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday):</strong>&nbsp;
-            <span>@_dateRangeStart.ToString("dd.MM.yyyy") - @_dateRangeEnd.ToString("dd.MM.yyyy")</span>
-        </div>
-    </RadzenStack>
+<RadzenStack Gap="1rem">
+    <RadzenText TextStyle="TextStyle.H4" TagName="TagName.H1">Project Time Evaluation</RadzenText>
 
+    <!-- Week Selector Card -->
+    <RadzenCard>
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween"
+                     AlignItems="AlignItems.Center" Gap="1rem" Wrap="FlexWrap.Wrap">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenLabel Text="Select Week"/>
+                <RadzenDatePicker @bind-Value="@_selectedDate" ShowButton="false" DateFormat="dd/MM/yyyy"
+                                  CurrentDateChanged="@OnCurrentDateChanged">
+                    <FooterTemplate>
+                        <RadzenButton Click="@(_ => OnCurrentDateChanged(DateTime.Now))" Text="Today"
+                                      Style="width: 100%;" class="rz-my-4"/>
+                    </FooterTemplate>
+                </RadzenDatePicker>
+                <RadzenButton Icon="chevron_left" ButtonStyle="ButtonStyle.Light" Click="@PrevWeek"/>
+                <RadzenButton Icon="chevron_right" ButtonStyle="ButtonStyle.Light" Click="@NextWeek"/>
+            </RadzenStack>
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenText TextStyle="TextStyle.H6">
+                    Week @CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(_selectedDate, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday)
+                </RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2">
+                    @_dateRangeStart.ToString("dd.MM.yyyy") - @_dateRangeEnd.ToString("dd.MM.yyyy")
+                </RadzenText>
+            </RadzenStack>
+        </RadzenStack>
+    </RadzenCard>
+
+    <!-- Warning Alert -->
     @if (_missingWorktimeDates.Any())
     {
-        <RadzenAlert AlertStyle="AlertStyle.Warning"
-                     Variant="Variant.Flat"
-                     Shade="Shade.Lighter"
-                     class="rz-my-4">
-            <strong>Warning:</strong> There are missing worktime entries for the following dates:
-            <ul style="margin: 0.5rem 0 0 0; padding-left: 1.5rem;">
-                @foreach (var date in _missingWorktimeDates)
-                {
-                    <li>
-                        <RadzenLink Path="@GetWorkdayEditPath(date)" Text="@date.ToString("dd.MM.yyyy")"
-                                    Style="margin-left:0.5rem;"/>
-                    </li>
-                }
-            </ul>
-            For accurate evaluation, please ensure all worktime entries are recorded.
+        <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter">
+            <RadzenStack Gap="0.5rem">
+                <RadzenText TextStyle="TextStyle.H6">Missing Worktime Entries</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2">
+                    Please complete entries for the following dates for accurate evaluation:
+                </RadzenText>
+                <RadzenStack Orientation="Orientation.Horizontal" Wrap="FlexWrap.Wrap" Gap="0.5rem">
+                    @foreach (var date in _missingWorktimeDates)
+                    {
+                        <RadzenLink Path="@GetWorkdayEditPath(date)"
+                                    Text="@date.ToString("dd.MM.yyyy")"
+                                    Style="font-weight: 500;"/>
+                    }
+                </RadzenStack>
+            </RadzenStack>
         </RadzenAlert>
     }
 
-    <RadzenTabs>
-        <Tabs>
-            <RadzenTabsItem Text="Daily SAP">
-                <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0.5rem"
-                             class="rz-p-4 rz-mb-6 rz-border-radius-1"
-                             Style="border: var(--rz-grid-cell-border, 1px solid rgba(0,0,0,0.12));">
-                    <RadzenLabel Text="Total Booked Working Time:"/>
-                    <RadzenBadge Text="@($"{_totalWorkingHours.TotalHours:F2}h")"/>
+    <!-- Summary Cards -->
+    <RadzenRow Gap="1rem">
+        <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
+            <RadzenCard>
+                <RadzenStack Gap="0.5rem">
+                    <RadzenText TextStyle="TextStyle.H6">Weekly Working Time</RadzenText>
+                    <RadzenText TextStyle="TextStyle.H3" Style="color: var(--rz-primary)">
+                        @_totalWorkingHours.TotalHours.ToString("F2") h
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2">Booked hours this week</RadzenText>
                 </RadzenStack>
-                <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0.5rem"
-                             class="rz-p-4 rz-mb-6 rz-border-radius-1"
-                             Style="border: var(--rz-grid-cell-border, 1px solid rgba(0,0,0,0.12));">
-                    <RadzenLabel Text="Project Times for this Week:"/>
-                    @if (_projecttimes.Count > 0)
-                    {
-                        <ProjectTimeDataGrid Data="@_projecttimes"
-                                             ShowDateColumn="true"
-                                             DateColumnTemplate="@DateTemplate"
-                                             ProjectNameTemplate="@ProjectNameTemplate"
-                                             ResponseObjectTemplate="@ResponseObjectTemplate"
-                                             TimeSpentTemplate="@TimeSpentTemplate"
-                                             ResponseTextTemplate="@ResponseTextTemplate"
-                                             TotalTimeSpent="@GetTotalTimeSpent()"/>
-                    }
-                    else
-                    {
-                        <RadzenLabel Text="No project times recorded for this week." Style="font-style: italic;"/>
-                    }
-                </RadzenStack>
-            </RadzenTabsItem>
+            </RadzenCard>
+        </RadzenColumn>
 
-            <RadzenTabsItem Text="Weekly SAP" Selected="true">
-                <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0.5rem"
-                             class="rz-p-4 rz-mb-6 rz-border-radius-1"
-                             Style="border: var(--rz-grid-cell-border, 1px solid rgba(0,0,0,0.12));">
-                    <RadzenLabel Text="Total Booked Working Time:"/>
-                    <RadzenBadge Text="@($"{_totalWorkingHours.TotalHours:F2}h")"/>
+        <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
+            <RadzenCard>
+                <RadzenStack Gap="0.5rem">
+                    <RadzenText TextStyle="TextStyle.H6">Weekly Balance</RadzenText>
+                    <RadzenText TextStyle="TextStyle.H3" Style="@GetOvertimeColor(_weeklyOvertime)">
+                        @(_weeklyOvertime.TotalHours >= 0 ? "+" : "")@_weeklyOvertime.TotalHours.ToString("F2") h
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2">Overtime this week</RadzenText>
                 </RadzenStack>
-                <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0.5rem"
-                             class="rz-p-4 rz-mb-6 rz-border-radius-1"
-                             Style="border: var(--rz-grid-cell-border, 1px solid rgba(0,0,0,0.12));">
-                    <RadzenLabel Text="Aggregated Project Times for this Week:"/>
-                    @if (_projecttimes.Count > 0)
-                    {
-                        <ProjectTimeDataGrid Data="@AggregateProjecttimes()"
-                                             ShowDateColumn="false"
-                                             ProjectNameTemplate="@ProjectNameTemplate"
-                                             ResponseObjectTemplate="@ResponseObjectTemplate"
-                                             TimeSpentTemplate="@TimeSpentTemplate"
-                                             ResponseTextTemplate="@ResponseTextTemplate"
-                                             TotalTimeSpent="@GetAggregatedTotalTimeSpent()"/>
-                    }
-                    else
-                    {
-                        <RadzenLabel Text="No project times recorded for this week." Style="font-style: italic;"/>
-                    }
+            </RadzenCard>
+        </RadzenColumn>
+
+        <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
+            <RadzenCard>
+                <RadzenStack Gap="0.5rem">
+                    <RadzenText TextStyle="TextStyle.H6">Monthly Balance</RadzenText>
+                    <RadzenText TextStyle="TextStyle.H3" Style="@GetOvertimeColor(_monthlyOvertime)">
+                        @(_monthlyOvertime.TotalHours >= 0 ? "+" : "")@_monthlyOvertime.TotalHours.ToString("F2") h
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2">Overtime
+                        in @_selectedDate.ToString("MMMM yyyy")</RadzenText>
                 </RadzenStack>
-            </RadzenTabsItem>
-        </Tabs>
-    </RadzenTabs>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+
+
+    <!-- Tabs -->
+    <RadzenCard Style="padding: 0;">
+        <RadzenTabs>
+            <Tabs>
+                <RadzenTabsItem Text="Daily SAP">
+                    <RadzenStack Gap="1rem" Style="padding: 1rem;">
+                        <RadzenText TextStyle="TextStyle.H6">Daily Project Times</RadzenText>
+                        @if (_projecttimes.Count > 0)
+                        {
+                            <ProjectTimeDataGrid Data="@_projecttimes"
+                                                 ShowDateColumn="true"
+                                                 DateColumnTemplate="@DateTemplate"
+                                                 ProjectNameTemplate="@ProjectNameTemplate"
+                                                 ResponseObjectTemplate="@ResponseObjectTemplate"
+                                                 TimeSpentTemplate="@TimeSpentTemplate"
+                                                 ResponseTextTemplate="@ResponseTextTemplate"
+                                                 TotalTimeSpent="@GetTotalTimeSpent()"/>
+                        }
+                        else
+                        {
+                            <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat">
+                                No project times recorded for this week.
+                            </RadzenAlert>
+                        }
+                    </RadzenStack>
+                </RadzenTabsItem>
+
+                <RadzenTabsItem Text="Weekly SAP" Selected="true">
+                    <RadzenStack Gap="1rem" Style="padding: 1rem;">
+                        <RadzenText TextStyle="TextStyle.H6">Aggregated Project Times</RadzenText>
+                        @if (_projecttimes.Count > 0)
+                        {
+                            <ProjectTimeDataGrid Data="@AggregateProjecttimes()"
+                                                 ShowDateColumn="false"
+                                                 ProjectNameTemplate="@ProjectNameTemplate"
+                                                 ResponseObjectTemplate="@ResponseObjectTemplate"
+                                                 TimeSpentTemplate="@TimeSpentTemplate"
+                                                 ResponseTextTemplate="@ResponseTextTemplate"
+                                                 TotalTimeSpent="@GetAggregatedTotalTimeSpent()"/>
+                        }
+                        else
+                        {
+                            <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat">
+                                No project times recorded for this week.
+                            </RadzenAlert>
+                        }
+                    </RadzenStack>
+                </RadzenTabsItem>
+            </Tabs>
+        </RadzenTabs>
+    </RadzenCard>
 </RadzenStack>
 
 @code {
@@ -119,9 +163,11 @@
     private DateTime _dateRangeStart;
     private DateTime _dateRangeEnd;
 
-    private const double DailyWorkingHours = 8.0;
+    private double _dailyWorkingHours;
     private List<string>? _reducingWorkdayTypes;
     private TimeSpan _totalWorkingHours;
+    private TimeSpan _weeklyOvertime;
+    private TimeSpan _monthlyOvertime;
 
     private ProjectModel? _defaultProject;
     private List<ProjectModel> _projects = [];
@@ -198,6 +244,7 @@
         _projectLookup = _projects.ToDictionary(p => p.ProjectId);
         _defaultProject = _projects.FirstOrDefault(p => p.IsDefault);
         _reducingWorkdayTypes = GetReducingWorkdayTypeStrings();
+        _dailyWorkingHours = (await EmployeeContextService.GetOrCreateCurrentEmployeeAsync()).DailyWorkingTimeInHours;
         await UpdateWorkdayDataAsync();
     }
 
@@ -213,7 +260,7 @@
                 continue;
 
             var actualWorktime = await WorkdayService.GetTotalWorktimeAsync(workday.WorkdayId);
-            var actualWorktimeHours = actualWorktime.TotalHours == 0 ? DailyWorkingHours : actualWorktime.TotalHours;
+            var actualWorktimeHours = actualWorktime.TotalHours == 0 ? _dailyWorkingHours : actualWorktime.TotalHours;
             if (actualWorktime == TimeSpan.Zero)
                 _missingWorktimeDates.Add(workday.Date);
 
@@ -244,6 +291,9 @@
         _missingWorktimeDates = _missingWorktimeDates.Distinct().OrderBy(d => d).ToList();
 
         _totalWorkingHours = await GetTotalWorkingHours();
+        _weeklyOvertime = CalculateWeeklyOvertime();
+        _monthlyOvertime = await CalculateMonthlyOvertime();
+
         StateHasChanged();
     }
 
@@ -291,6 +341,34 @@
     {
         var totalHours = await WorktimeService.GetTotalWorktimeAsync(_dateRangeStart, _dateRangeEnd);
         return totalHours ?? TimeSpan.Zero;
+    }
+
+    private TimeSpan CalculateWeeklyOvertime()
+    {
+        var expectedHours = _workdays.Count(w => !_reducingWorkdayTypes!.Contains(w.TypeText)) * _dailyWorkingHours;
+        var actualHours = _totalWorkingHours.TotalHours;
+        return TimeSpan.FromHours(actualHours - expectedHours);
+    }
+
+    private async Task<TimeSpan> CalculateMonthlyOvertime()
+    {
+        var monthStart = new DateTime(_selectedDate.Year, _selectedDate.Month, 1);
+        var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+
+        var monthWorkdays = await WorkdayService.GetWorkdaysAsync(monthStart, monthEnd);
+        var expectedHours = monthWorkdays.Count(w => !_reducingWorkdayTypes!.Contains(w.TypeText)) * _dailyWorkingHours;
+
+        var actualHours = await WorktimeService.GetTotalWorktimeAsync(monthStart, monthEnd);
+        return actualHours.HasValue
+            ? TimeSpan.FromHours(actualHours.Value.TotalHours - expectedHours)
+            : TimeSpan.Zero;
+    }
+
+    private string GetOvertimeColor(TimeSpan overtime)
+    {
+        return overtime.TotalHours >= 0
+            ? "color: var(--rz-success)"
+            : "color: var(--rz-danger)";
     }
 
     private static string GetWorkdayEditPath(DateTime date)
