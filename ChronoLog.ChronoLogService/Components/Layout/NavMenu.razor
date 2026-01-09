@@ -10,6 +10,10 @@
     }
     <RadzenPanelMenuItem Text="Evaluation" Icon="assessment" Path="evaluation" />
     <RadzenPanelMenuItem Text="Time Balance" Icon="schedule" Path="timebalance" />
+    @if (_showUserManagement)
+    {
+        <RadzenPanelMenuItem Text="User Management" Icon="manage_accounts" Path="usermanagement" />
+    }
 </RadzenPanelMenu>
 
 @code {
@@ -17,10 +21,12 @@
     public bool IsExpanded { get; set; }
 
     private bool _showProjects;
+    private bool _showUserManagement;
 
     protected override async Task OnInitializedAsync()
     {
         var employee = await EmployeeContextService.GetOrCreateCurrentEmployeeAsync();
         _showProjects = employee.IsAdmin == true || employee.IsProjectManager == true;
+        _showUserManagement = employee.IsAdmin == true;
     }
 }

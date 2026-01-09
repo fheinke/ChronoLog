@@ -1,0 +1,124 @@
+@page "/usermanagement"
+@using System.Globalization
+@using ChronoLog.Core.Interfaces
+@using ChronoLog.Core.Models.DisplayObjects
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject NotificationService NotificationService
+@inject IEmployeeContextService EmployeeContextService
+
+<PageTitle>User Management</PageTitle>
+
+@if (!_isAuthorized)
+{
+    <RadzenCard>
+        <p>You do not have the necessary access rights to view this site.</p>
+    </RadzenCard>
+}
+else
+{
+    <RadzenStack Gap="1rem">
+        <RadzenText TextStyle="TextStyle.H4" TagName="TagName.H1">User Management</RadzenText>
+        <RadzenText TextStyle="TextStyle.Body1">
+            Manage user accounts, roles, and permissions within the ChronoLog application.
+        </RadzenText>
+
+        <RadzenDataGrid @ref="_grid"
+                        Data="@_employees"
+                        TItem="EmployeeModel"
+                        AllowFiltering="true"
+                        AllowSorting="true"
+                        AllowPaging="true"
+                        PageSize="10"
+                        EditMode="DataGridEditMode.Single"
+                        RowUpdate="@OnUpdateRow">
+            <Columns>
+                <RadzenDataGridColumn TItem="EmployeeModel" Property="Name" Title="Name">
+                    <Template Context="employee">
+                        @employee.Name
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="EmployeeModel" Property="Email" Title="Email">
+                    <Template Context="employee">
+                        @employee.Email
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="EmployeeModel" Property="IsAdmin" Title="Admin">
+                    <Template Context="employee">
+                        <RadzenCheckBox Value="@employee.IsAdmin" Disabled="true"/>
+                    </Template>
+                    <EditTemplate Context="employee">
+                        <RadzenCheckBox @bind-Value="@employee.IsAdmin"/>
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="EmployeeModel" Property="IsProjectManager" Title="Project manager">
+                    <Template Context="employee">
+                        <RadzenCheckBox Value="@(employee.IsProjectManager ?? false)" Disabled="true"/>
+                    </Template>
+                    <EditTemplate Context="employee">
+                        <RadzenCheckBox @bind-Value="@employee.IsProjectManager"/>
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="EmployeeModel" Property="LastSeen" Title="Last seen">
+                    <Template Context="employee">
+                        @(employee.LastSeen.ToLocalTime().ToString("g", CultureInfo.CurrentCulture))
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="EmployeeModel" Width="100px" Sortable="false" Filterable="false">
+                    <Template Context="employee">
+                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                                      Click="@(() => StartEdit(employee))"/>
+                    </Template>
+                    <EditTemplate Context="employee">
+                        <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
+                                      Click="@(() => SaveEdit(employee))"/>
+                        <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                                      Click="@(() => _grid.CancelEditRow(employee))"/>
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenStack>
+}
+
+@code {
+    private bool _isAuthorized;
+    
+    private List<EmployeeModel> _employees = null!;
+    private RadzenDataGrid<EmployeeModel> _grid = null!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var employee = await EmployeeContextService.GetOrCreateCurrentEmployeeAsync();
+        _isAuthorized = employee.IsAdmin == true;
+        if (!_isAuthorized) return;
+        _employees = await EmployeeContextService.GetAllEmployeesAsync();
+    }
+
+    private void StartEdit(EmployeeModel employee)
+    {
+        employee.IsAdmin ??= false;
+        employee.IsProjectManager ??= false;
+        _grid.EditRow(employee);
+    }
+
+    private async Task SaveEdit(EmployeeModel employee)
+    {
+        await _grid.UpdateRow(employee);
+    }
+    
+    private async Task OnUpdateRow(EmployeeModel employee)
+    {
+        try
+        {
+            await EmployeeContextService.UpdateEmployeeAsync(employee);
+            NotificationService.Notify(NotificationSeverity.Success, "User has been updated.");
+        }
+        catch (Exception)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Something went wrong updating the user.");
+        }
+    }
+
+}
