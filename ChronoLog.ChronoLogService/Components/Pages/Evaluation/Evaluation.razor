@@ -1,7 +1,7 @@
 @page "/evaluation"
 @using System.Globalization
+@using ChronoLog.Core
 @using ChronoLog.Core.Interfaces
-@using ChronoLog.Core.Models
 @using ChronoLog.Core.Models.DisplayObjects
 @inject IJSRuntime JsRuntime
 @inject NotificationService NotificationService
@@ -176,7 +176,6 @@
     private DateTime _dateRangeEnd;
 
     private double _dailyWorkingHours;
-    private List<string>? _reducingWorkdayTypes;
     private TimeSpan _totalWorkingHours;
     private TimeSpan _weeklyOvertime;
     private TimeSpan _monthlyOvertime;
@@ -256,7 +255,6 @@
         _projects = await ProjectService.GetProjectsAsync();
         _projectLookup = _projects.ToDictionary(p => p.ProjectId);
         _defaultProject = _projects.FirstOrDefault(p => p.IsDefault);
-        _reducingWorkdayTypes = GetReducingWorkdayTypeStrings();
         _dailyWorkingHours = (await EmployeeContextService.GetOrCreateCurrentEmployeeAsync()).DailyWorkingTimeInHours;
         await UpdateWorkdayDataAsync();
     }
@@ -270,7 +268,7 @@
 
         foreach (var workday in _workdays)
         {
-            if (_reducingWorkdayTypes!.Contains(workday.TypeText))
+            if (workday.Type.IsNonWorkingDay())
                 continue;
 
             var actualWorktime = await WorkdayService.GetTotalWorktimeAsync(workday.WorkdayId);
@@ -344,13 +342,6 @@
         await UpdateWorkdayDataAsync();
     }
 
-    private static List<string> GetReducingWorkdayTypeStrings()
-    {
-        return Enum.GetValues<ReducingWorkdayType>()
-            .Select(x => x.ToString())
-            .ToList();
-    }
-
     private async Task<TimeSpan> GetTotalWorkingHours()
     {
         var totalHours = await WorktimeService.GetTotalWorktimeAsync(_dateRangeStart, _dateRangeEnd);
@@ -359,7 +350,7 @@
 
     private TimeSpan CalculateWeeklyOvertime()
     {
-        var expectedHours = _workdays.Count(w => !_reducingWorkdayTypes!.Contains(w.TypeText)) * _dailyWorkingHours;
+        var expectedHours = _workdays.Count(w => w.Type.IsWorkingDay()) * _dailyWorkingHours;
         var actualHours = _totalWorkingHours.TotalHours;
         return TimeSpan.FromHours(actualHours - expectedHours);
     }
@@ -370,7 +361,7 @@
         var monthEnd = monthStart.AddMonths(1).AddDays(-1);
 
         var monthWorkdays = await WorkdayService.GetWorkdaysAsync(monthStart, monthEnd);
-        var expectedHours = monthWorkdays.Count(w => !_reducingWorkdayTypes!.Contains(w.TypeText)) * _dailyWorkingHours;
+        var expectedHours = monthWorkdays.Count(w => w.Type.IsWorkingDay()) * _dailyWorkingHours;
 
         var actualHours = await WorktimeService.GetTotalWorktimeAsync(monthStart, monthEnd);
         return actualHours.HasValue

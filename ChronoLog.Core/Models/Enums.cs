@@ -15,15 +15,6 @@ public enum WorkdayType
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
-public enum ReducingWorkdayType
-{
-    Krankheitstag,
-    Urlaub,
-    Gleitzeittag,
-    Feiertag
-}
-
-[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum GermanProvince
 {
     ALL, // National

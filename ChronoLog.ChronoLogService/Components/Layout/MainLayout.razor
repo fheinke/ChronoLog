@@ -99,7 +99,7 @@
     {
         _currentEmployee ??= await EmployeeContextService.GetOrCreateCurrentEmployeeAsync();
         var absenceDays = await EmployeeContextService.GetEmployeeAbsenceDaysAsync(_currentEmployee.EmployeeId, DateTime.UtcNow.Year);
-        _remainingVacationDays = absenceDays.Count(a => a.AbsenceTypes.Split(", ").Contains(nameof(ReducingWorkdayType.Urlaub)));
+        _remainingVacationDays = absenceDays.Count(a => a.AbsenceTypes.Split(", ").Contains(nameof(WorkdayType.Urlaub)));
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

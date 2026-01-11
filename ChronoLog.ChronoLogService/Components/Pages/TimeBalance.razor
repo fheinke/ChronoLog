@@ -46,7 +46,7 @@
                 <RadzenStack Gap="0.5rem">
                     <RadzenText TextStyle="TextStyle.H6">Vacation @_selectedYear</RadzenText>
                     <RadzenText TextStyle="TextStyle.H3" Style="color: rgba(103, 58, 183, 1)">
-                        @(_absenceDays.Count(a => a.AbsenceTypes.Split(", ").Contains(nameof(ReducingWorkdayType.Urlaub)))) / @_vacationDaysPerYear
+                        @(_absenceDays.Count(a => a.AbsenceTypes.Split(", ").Contains(nameof(WorkdayType.Urlaub)))) / @_vacationDaysPerYear
                     </RadzenText>
                     <RadzenText TextStyle="TextStyle.Body2">Remaining: @RemainingVacationDays Days</RadzenText>
                 </RadzenStack>
@@ -103,7 +103,7 @@
 
     private List<AbsenceEntryModel> _absenceDays = [];
     private int _vacationDaysPerYear;
-    private int RemainingVacationDays => _vacationDaysPerYear - _absenceDays.Count(a => a.AbsenceTypes.Split(", ").Contains(nameof(ReducingWorkdayType.Urlaub)));
+    private int RemainingVacationDays => _vacationDaysPerYear - _absenceDays.Count(a => a.AbsenceTypes.Split(", ").Contains(nameof(WorkdayType.Urlaub)));
     private double _totalOvertime;
     private int _officeDays;
 

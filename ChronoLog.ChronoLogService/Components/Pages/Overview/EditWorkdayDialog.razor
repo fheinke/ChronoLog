@@ -1,3 +1,4 @@
+@using ChronoLog.Core
 @using ChronoLog.Core.Interfaces
 @using ChronoLog.Core.Models
 @using ChronoLog.Core.Models.DisplayObjects
@@ -308,12 +309,8 @@ else
     private Popup? _projectInfoPopup;
     private RadzenButton? _projectInfoButton;
     private ProjectModel? _selectedProject;
-    
-    private bool IsWorkingDay =>
-        Workday?.Type is not null &&
-        Enum.GetValues<ReducingWorkdayType>()
-            .Select(x => (WorkdayType)x)
-            .Contains(Workday.Type);
+
+    private bool IsWorkingDay => Workday?.Type.IsWorkingDay() ?? false;
 
     private bool WorkdayTypeHasChanged =>
         Workday is not null &&

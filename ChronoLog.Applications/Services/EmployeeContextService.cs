@@ -1,4 +1,5 @@
 using ChronoLog.Applications.Mappers;
+using ChronoLog.Core;
 using ChronoLog.Core.Interfaces;
 using ChronoLog.Core.Models;
 using ChronoLog.Core.Models.DisplayObjects;
@@ -102,10 +103,6 @@ public class EmployeeContextService : IEmployeeContextService
 
     public async Task<List<AbsenceEntryModel>> GetEmployeeAbsenceDaysAsync(Guid employeeId, int year)
     {
-        var reducingWorkdayTypes = Enum.GetValues<ReducingWorkdayType>()
-            .Select(w => w.ToString())
-            .ToList();
-
         List<AbsenceEntryModel> absenceDays = [];
 
         await _initializationLock.WaitAsync();
@@ -117,7 +114,7 @@ public class EmployeeContextService : IEmployeeContextService
                 .ToListAsync();
 
             absenceEntries = absenceEntries
-                .Where(w => reducingWorkdayTypes.Contains(w.Type.ToString()))
+                .Where(w => w.Type.IsNonWorkingDay())
                 .OrderBy(w => w.Date)
                 .ToList();
 
