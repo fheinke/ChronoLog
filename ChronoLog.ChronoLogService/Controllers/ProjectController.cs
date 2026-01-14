@@ -82,6 +82,7 @@ public class ProjectController : ControllerBase
     {
         var result = await _projectService.UpdateProjectAsync(
             projectId,
+            value.Name,
             value.Description ?? null,
             value.ResponseObject,
             value.DefaultResponseText ?? null,

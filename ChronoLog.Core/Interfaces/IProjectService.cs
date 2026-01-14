@@ -11,7 +11,7 @@ public interface IProjectService
     Task<List<ProjectModel>> GetProjectsAsync();
     Task<ProjectModel?> GetProjectByIdAsync(Guid projectId);
 
-    Task<bool> UpdateProjectAsync(Guid projectId, string? description, string? responseObject,
+    Task<bool> UpdateProjectAsync(Guid projectId, string? name, string? description, string? responseObject,
         string? defaultResponseText, bool? isDefault);
 
     Task<bool> UpdateProjectAsync(ProjectModel projectModel);

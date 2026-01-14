@@ -69,13 +69,15 @@ public class ProjectService : IProjectService
         return project ?? null;
     }
     
-    public async Task<bool> UpdateProjectAsync(Guid projectId, string? description, string? responseObject, string? defaultResponseText, bool? isDefault)
+    public async Task<bool> UpdateProjectAsync(Guid projectId, string? name, string? description, string? responseObject, string? defaultResponseText, bool? isDefault)
     {
         var project = await _sqlDbContext.Projects
             .FirstOrDefaultAsync(p => p.ProjectId == projectId);
         if (project is null)
             return false;
         
+        if (name is not null)
+            project.Name = name;
         if (description is not null)
             project.Description = description;
         if (responseObject is not null)
@@ -102,6 +104,7 @@ public class ProjectService : IProjectService
         if (project is null)
             return false;
         
+        project.Name = projectModel.Name;
         project.Description = projectModel.Description;
         project.ResponseObject = projectModel.ResponseObject;
         project.DefaultResponseText = projectModel.DefaultResponseText;
