@@ -470,16 +470,13 @@ else
         var totalWorktime = TimeSpan.Zero;
         foreach (var worktime in worktimeSource)
         {
-            if (worktime.EndTime.HasValue)
-            {
-                var duration = worktime.EndTime.Value - worktime.StartTime;
-                totalWorktime += duration;
-            }
+            if (!worktime.EndTime.HasValue)
+                continue;
+            var duration = worktime.EndTime.Value - worktime.StartTime;
+            totalWorktime += duration;
 
             if (worktime.BreakTime.HasValue)
-            {
                 totalWorktime -= worktime.BreakTime.Value;
-            }
         }
 
         return totalWorktime;
