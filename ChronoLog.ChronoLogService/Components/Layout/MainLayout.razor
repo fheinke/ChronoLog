@@ -12,8 +12,12 @@
     <RadzenHeader>
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center"
                      JustifyContent="JustifyContent.SpaceBetween" Gap="0">
-            <div style="display: flex; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
                 <RadzenSidebarToggle Click="@(() => _sidebarExpanded = !_sidebarExpanded)"/>
+                <RadzenText TextStyle="TextStyle.H5"
+                            Style="margin: 0; font-weight: 600; color: var(--rz-text-primary);">
+                    ChronoLog
+                </RadzenText>
             </div>
 
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem"
