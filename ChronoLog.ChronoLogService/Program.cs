@@ -3,6 +3,8 @@ using ChronoLog.Applications;
 using ChronoLog.ChronoLogService.Authorization;
 using ChronoLog.ChronoLogService.Components;
 using ChronoLog.ChronoLogService.Extensions;
+using ChronoLog.ChronoLogService.Services;
+using ChronoLog.Core.Interfaces;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using ChronoLog.SqlDatabase;
@@ -14,6 +16,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
 using Radzen;
+using ApiUserService = ChronoLog.ChronoLogService.Authorization.ApiUserService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -70,8 +73,14 @@ builder.Services.AddRadzenCookieThemeService(options =>
 
 // Database & Services
 builder.Services.AddSqlServices();
-builder.Services.AddApplicationsToServiceCollection(builder.Configuration);
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<UserServiceFactory>();
+builder.Services.AddScoped<IUserService>(sp =>
+{
+    var factory = sp.GetRequiredService<UserServiceFactory>();
+    return factory.Create();
+});
+builder.Services.AddApplicationsToServiceCollection(builder.Configuration);
 
 // API Documentation
 if (builder.Environment.IsDevelopment())

@@ -5,7 +5,6 @@ namespace ChronoLog.Core.Interfaces;
 
 public interface IWorkdayService
 {
-    Task<bool> CreateWorkdayAsync(WorkdayPostModel workday);
     Task<Guid> CreateWorkdayAsync(WorkdayModel workday);
     Task<List<WorkdayViewModel>> GetWorkdaysAsync(DateTime startDate, DateTime endDate);
     Task<List<WorkdayViewModel>> GetWorkdaysAsync();
