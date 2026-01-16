@@ -1,4 +1,6 @@
+using ChronoLog.Core;
 using ChronoLog.Core.Interfaces;
+using ChronoLog.Core.Models;
 using ChronoLog.Core.Models.DisplayObjects;
 using ChronoLog.Core.Models.DTOs;
 using Microsoft.AspNetCore.Authorization;
@@ -40,6 +42,22 @@ public class WorkdayController : ControllerBase
         if (newWorkdayId != Guid.Empty)
             return CreatedAtAction(nameof(GetWorkdayById), new { workdayId = newWorkdayId }, workday);
         return BadRequest("Failed to create workday.");
+    }
+    
+    /// <summary>
+    /// Returns all Workday types.
+    /// </summary>
+    /// <returns>List of Workday types</returns>
+    [HttpGet("types")]
+    [ProducesResponseType(typeof(WorkdayTypesResponse), 200)]
+    public ActionResult<WorkdayTypesResponse> GetWorkdayTypes()
+    {
+        var workdayTypes = WorkdayType.GetAll<WorkdayType>();
+        var workingDays = workdayTypes.Where(t => t.IsWorkingDay()).ToList();
+        var nonWorkingDays = workdayTypes.Where(t => t.IsNonWorkingDay()).ToList();
+        
+        var response = new WorkdayTypesResponse(workdayTypes, workingDays, nonWorkingDays);
+        return Ok(response);
     }
     
     [HttpGet]

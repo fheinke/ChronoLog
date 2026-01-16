@@ -6,6 +6,11 @@ public static class Extensions
 {
     extension(WorkdayType type)
     {
+        public static List<T> GetAll<T>() where T : struct, Enum
+        {
+            return Enum.GetValues<T>().ToList();
+        }
+        
         public bool IsWorkingDay() => type switch
         {
             WorkdayType.Homeoffice => true,
