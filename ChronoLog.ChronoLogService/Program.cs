@@ -1,5 +1,6 @@
 using System.Globalization;
 using ChronoLog.Applications;
+using ChronoLog.ChronoLogService.Authorization;
 using ChronoLog.ChronoLogService.Components;
 using ChronoLog.ChronoLogService.Extensions;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -7,6 +8,7 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using ChronoLog.SqlDatabase;
 using ChronoLog.SqlDatabase.Context;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Web;
@@ -28,7 +30,18 @@ builder.Services.Configure<CookiePolicyOptions>(options =>
     options.MinimumSameSitePolicy = SameSiteMode.None;
     options.Secure = CookieSecurePolicy.Always;
 });
-builder.Services.AddAuthorization(options => { options.FallbackPolicy = options.DefaultPolicy; });
+
+// Authorization Handlers
+builder.Services.AddScoped<IApiUserService, ApiUserService>();
+builder.Services.AddScoped<IAuthorizationHandler, ProjectManagementHandler>();
+
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = options.DefaultPolicy;
+
+    options.AddPolicy("ProjectManagement", policy =>
+        policy.Requirements.Add(new ProjectManagementRequirement()));
+});
 
 // MVC & Razor
 builder.Services.AddControllersWithViews()
@@ -38,10 +51,7 @@ builder.Services.AddControllersWithViews()
         options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
         options.JsonSerializerOptions.Converters.Add(new ChronoLog.Applications.Converters.TimeOnlyJsonConverter());
     })
-    .ConfigureApiBehaviorOptions(options =>
-    {
-        options.SuppressModelStateInvalidFilter = false;
-    });
+    .ConfigureApiBehaviorOptions(options => { options.SuppressModelStateInvalidFilter = false; });
 builder.Services.AddRazorPages();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -69,7 +79,8 @@ if (builder.Environment.IsDevelopment())
     builder.Services.AddSwaggerExtension();
     builder.Services.AddSwaggerGen(options =>
     {
-        options.DocInclusionPredicate((docName, apiDesc) => !apiDesc.RelativePath?.StartsWith("MicrosoftIdentity") ?? true);
+        options.DocInclusionPredicate((_, apiDesc) =>
+            !apiDesc.RelativePath?.StartsWith("MicrosoftIdentity") ?? true);
         var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
         var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
         if (File.Exists(xmlPath)) options.IncludeXmlComments(xmlPath);
