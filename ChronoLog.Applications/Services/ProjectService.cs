@@ -15,28 +15,6 @@ public class ProjectService : IProjectService
         _sqlDbContext = sqlDbContext;
     }
     
-    public async Task<bool> CreateProjectAsync(string name, string? description, string responseObject, string? defaultResponseText, bool? isDefault = false)
-    {
-        var project = new ProjectModel
-        {
-            ProjectId = Guid.NewGuid(),
-            Name = name,
-            Description = description ?? string.Empty,
-            ResponseObject = responseObject,
-            DefaultResponseText = defaultResponseText ?? string.Empty,
-            IsDefault = isDefault ?? false
-        };
-        
-        if (project.IsDefault)
-            await _sqlDbContext.Projects
-                .Where(p => p.IsDefault)
-                .ExecuteUpdateAsync(p => p.SetProperty(x => x.IsDefault, false));
-        
-        await _sqlDbContext.Projects.AddAsync(project.ToEntity());
-        var affectedRows = await _sqlDbContext.SaveChangesAsync();
-        return affectedRows > 0;
-    }
-    
     public async Task<bool> CreateProjectAsync(ProjectModel projectModel)
     {
         if (projectModel.IsDefault)
@@ -132,20 +110,6 @@ public class ProjectService : IProjectService
         
         _sqlDbContext.Projects.Remove(project);
         var affectedRows = await _sqlDbContext.SaveChangesAsync();
-        return affectedRows > 0;
-    }
-
-    public async Task<bool> SetDefaultProjectAsync(Guid projectId, CancellationToken cancellationToken = default)
-    {
-        await _sqlDbContext.Projects
-            .Where(p => p.IsDefault)
-            .ExecuteUpdateAsync(p => p.SetProperty(x => x.IsDefault, false), cancellationToken);
-        
-        await _sqlDbContext.Projects
-            .Where(p => p.ProjectId == projectId)
-            .ExecuteUpdateAsync(p => p.SetProperty(x => x.IsDefault, true), cancellationToken);
-        
-        var affectedRows = await _sqlDbContext.SaveChangesAsync(cancellationToken);
         return affectedRows > 0;
     }
 }
