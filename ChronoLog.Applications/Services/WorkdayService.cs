@@ -50,11 +50,15 @@ public class WorkdayService : IWorkdayService
             query = query.Where(w => w.Date >= startDate.Value && w.Date <= endDate.Value);
 
         var workdays = await query
+            .OrderBy(w => w.Date)
             .Include(w => w.Worktimes.OrderBy(x => x.StartTime))
             .Include(w => w.Projecttimes)
             .Select(w => w.ToViewModel())
             .ToListAsync();
 
+        foreach (var workday in workdays)
+            workday.Worktimes = workday.Worktimes.OrderBy(x => x.StartTime).ToList();
+        
         return workdays;
     }
 
