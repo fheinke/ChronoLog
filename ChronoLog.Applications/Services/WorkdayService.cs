@@ -19,20 +19,6 @@ public class WorkdayService : IWorkdayService
         _employeeContextService = employeeContextService;
     }
 
-    public async Task<bool> CreateWorkdayAsync(WorkdayPostModel workday)
-    {
-        var model = new WorkdayModel
-        {
-            WorkdayId = Guid.NewGuid(),
-            EmployeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService),
-            Date = workday.Date ?? DateTime.Now,
-            Type = workday.Type
-        };
-        await _sqlDbContext.Workdays.AddAsync(model.ToEntity());
-        var affectedRows = await _sqlDbContext.SaveChangesAsync();
-        return affectedRows > 0;
-    }
-
     public async Task<Guid> CreateWorkdayAsync(WorkdayModel workday)
     {
         var model = new WorkdayModel

@@ -1,5 +1,6 @@
 using ChronoLog.Core.Interfaces;
 using ChronoLog.Core.Models.DisplayObjects;
+using ChronoLog.Core.Models.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,6 +20,28 @@ public class WorkdayController : ControllerBase
         _workdayService = workdayService;
     }
     
+    /// <summary>
+    /// Creates a new Workday.
+    /// </summary>
+    /// <param name="value"></param>
+    /// <returns>Created WorkdayModel</returns>
+    [HttpPost]
+    [ProducesResponseType(typeof(WorkdayModel), 201)]
+    [ProducesResponseType(400)]
+    public async Task<ActionResult<WorkdayModel>> PostNewWorkday([FromBody] WorkdayRequest value)
+    {
+        var workday = new WorkdayModel
+        {
+            EmployeeId = Guid.Empty,
+            Date = value.Date,
+            Type = value.Type
+        };
+        var newWorkdayId = await _workdayService.CreateWorkdayAsync(workday);
+        if (newWorkdayId != Guid.Empty)
+            return CreatedAtAction(nameof(GetWorkdayById), new { workdayId = newWorkdayId }, workday);
+        return BadRequest("Failed to create workday.");
+    }
+    
     [HttpGet]
     [ProducesResponseType(typeof(List<WorkdayViewModel>), 200)]
     public async Task<ActionResult<List<WorkdayViewModel>>> GetWorkdays()
@@ -36,13 +59,5 @@ public class WorkdayController : ControllerBase
         if (workday == null)
             return NotFound("Workday not found");
         return Ok(workday);
-    }
-
-    [HttpPost]
-    [ProducesResponseType(typeof(WorkdayPostModel), 201)]
-    public async Task<ActionResult<WorkdayViewModel>> CreateWorkday([FromBody] WorkdayPostModel workday)
-    {
-        var createdWorkday = await _workdayService.CreateWorkdayAsync(workday);
-        return CreatedAtAction(nameof(GetWorkdayById), new { workdayId = createdWorkday }, createdWorkday);
     }
 }
