@@ -47,6 +47,14 @@ public class ProjectService : IProjectService
         return project ?? null;
     }
     
+    public async Task<Guid> GetDefaultProjectIdAsync()
+    {
+        var defaultProject = await _sqlDbContext.Projects
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.IsDefault);
+        return defaultProject?.ProjectId ?? Guid.Empty;
+    }
+    
     public async Task<bool> UpdateProjectAsync(Guid projectId, string? name, string? description, string? responseObject, string? defaultResponseText, bool? isDefault)
     {
         var project = await _sqlDbContext.Projects
