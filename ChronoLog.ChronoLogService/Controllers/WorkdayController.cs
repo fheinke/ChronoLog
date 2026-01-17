@@ -8,6 +8,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ChronoLog.ChronoLogService.Controllers;
 
+/// <summary>
+/// Managing Workdays API Controller: CRUD operations for workdays.
+/// </summary>
 [Authorize]
 [ApiController]
 [Route("api/[controller]")]
@@ -82,7 +85,7 @@ public class WorkdayController : ControllerBase
     /// <returns>List of WorkdayModel</returns>
     [HttpGet("startdate/{startDate}/enddate/{endDate}")]
     [ProducesResponseType(typeof(List<WorkdayResponse>), 200)]
-    public async Task<ActionResult<List<WorkdayResponse>>> GetWorkdays(DateOnly startDate, DateOnly endDate)
+    public async Task<ActionResult<List<WorkdayResponse>>> GetWorkdays([FromRoute] DateOnly startDate, [FromRoute] DateOnly endDate)
     {
         var workdays = await _workdayService.GetWorkdaysAsync(startDate.ToDateTime(TimeOnly.MinValue),
             endDate.ToDateTime(TimeOnly.MaxValue));
