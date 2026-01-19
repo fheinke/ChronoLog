@@ -1,5 +1,4 @@
 using ChronoLog.Core.Interfaces;
-using ChronoLog.Core.Models.DisplayObjects;
 using ChronoLog.Core.Models.DTOs;
 using ChronoLog.Core.Models.HelperObjects;
 using Microsoft.AspNetCore.Authorization;
