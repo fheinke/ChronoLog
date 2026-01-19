@@ -160,6 +160,25 @@ public class EmployeeContextService : IEmployeeContextService
 
         return absenceDays;
     }
+    
+    public async Task<int> GetEmployeeVacationDaysCountAsync(Guid employeeId, int year)
+    {
+        int vacationDays;
+        await _initializationLock.WaitAsync();
+        try
+        {
+            vacationDays = await _sqlDbContext.Workdays
+                .Where(w => w.EmployeeId == employeeId)
+                .Where(w => w.Date.Year == year)
+                .Where(w => w.Type == WorkdayType.Urlaub)
+                .CountAsync();
+        }
+        finally
+        {
+            _initializationLock.Release();
+        }
+        return vacationDays;
+    }
 
     public async Task<bool> UpdateEmployeeAsync(EmployeeModel employee)
     {

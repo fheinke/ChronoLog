@@ -46,7 +46,7 @@
                 <RadzenStack Gap="0.5rem">
                     <RadzenText TextStyle="TextStyle.H6">Vacation @_selectedYear</RadzenText>
                     <RadzenText TextStyle="TextStyle.H3" Style="color: rgba(103, 58, 183, 1)">
-                        @(_absenceDays.Count(a => a.AbsenceTypes.Split(", ").Contains(nameof(WorkdayType.Urlaub)))) / @_vacationDaysPerYear
+                        @_vacationDaysTaken / @_vacationDaysPerYear
                     </RadzenText>
                     <RadzenText TextStyle="TextStyle.Body2">Remaining: @RemainingVacationDays Days</RadzenText>
                 </RadzenStack>
@@ -106,6 +106,7 @@
     private int RemainingVacationDays => _vacationDaysPerYear - _absenceDays.Count(a => a.AbsenceTypes.Split(", ").Contains(nameof(WorkdayType.Urlaub)));
     private double _totalOvertime;
     private int _officeDays;
+    private int _vacationDaysTaken;
 
     protected override async Task OnInitializedAsync()
     {
@@ -118,8 +119,10 @@
 
     private async Task LoadAbsenceDaysAsync()
     {
-        if (_currentEmployee != null)
-            _absenceDays = await EmployeeContextService.GetEmployeeAbsenceDaysAsync(_currentEmployee.EmployeeId, _selectedYear);
+        if (_currentEmployee is null)
+            return;
+        _absenceDays = await EmployeeContextService.GetEmployeeAbsenceDaysAsync(_currentEmployee.EmployeeId, _selectedYear);
+        _vacationDaysTaken = await EmployeeContextService.GetEmployeeVacationDaysCountAsync(_currentEmployee.EmployeeId, _selectedYear);
     }
     
     private async Task LoadOfficeDaysAsync()
