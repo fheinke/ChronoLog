@@ -9,7 +9,7 @@ namespace ChronoLog.ChronoLogService.Controllers;
 /// <summary>
 /// Employee Context API Controller: Managing current employee data and settings.
 /// </summary>
-[Authorize]
+[Authorize(AuthenticationSchemes = "Cookies,Bearer")] 
 [ApiController]
 [Route("api/[controller]")]
 public class EmployeeController : ControllerBase

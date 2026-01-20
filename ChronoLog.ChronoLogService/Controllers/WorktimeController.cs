@@ -9,7 +9,7 @@ namespace ChronoLog.ChronoLogService.Controllers;
 /// <summary>
 /// Managing Worktimes API Controller: CRUD operations for worktimes.
 /// </summary>
-[Authorize]
+[Authorize(AuthenticationSchemes = "Cookies,Bearer")] 
 [ApiController]
 [Route("api/[controller]")]
 public class WorktimeController : ControllerBase

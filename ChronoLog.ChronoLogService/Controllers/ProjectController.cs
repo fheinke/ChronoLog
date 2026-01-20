@@ -9,7 +9,7 @@ namespace ChronoLog.ChronoLogService.Controllers;
 /// <summary>
 /// Managing Projects API Controller: CRUD operations for projects.
 /// </summary>
-[Authorize(Policy = "ProjectManagement")]
+[Authorize(Policy = "ProjectManagement", AuthenticationSchemes = "Cookies,Bearer")]
 [ApiController]
 [Route("api/[controller]")]
 public class ProjectController : ControllerBase

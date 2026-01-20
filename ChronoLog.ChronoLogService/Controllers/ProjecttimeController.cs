@@ -9,7 +9,7 @@ namespace ChronoLog.ChronoLogService.Controllers;
 /// <summary>
 /// Managing Projecttimes API Controller: CRUD operations for projecttimes.
 /// </summary>
-[Authorize]
+[Authorize(AuthenticationSchemes = "Cookies,Bearer")] 
 [ApiController]
 [Route("api/[controller]")]
 public class ProjecttimeController : ControllerBase

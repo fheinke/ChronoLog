@@ -11,7 +11,7 @@ namespace ChronoLog.ChronoLogService.Controllers;
 /// <summary>
 /// Managing Workdays API Controller: CRUD operations for workdays.
 /// </summary>
-[Authorize]
+[Authorize(AuthenticationSchemes = "Cookies,Bearer")] 
 [ApiController]
 [Route("api/[controller]")]
 public class WorkdayController : ControllerBase
