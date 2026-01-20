@@ -11,7 +11,7 @@ public static class SwaggerExtension
         services.AddSwaggerGen(swaggerGenOptions =>
         {
             swaggerGenOptions.SwaggerDoc(
-                "v1", 
+                "v1",
                 new OpenApiInfo
                 {
                     Version = "v1",
@@ -23,7 +23,22 @@ public static class SwaggerExtension
                     },
                     License = new OpenApiLicense { Name = "MIT License" }
                 });
+
+            swaggerGenOptions.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                Description = "JWT Authorization header using the Bearer scheme.",
+                Name = "Authorization",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.ApiKey,
+                Scheme = "Bearer"
+            });
+
+            swaggerGenOptions.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+            {
+                [new OpenApiSecuritySchemeReference("Bearer", document)] = []
+            });
         });
+
         return services;
     }
 }

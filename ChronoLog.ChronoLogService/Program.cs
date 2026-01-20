@@ -26,8 +26,41 @@ CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
 CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 
 // Authentication & Authorization
-builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
-    .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"));
+builder.Services.AddAuthentication(options =>
+    {
+        // Standard is Cookie (für Blazor/Browser)
+        options.DefaultScheme = OpenIdConnectDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
+    })
+    .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd")) // Cookie Auth
+    .EnableTokenAcquisitionToCallDownstreamApi()
+    .AddInMemoryTokenCaches();
+
+// Bearer Auth
+builder.Services.AddAuthentication()
+    .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"), "Bearer");
+
+// POLICY SCHEME: Differenciate between Bearer and Cookie Auth
+builder.Services.AddAuthentication(options => 
+    {
+        options.DefaultScheme = "JWT_OR_COOKIE";
+        options.DefaultChallengeScheme = "JWT_OR_COOKIE";
+    })
+    .AddPolicyScheme("JWT_OR_COOKIE", "JWT_OR_COOKIE", options =>
+    {
+        options.ForwardDefaultSelector = context =>
+        {
+            // If Authorization header with Bearer token is present, use Bearer Auth
+            string authorization = context.Request.Headers[Microsoft.Net.Http.Headers.HeaderNames.Authorization]!;
+            if (!string.IsNullOrEmpty(authorization) && authorization.StartsWith("Bearer "))
+            {
+                return "Bearer";
+            }
+            // Else, use Cookie Auth
+            return OpenIdConnectDefaults.AuthenticationScheme;
+        };
+    });
+
 builder.Services.Configure<CookiePolicyOptions>(options =>
 {
     options.MinimumSameSitePolicy = SameSiteMode.None;
