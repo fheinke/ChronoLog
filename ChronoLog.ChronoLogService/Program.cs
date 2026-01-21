@@ -16,6 +16,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
 using Radzen;
+using static System.Int32;
 using ApiUserService = ChronoLog.ChronoLogService.Authorization.ApiUserService;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -146,7 +147,36 @@ if (useReverseProxy)
 
         options.KnownIPNetworks.Clear();
         options.KnownProxies.Clear();
-        options.KnownProxies.Add(System.Net.IPAddress.Parse("127.0.0.1"));
+
+        var knownProxies = builder.Configuration.GetValue<string>("ReverseProxy:KnownProxies");
+        if (!string.IsNullOrWhiteSpace(knownProxies))
+        {
+            foreach (var proxy in knownProxies.Split(',',
+                         StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (proxy.Contains('/'))
+                {
+                    var parts = proxy.Split('/');
+                    if (parts.Length != 2) continue;
+                    var prefixLength = TryParse(parts[1], out var length) ? length : 32;
+                    options.KnownIPNetworks.Add(new System.Net.IPNetwork(System.Net.IPAddress.Parse(parts[0]),
+                        prefixLength));
+                }
+                else if (System.Net.IPAddress.TryParse(proxy, out var ipAddress))
+                {
+                    options.KnownProxies.Add(ipAddress);
+                }
+            }
+        }
+        else
+        {
+            options.KnownIPNetworks.Add(new System.Net.IPNetwork(
+                System.Net.IPAddress.Parse("10.0.0.0"), 8));
+            options.KnownIPNetworks.Add(new System.Net.IPNetwork(
+                System.Net.IPAddress.Parse("172.16.0.0"), 12));
+            options.KnownIPNetworks.Add(new System.Net.IPNetwork(
+                System.Net.IPAddress.Parse("192.168.0.0"), 16));
+        }
 
         options.ForwardLimit = 1;
         options.RequireHeaderSymmetry = false;
