@@ -1,71 +1,94 @@
 # ChronoLog - Worktime Tracking Application
 
-ChronoLog is a simple and efficient worktime tracking application designed to help individuals and teams monitor their productivity and manage their time effectively. With an intuitive interface and powerful features, ChronoLog makes it easy to log work hours, generate reports, and analyze time usage. You can use the application to directly track your times and copy the data to SAP for weekly or daily reporting.
+[![Docker Image](https://img.shields.io/badge/docker-ghcr.io%2Ffheinke%2Fchronolog-blue)](https://github.com/fheinke/ChronoLog/pkgs/container/chronolog)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.txt)
 
-## Features
-- **Time Tracking**: Easily log your work hours with start and stop timers.
-- **Project Management**: Organize your work by projects and tasks.
-- **Reporting**: Generate detailed reports to analyze your time usage. You can use the reports to copy data to SAP.
-- **Personal Dashboard**: View your overtime and vacation balance at a glance.
-- **User Authentication**: Secure login using Azure Active Directory.
-- **Dockerized Deployment**: Simple deployment using Docker and Docker Compose.
+ChronoLog is a modern, efficient worktime tracking application built with **ASP.NET Core** and **Blazor Server**. Designed for individuals and teams, ChronoLog helps you monitor productivity, manage time effectively, and streamline reporting processes. Track your work hours, manage projects, and copy the worktime data directly to enterprise systems like SAP to book your times.
 
-## Installation
+## ✨ Features
+
+- **⏱️ Time Tracking**: Log work hours
+- **📊 Project Management**: Organize work by projects with detailed time allocation
+- **📈 Reporting & Analytics**: Generate comprehensive reports with copy-to-clipboard functionality for SAP integration
+- **🎯 Personal Dashboard**: View overtime balance, vacation days, and time statistics at a glance
+- **🔒 Enterprise Authentication**: Secure login via Microsoft Entra ID (Azure AD)
+- **👥 User Management**: Admin interface for managing permissions of employees
+- **🏢 Multi-Province Support**: Configure workday types and holidays per region
+- **🐳 Dockerized Deployment**: Simple deployment using Docker and Docker Compose
+- **🌐 RESTful API**: Full API support for external integrations
+- **📱 Responsive Design**: Modern UI that works seamlessly on desktops
+
+## 🏗️ Technology Stack
+
+- **Backend**: ASP.NET Core 10 (.NET 10)
+- **Frontend**: Blazor Server with Radzen UI Components
+- **Database**: MySQL 8 with Entity Framework Core
+- **Authentication**: Microsoft Entra ID (Azure AD) with OpenID Connect
+- **API Documentation**: Swagger/OpenAPI
+- **Containerization**: Docker & Docker Compose
+
+## 🚀 Quick Start
+
 ### Prerequisites
-- Docker and Docker Compose installed on your machine.
-- An Azure account to create an App Registration for authentication.
 
-### Steps
-To install ChronoLog, follow these steps:
+- Docker and Docker Compose installed on your machine
+- An Azure account with permissions to create App Registrations
+- (Optional) A reverse proxy like nginx for production deployment
 
-#### 1. Create an Azure App Registration
-1. Go to the [Azure Portal](https://portal.azure.com/)
-2. Navigate to "Azure Active Directory" > "App registrations" > "New registration"
-3. Fill in the required details:
-   - Name: ChronoLog
-   - Supported account types: Accounts in this organizational directory only
-   - Redirect URI: `Web` https://localhost:5001/signin-oidc (for the development environment, otherwise use your own domain)
-   - Redirect URI: `Web` https://localhost:5001/signout-callback-oidc (for the development environment, otherwise use your own domain)
-4. Click "Register"
-5. After registration, go to "Certificates & secrets" and create a new client secret. Note down the secret value.
-6. Go to "API permissions" and add the following Microsoft Graph permissions:
-   - User.Read
-7. Click "Grant admin consent for [Your Organization]"
-8. Go to "Authentication" and then "Settings" 
-   - Under "Implicit grant and hybrid flows", check the box for "ID tokens"
-9. Note down the Application (client) ID and Directory (tenant) ID from the "Overview" section.
+### Installation
 
-#### (optional) Configure the App Registration to use the API Endpoint
-1. In the Azure Portal, navigate to your App Registration.
-2. Go to "Expose an API".
-3. Click on "Add a scope", the correct Application ID URI should already be set (e.g., `api://<client-id>`).
-4. Fill in the scope details as follows:
-   - Scope name: `access_as_user`
-   - Who can consent: Admins and users
-   - Admin consent display name: `Access ChronoLog API`
-   - Admin consent description: `Allows the app to access ChronoLog API on behalf of the signed-in user.`
+For detailed installation instructions, please see the [Getting Started Guide](docs/getting-started.md).
 
-#### 2. Configure the Docker Environment
-1. Create a `.env` file in the root directory of the project. You can use the provided `.env.example` as a template.
-2. Fill in the following environment variables in the `.env` file:
-   - `AZURE_AD_CLIENT_ID`: Your Azure App Registration Application (client) ID
-   - `AZURE_AD_TENANT_ID`: Your Azure App Registration Directory (tenant) ID
-   - `AZURE_AD_DOMAIN`: Your Azure AD domain (e.g., yourdomain.onmicrosoft.com)
-   - `MYSQL_USER`: Database username (default: chronolog)
-   - `MYSQL_PASSWORD`: Database password
-   - `MYSQL_ROOT_PASSWORD`: Root database password
-   - `MYSQL_DATABASE`: Database name (default: ChronoLog)
-   - `MYSQL_HOST`: Database host (default: chronoLogDatabase for Docker Compose)
-3. If you are using a **reverse Proxy**, make sure to change the following environment variables as well:
-   - `REVERSE_PROXY_ENABLED`: Set to `true`
-   - `REVERSE_PROXY_BASE_URL`: Set to your domain (e.g., `https://chronolog.yourdomain.com`)
-4. Run the following command to start the application using Docker Compose:
-   ```bash
-   docker compose up -d
-   ```
+**Quick installation steps:**
 
-#### 3. User Configuration
-You have to manually set an initial user as admin **after** the first login. To do this, execute the following command, replacing `<your_email_address>` with the email address of the user you want to set as admin:
+1. Clone the repository
+2. Configure Azure AD App Registration (see [Getting Started Guide](docs/getting-started.md))
+3. Copy `.env.example` to `.env` and configure your environment variables
+4. Run `docker compose up -d`
+5. Access the application at `http://localhost:8080`
+6. Set the first admin user after initial login
+
+For detailed configuration options, see [Configuration Guide](docs/configuration.md).
+
+## 📚 Documentation
+
+- **[Getting Started Guide](docs/getting-started.md)** - Step-by-step installation and setup
+- **[Configuration Guide](docs/configuration.md)** - Detailed configuration options and best practices
+- **[API Reference](docs/api-reference.md)** - Complete API documentation for integrations
+
+## 🔧 Configuration Overview
+
+ChronoLog uses environment variables for configuration. Key settings include:
+
 ```bash
-docker exec -it chronolog-database mysql -u<MYSQL_USER> -p<MYSQL_PASSWORD> <MYSQL_DATABASE> -e "UPDATE Employees SET IsAdmin = 1 WHERE Email = '<your_email_address>';"
+# Azure AD Authentication
+AZURE_AD_DOMAIN=yourdomain.onmicrosoft.com
+AZURE_AD_TENANT_ID=your-tenant-id
+AZURE_AD_CLIENT_ID=your-client-id
+
+# Database Configuration
+MYSQL_HOST=chronoLogDatabase
+MYSQL_USER=chronolog
+MYSQL_PASSWORD=your-secure-password
+MYSQL_DATABASE=ChronoLog
+
+# Reverse Proxy (for production)
+REVERSE_PROXY_ENABLED=true
+REVERSE_PROXY_BASE_URL=https://chronolog.yourdomain.com
 ```
+
+See the [Configuration Guide](docs/configuration.md) for all available options.
+
+## 🔐 Security
+
+- All API endpoints require authentication
+- Role-based authorization for admin and project management features
+- Secure cookie handling with SameSite and HttpOnly flags
+- HTTPS enforcement in production environments
+- Database migrations run automatically on startup
+- Health checks for service monitoring
+
+## 📄 License
+
+This project is licensed under the terms specified in [LICENSE.txt](LICENSE.txt).
+Feel free to use, modify, and distribute it as per the license terms.
