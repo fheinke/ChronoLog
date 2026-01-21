@@ -57,7 +57,15 @@ After registration, navigate to the **Overview** page and note down:
 - **Directory (tenant) ID**: This is your `AZURE_AD_TENANT_ID`
 - **Azure AD domain**: Typically `yourdomain.onmicrosoft.com` (found under "Primary domain")
 
-### 1.3 Configure Authentication
+### 1.3 Create a Client Secret
+
+1. Go to **Certificates & secrets** → **New client secret**
+2. Add a description (e.g., `ChronoLog Secret`)
+3. Set an expiration period (e.g., `6 months`, `12 months`, or `24 months`)
+4. Click **Add**
+5. Note down the **Value** of the client secret immediately (this is your `AZURE_AD_CLIENT_SECRET`). You won't be able to see it again.
+
+### 1.4 Configure Authentication
 
 1. In your App Registration, go to **Authentication**
 2. Add additional redirect URIs if needed:
@@ -67,7 +75,7 @@ After registration, navigate to the **Overview** page and note down:
    - ✅ **ID tokens** (used for user authentication)
 4. Click **Save**
 
-### 1.4 Configure API Permissions
+### 1.5 Configure API Permissions
 
 1. Go to **API permissions**
 2. Click **Add a permission** → **Microsoft Graph** → **Delegated permissions**
@@ -77,7 +85,7 @@ After registration, navigate to the **Overview** page and note down:
    - This requires admin privileges
    - Ensures all users can sign in without individual consent
 
-### 1.5 (Optional) Expose an API for External Integrations
+### 1.6 (Optional) Expose an API for External Integrations
 
 If you plan to use the ChronoLog API from external applications:
 
@@ -130,6 +138,7 @@ Configure the following variables:
 AZURE_AD_DOMAIN="yourdomain.onmicrosoft.com"
 AZURE_AD_TENANT_ID="12345678-1234-1234-1234-123456789012"
 AZURE_AD_CLIENT_ID="87654321-4321-4321-4321-210987654321"
+AZURE_AD_CLIENT_SECRET="YourClientSecretValue"
 ```
 
 Replace with your actual values from Step 1.2.

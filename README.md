@@ -70,6 +70,7 @@ ChronoLog uses environment variables for configuration. Key settings include:
 AZURE_AD_DOMAIN=yourdomain.onmicrosoft.com
 AZURE_AD_TENANT_ID=your-tenant-id
 AZURE_AD_CLIENT_ID=your-client-id
+AZURE_AD_CLIENT_SECRET=your-client-secret
 
 # Database Configuration
 MYSQL_HOST=chronoLogDatabase
