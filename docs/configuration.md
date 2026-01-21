@@ -27,6 +27,7 @@ ChronoLog is configured entirely through environment variables defined in the `.
 AZURE_AD_DOMAIN="yourdomain.onmicrosoft.com"
 AZURE_AD_TENANT_ID="your-tenant-id"
 AZURE_AD_CLIENT_ID="your-client-id"
+AZURE_AD_CLIENT_SECRET="your-client-secret"
 
 # ============================================
 # Database Configuration
@@ -47,10 +48,11 @@ REVERSE_PROXY_BASE_URL="https://chronolog.yourdomain.com"
 ### Environment Variable Details
 
 | Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
+|----------|----------|-------|-------------|
 | `AZURE_AD_DOMAIN` | ✅ Yes | - | Your Azure AD domain (e.g., `contoso.onmicrosoft.com`) |
 | `AZURE_AD_TENANT_ID` | ✅ Yes | - | Azure AD Tenant ID (GUID) |
 | `AZURE_AD_CLIENT_ID` | ✅ Yes | - | Azure AD Application (Client) ID |
+| `AZURE_AD_CLIENT_SECRET` | ✅ Yes | - | Azure AD Application Client Secret |
 | `MYSQL_USER` | ✅ Yes | - | MySQL database user |
 | `MYSQL_PASSWORD` | ✅ Yes | - | MySQL user password (min 8 chars recommended) |
 | `MYSQL_ROOT_PASSWORD` | ✅ Yes | - | MySQL root password |
@@ -80,6 +82,11 @@ Azure AD (Microsoft Entra ID) provides enterprise-grade authentication for Chron
 3. **Client ID**: From your App Registration → Overview
    ```bash
    AZURE_AD_CLIENT_ID="87654321-4321-4321-4321-210987654321"
+   ```
+   
+4. **Client Secret**: Create a new client secret in App Registration → Certificates & secrets
+   ```bash
+   AZURE_AD_CLIENT_SECRET="your-client-secret"
    ```
 
 ### Redirect URIs

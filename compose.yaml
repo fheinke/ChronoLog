@@ -13,6 +13,7 @@
       AzureAd__Domain: ${AZURE_AD_DOMAIN}
       AzureAd__TenantId: ${AZURE_AD_TENANT_ID}
       AzureAd__ClientId: ${AZURE_AD_CLIENT_ID}
+      AzureAd__ClientSecret: ${AZURE_AD_CLIENT_SECRET}
       AzureAd__CallbackPath: "/signin-oidc"
       AzureAd__SignedOutCallbackPath: "/signout-callback-oidc"
       ReverseProxy__Enabled: ${REVERSE_PROXY_ENABLED}
