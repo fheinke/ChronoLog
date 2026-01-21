@@ -5,6 +5,8 @@
 
 ChronoLog is a modern, efficient worktime tracking application built with **ASP.NET Core** and **Blazor Server**. Designed for individuals and teams, ChronoLog helps you monitor productivity, manage time effectively, and streamline reporting processes. Track your work hours, manage projects, and copy the worktime data directly to enterprise systems like SAP to book your times.
 
+![ChronoLog Dashboard](docs/images/screenshots/chronolog-dashboard.png)
+
 ## ✨ Features
 
 - **⏱️ Time Tracking**: Log work hours
@@ -17,6 +19,9 @@ ChronoLog is a modern, efficient worktime tracking application built with **ASP.
 - **🐳 Dockerized Deployment**: Simple deployment using Docker and Docker Compose
 - **🌐 RESTful API**: Full API support for external integrations
 - **📱 Responsive Design**: Modern UI that works seamlessly on desktops
+
+![ChronoLog Projecttime Evaluation](docs/images/screenshots/chronolog-projecttime-evaluation.png)
+![ChronoLog Personal Time Balance](docs/images/screenshots/chronolog-personal-timebalance.png)
 
 ## 🏗️ Technology Stack
 
