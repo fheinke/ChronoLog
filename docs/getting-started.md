@@ -165,6 +165,7 @@ If deploying behind a reverse proxy (nginx, Apache, Traefik, etc.):
 ```bash
 REVERSE_PROXY_ENABLED="true"
 REVERSE_PROXY_BASE_URL="https://chronolog.yourdomain.com"
+REVERSE_PROXY_KNOWN_PROXIES="172.16.0.0/12"
 ```
 
 For local development:
@@ -172,6 +173,7 @@ For local development:
 ```bash
 REVERSE_PROXY_ENABLED="false"
 REVERSE_PROXY_BASE_URL=""
+REVERSE_PROXY_KNOWN_PROXIES=""
 ```
 
 ## Step 3: Deploy with Docker

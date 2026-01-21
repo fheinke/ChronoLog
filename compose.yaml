@@ -18,6 +18,7 @@
       AzureAd__SignedOutCallbackPath: "/signout-callback-oidc"
       ReverseProxy__Enabled: ${REVERSE_PROXY_ENABLED}
       ReverseProxy__BaseUrl: ${REVERSE_PROXY_BASE_URL}
+      ReverseProxy__KnownProxies: ${REVERSE_PROXY_KNOWN_PROXIES}
     healthcheck:
       test: [ "CMD-SHELL", "curl -f http://localhost:80/.well-known/readiness || exit 1" ]
       interval: 30s

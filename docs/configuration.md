@@ -43,23 +43,25 @@ MYSQL_HOST="chronoLogDatabase"
 # ============================================
 REVERSE_PROXY_ENABLED="false"
 REVERSE_PROXY_BASE_URL="https://chronolog.yourdomain.com"
+REVERSE_PROXY_KNOWN_PROXIES="172.16.0.0/12"
 ```
 
 ### Environment Variable Details
 
-| Variable | Required | Default | Description |
-|----------|----------|-------|-------------|
+| Variable | Required | Default | Description                                            |
+|----------|----------|-------|--------------------------------------------------------|
 | `AZURE_AD_DOMAIN` | ✅ Yes | - | Your Azure AD domain (e.g., `contoso.onmicrosoft.com`) |
-| `AZURE_AD_TENANT_ID` | ✅ Yes | - | Azure AD Tenant ID (GUID) |
-| `AZURE_AD_CLIENT_ID` | ✅ Yes | - | Azure AD Application (Client) ID |
-| `AZURE_AD_CLIENT_SECRET` | ✅ Yes | - | Azure AD Application Client Secret |
-| `MYSQL_USER` | ✅ Yes | - | MySQL database user |
-| `MYSQL_PASSWORD` | ✅ Yes | - | MySQL user password (min 8 chars recommended) |
-| `MYSQL_ROOT_PASSWORD` | ✅ Yes | - | MySQL root password |
-| `MYSQL_DATABASE` | ✅ Yes | `ChronoLog` | Database name |
-| `MYSQL_HOST` | ✅ Yes | `chronoLogDatabase` | Database host (container name in Docker) |
-| `REVERSE_PROXY_ENABLED` | ❌ No | `false` | Enable reverse proxy support |
-| `REVERSE_PROXY_BASE_URL` | ❌ No | - | Full base URL when behind reverse proxy |
+| `AZURE_AD_TENANT_ID` | ✅ Yes | - | Azure AD Tenant ID (GUID)                              |
+| `AZURE_AD_CLIENT_ID` | ✅ Yes | - | Azure AD Application (Client) ID                       |
+| `AZURE_AD_CLIENT_SECRET` | ✅ Yes | - | Azure AD Application Client Secret                     |
+| `MYSQL_USER` | ✅ Yes | - | MySQL database user                                    |
+| `MYSQL_PASSWORD` | ✅ Yes | - | MySQL user password (min 8 chars recommended)          |
+| `MYSQL_ROOT_PASSWORD` | ✅ Yes | - | MySQL root password                                    |
+| `MYSQL_DATABASE` | ✅ Yes | `ChronoLog` | Database name                                          |
+| `MYSQL_HOST` | ✅ Yes | `chronoLogDatabase` | Database host (container name in Docker)               |
+| `REVERSE_PROXY_ENABLED` | ❌ No | `false` | Enable reverse proxy support                           |
+| `REVERSE_PROXY_BASE_URL` | ❌ No | - | Full base URL when behind reverse proxy                |
+| `REVERSE_PROXY_KNOWN_PROXIES` | ❌ No | - | CIDR ranges of known reverse proxies comma separated   |
 
 ## Azure AD Configuration
 
@@ -192,6 +194,7 @@ In `.env`:
 ```bash
 REVERSE_PROXY_ENABLED="true"
 REVERSE_PROXY_BASE_URL="https://chronolog.yourdomain.com"
+REVERSE_PROXY_KNOWN_PROXIES="172.16.0.0/12"
 ```
 
 ### Nginx Configuration

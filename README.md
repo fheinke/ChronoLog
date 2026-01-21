@@ -81,6 +81,7 @@ MYSQL_DATABASE=ChronoLog
 # Reverse Proxy (for production)
 REVERSE_PROXY_ENABLED=true
 REVERSE_PROXY_BASE_URL=https://chronolog.yourdomain.com
+REVERSE_PROXY_KNOWN_PROXIES="172.16.0.0/12"
 ```
 
 See the [Configuration Guide](docs/configuration.md) for all available options.
