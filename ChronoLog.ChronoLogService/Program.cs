@@ -1,17 +1,22 @@
 using System.Globalization;
 using ChronoLog.Applications;
+using ChronoLog.ChronoLogService.Authorization;
 using ChronoLog.ChronoLogService.Components;
 using ChronoLog.ChronoLogService.Extensions;
+using ChronoLog.ChronoLogService.Services;
+using ChronoLog.Core.Interfaces;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using ChronoLog.SqlDatabase;
 using ChronoLog.SqlDatabase.Context;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
 using Radzen;
+using ApiUserService = ChronoLog.ChronoLogService.Authorization.ApiUserService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,14 +26,58 @@ CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
 CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 
 // Authentication & Authorization
-builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
-    .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"));
+builder.Services.AddAuthentication(options =>
+    {
+        // Standard is Cookie (für Blazor/Browser)
+        options.DefaultScheme = OpenIdConnectDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
+    })
+    .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd")) // Cookie Auth
+    .EnableTokenAcquisitionToCallDownstreamApi()
+    .AddInMemoryTokenCaches();
+
+// Bearer Auth
+builder.Services.AddAuthentication()
+    .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"), "Bearer");
+
+// POLICY SCHEME: Differenciate between Bearer and Cookie Auth
+builder.Services.AddAuthentication(options => 
+    {
+        options.DefaultScheme = "JWT_OR_COOKIE";
+        options.DefaultChallengeScheme = "JWT_OR_COOKIE";
+    })
+    .AddPolicyScheme("JWT_OR_COOKIE", "JWT_OR_COOKIE", options =>
+    {
+        options.ForwardDefaultSelector = context =>
+        {
+            // If Authorization header with Bearer token is present, use Bearer Auth
+            string authorization = context.Request.Headers[Microsoft.Net.Http.Headers.HeaderNames.Authorization]!;
+            if (!string.IsNullOrEmpty(authorization) && authorization.StartsWith("Bearer "))
+            {
+                return "Bearer";
+            }
+            // Else, use Cookie Auth
+            return OpenIdConnectDefaults.AuthenticationScheme;
+        };
+    });
+
 builder.Services.Configure<CookiePolicyOptions>(options =>
 {
     options.MinimumSameSitePolicy = SameSiteMode.None;
     options.Secure = CookieSecurePolicy.Always;
 });
-builder.Services.AddAuthorization(options => { options.FallbackPolicy = options.DefaultPolicy; });
+
+// Authorization Handlers
+builder.Services.AddScoped<IApiUserService, ApiUserService>();
+builder.Services.AddScoped<IAuthorizationHandler, ProjectManagementHandler>();
+
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = options.DefaultPolicy;
+
+    options.AddPolicy("ProjectManagement", policy =>
+        policy.Requirements.Add(new ProjectManagementRequirement()));
+});
 
 // MVC & Razor
 builder.Services.AddControllersWithViews()
@@ -37,7 +86,9 @@ builder.Services.AddControllersWithViews()
     {
         options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
         options.JsonSerializerOptions.Converters.Add(new ChronoLog.Applications.Converters.TimeOnlyJsonConverter());
-    });
+        options.JsonSerializerOptions.Converters.Add(new ChronoLog.Applications.Converters.DateOnlyJsonConverter());
+    })
+    .ConfigureApiBehaviorOptions(options => { options.SuppressModelStateInvalidFilter = false; });
 builder.Services.AddRazorPages();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -56,8 +107,14 @@ builder.Services.AddRadzenCookieThemeService(options =>
 
 // Database & Services
 builder.Services.AddSqlServices();
-builder.Services.AddApplicationsToServiceCollection(builder.Configuration);
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<UserServiceFactory>();
+builder.Services.AddScoped<IUserService>(sp =>
+{
+    var factory = sp.GetRequiredService<UserServiceFactory>();
+    return factory.Create();
+});
+builder.Services.AddApplicationsToServiceCollection(builder.Configuration);
 
 // API Documentation
 if (builder.Environment.IsDevelopment())
@@ -65,7 +122,8 @@ if (builder.Environment.IsDevelopment())
     builder.Services.AddSwaggerExtension();
     builder.Services.AddSwaggerGen(options =>
     {
-        options.DocInclusionPredicate((docName, apiDesc) => !apiDesc.RelativePath?.StartsWith("MicrosoftIdentity") ?? true);
+        options.DocInclusionPredicate((_, apiDesc) =>
+            !apiDesc.RelativePath?.StartsWith("MicrosoftIdentity") ?? true);
         var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
         var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
         if (File.Exists(xmlPath)) options.IncludeXmlComments(xmlPath);

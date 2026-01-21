@@ -35,6 +35,16 @@ To install ChronoLog, follow these steps:
    - Under "Implicit grant and hybrid flows", check the box for "ID tokens"
 9. Note down the Application (client) ID and Directory (tenant) ID from the "Overview" section.
 
+#### (optional) Configure the App Registration to use the API Endpoint
+1. In the Azure Portal, navigate to your App Registration.
+2. Go to "Expose an API".
+3. Click on "Add a scope", the correct Application ID URI should already be set (e.g., `api://<client-id>`).
+4. Fill in the scope details as follows:
+   - Scope name: `access_as_user`
+   - Who can consent: Admins and users
+   - Admin consent display name: `Access ChronoLog API`
+   - Admin consent description: `Allows the app to access ChronoLog API on behalf of the signed-in user.`
+
 #### 2. Configure the Docker Environment
 1. Create a `.env` file in the root directory of the project. You can use the provided `.env.example` as a template.
 2. Fill in the following environment variables in the `.env` file:

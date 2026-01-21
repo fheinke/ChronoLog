@@ -1,5 +1,6 @@
 using ChronoLog.Core.Interfaces;
 using ChronoLog.Core.Models.DisplayObjects;
+using ChronoLog.Core.Models.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,7 +9,7 @@ namespace ChronoLog.ChronoLogService.Controllers;
 /// <summary>
 /// Managing Projects API Controller: CRUD operations for projects.
 /// </summary>
-[Authorize]
+[Authorize(Policy = "ProjectManagement", AuthenticationSchemes = "Bearer,OpenIdConnect")]
 [ApiController]
 [Route("api/[controller]")]
 public class ProjectController : ControllerBase
@@ -20,6 +21,31 @@ public class ProjectController : ControllerBase
     {
         _logger = logger;
         _projectService = projectService;
+    }
+    
+    /// <summary>
+    /// Creates a new project.
+    /// </summary>
+    /// <param name="value"></param>
+    /// <returns>Created ProjectModel</returns>
+    [HttpPost]
+    [ProducesResponseType(typeof(ProjectModel), 201)]
+    [ProducesResponseType(400)]
+    public async Task<ActionResult<ProjectModel>> PostNewProject([FromBody] ProjectRequest value)
+    {
+        var project = new ProjectModel
+        {
+            ProjectId = Guid.NewGuid(),
+            Name = value.Name,
+            Description = value.Description ?? string.Empty,
+            ResponseObject = value.ResponseObject,
+            DefaultResponseText = value.DefaultResponseText ?? string.Empty,
+            IsDefault = value.IsDefault ?? false
+        };
+        var result = await _projectService.CreateProjectAsync(project);
+        if (result)
+            return CreatedAtAction(nameof(GetProjectById), new { projectId = project.ProjectId }, project);
+        return BadRequest("Failed to create project.");
     }
     
     /// <summary>
@@ -50,67 +76,51 @@ public class ProjectController : ControllerBase
         return Ok(project);
     }
     
-    [HttpPost]
-    [ProducesResponseType(200)]
+    /// <summary>
+    /// Updates an existing project.
+    /// </summary>
+    /// <param name="projectId"></param>
+    /// <param name="value"></param>
+    [HttpPatch("{projectId:guid}")]
+    [ProducesResponseType(204)]
     [ProducesResponseType(400)]
-    public async Task<ActionResult> PostNewProject([FromBody] ProjectPostModel value)
+    [ProducesResponseType(404)]
+    public async Task<ActionResult> Patch(Guid projectId, [FromBody] ProjectUpdateRequest value)
     {
-        var project = new ProjectModel
-        {
-            ProjectId = Guid.NewGuid(),
-            Name = value.Name,
-            Description = value.Description ?? string.Empty,
-            ResponseObject = value.ResponseObject,
-            DefaultResponseText = value.DefaultResponseText ?? string.Empty,
-            IsDefault = value.IsDefault ?? false
-        };
-        var result = await _projectService.CreateProjectAsync(
-            project.Name,
-            project.Description,
-            project.ResponseObject,
-            project.DefaultResponseText,
-            project.IsDefault);
-        if (result)
-            return Ok("Project created successfully.");
-        return BadRequest("Failed to create project.");
-    }
-    
-    [HttpPut("{projectId:guid}")]
-    [ProducesResponseType(200)]
-    [ProducesResponseType(400)]
-    public async Task<ActionResult> Put(Guid projectId, [FromBody] ProjectPostModel value)
-    {
+        var exists = await _projectService.GetProjectByIdAsync(projectId);
+        if (exists is null)
+            return NotFound($"Project with ID {projectId} not found.");
+        
         var result = await _projectService.UpdateProjectAsync(
             projectId,
             value.Name,
-            value.Description ?? null,
+            value.Description,
             value.ResponseObject,
-            value.DefaultResponseText ?? null,
-            value.IsDefault ?? false);
+            value.DefaultResponseText,
+            value.IsDefault);
+        
         if (result)
-            return Ok("Project updated successfully.");
+            return NoContent();
         return BadRequest("Failed to update project.");
     }
     
-    [HttpPatch("{projectId:guid}")]
-    [ProducesResponseType(200)]
-    [ProducesResponseType(400)]
-    public async Task<ActionResult> PatchDefaultProject(Guid projectId)
-    {
-        var result = await _projectService.SetDefaultProjectAsync(projectId);
-        if (result)
-            return Ok("Project set as default successfully.");
-        return BadRequest("Failed to set project as default.");
-    }
-    
+    /// <summary>
+    /// Deletes a project by its ID.
+    /// </summary>
+    /// <param name="projectId"></param>
     [HttpDelete("{projectId:guid}")]
-    [ProducesResponseType(200)]
+    [ProducesResponseType(204)]
     [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
     public async Task<ActionResult> DeleteProject(Guid projectId)
     {
+        var exists = await _projectService.GetProjectByIdAsync(projectId);
+        if (exists is null)
+            return NotFound($"Project with ID {projectId} not found.");
+        
         var result = await _projectService.DeleteProjectAsync(projectId);
         if (result)
-            return Ok("Project deleted successfully.");
-        return BadRequest("Failed to delete project.");
+            return NoContent();
+        return BadRequest("Failed to delete project. It may be the default project.");
     }
 }

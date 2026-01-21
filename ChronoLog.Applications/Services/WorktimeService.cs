@@ -18,21 +18,6 @@ public class WorktimeService : IWorktimeService
         _employeeContextService = employeeContextService;
     }
     
-    public async Task<bool> CreateWorktimeAsync(WorktimePostModel worktime)
-    {
-        var model = new WorktimeModel
-        {
-            WorktimeId = Guid.NewGuid(),
-            WorkdayId = worktime.WorkdayId,
-            StartTime = worktime.StartTime,
-            EndTime = worktime.EndTime ?? null,
-            BreakTime =  worktime.BreakTime ?? null
-        };
-        await _sqlDbContext.Worktimes.AddAsync(model.ToEntity());
-        var affectedRows = await _sqlDbContext.SaveChangesAsync();
-        return affectedRows > 0;
-    }
-    
     public async Task<Guid> CreateWorktimeAsync(WorktimeModel worktime)
     {
         var model = new WorktimeModel
@@ -54,21 +39,6 @@ public class WorktimeService : IWorktimeService
         var worktimes = await _sqlDbContext.Worktimes
             .AsNoTracking()
             .Where(w => w.Workday.EmployeeId == employeeId)
-            .Select(w => w.ToModel())
-            .ToListAsync();
-        return worktimes;
-    }
-    
-    public async Task<List<WorktimeModel>> GetWorktimesAsync(List<Guid> worktimeIds)
-    {
-        if (worktimeIds.Count == 0)
-            return [];
-        
-        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
-        var worktimes = await _sqlDbContext.Worktimes
-            .AsNoTracking()
-            .Where(w => w.Workday.EmployeeId == employeeId)
-            .Where(w => worktimeIds.Contains(w.WorktimeId))
             .Select(w => w.ToModel())
             .ToListAsync();
         return worktimes;
