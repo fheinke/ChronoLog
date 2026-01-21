@@ -11,7 +11,7 @@ namespace ChronoLog.ChronoLogService.Controllers;
 /// <summary>
 /// Managing Workdays API Controller: CRUD operations for workdays.
 /// </summary>
-[Authorize(AuthenticationSchemes = "Cookies,Bearer")] 
+[Authorize(AuthenticationSchemes = "Bearer,OpenIdConnect")]
 [ApiController]
 [Route("api/[controller]")]
 public class WorkdayController : ControllerBase
@@ -55,7 +55,7 @@ public class WorkdayController : ControllerBase
     [ProducesResponseType(typeof(WorkdayTypesResponse), 200)]
     public ActionResult<WorkdayTypesResponse> GetWorkdayTypes()
     {
-        var workdayTypes = WorkdayType.GetAll<WorkdayType>();
+        var workdayTypes = Core.Extensions.GetAll<WorkdayType>();
         var workingDays = workdayTypes.Where(t => t.IsWorkingDay()).ToList();
         var nonWorkingDays = workdayTypes.Where(t => t.IsNonWorkingDay()).ToList();
 

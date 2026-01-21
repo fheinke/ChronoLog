@@ -9,7 +9,7 @@ namespace ChronoLog.ChronoLogService.Controllers;
 /// <summary>
 /// Employee Context API Controller: Managing current employee data and settings.
 /// </summary>
-[Authorize(AuthenticationSchemes = "Cookies,Bearer")] 
+[Authorize(AuthenticationSchemes = "Bearer,OpenIdConnect")]
 [ApiController]
 [Route("api/[controller]")]
 public class EmployeeController : ControllerBase
@@ -28,7 +28,7 @@ public class EmployeeController : ControllerBase
     /// </summary>
     /// <returns>EmployeeResponse</returns>
     [HttpGet]
-    [ProducesResponseType(typeof(Guid), 200)]
+    [ProducesResponseType(typeof(EmployeeResponse), 200)]
     public async Task<ActionResult<EmployeeResponse>> GetCurrentEmployee()
     {
         var currentEmployee = await _employeeService.GetOrCreateCurrentEmployeeAsync();
@@ -52,7 +52,7 @@ public class EmployeeController : ControllerBase
     /// </summary>
     /// <returns>List of AbsenceEntrys</returns>
     [HttpGet("absenceDays/currentYear")]
-    [ProducesResponseType(typeof(Guid), 200)]
+    [ProducesResponseType(typeof(List<AbsenceEntryModel>), 200)]
     public async Task<ActionResult<List<AbsenceEntryModel>>> GetEmployeeAbsenceDays()
     {
         var currentEmployee = await _employeeService.GetOrCreateCurrentEmployeeAsync();
@@ -65,7 +65,7 @@ public class EmployeeController : ControllerBase
     /// </summary>
     /// <returns>List of AbsenceEntrys</returns>
     [HttpGet("absenceDays/{year:int}")]
-    [ProducesResponseType(typeof(Guid), 200)]
+    [ProducesResponseType(typeof(List<AbsenceEntryModel>), 200)]
     public async Task<ActionResult<List<AbsenceEntryModel>>> GetEmployeeAbsenceDays(int year)
     {
         var currentEmployee = await _employeeService.GetOrCreateCurrentEmployeeAsync();
@@ -78,7 +78,7 @@ public class EmployeeController : ControllerBase
     /// </summary>
     /// <returns>Number of vacation days taken</returns>
     [HttpGet("vacationDaysTaken/currentYear")]
-    [ProducesResponseType(typeof(Guid), 200)]
+    [ProducesResponseType(typeof(int), 200)]
     public async Task<ActionResult<int>> GetEmployeeVacationDaysTaken()
     {
         var currentEmployee = await _employeeService.GetOrCreateCurrentEmployeeAsync();
@@ -92,7 +92,7 @@ public class EmployeeController : ControllerBase
     /// </summary>
     /// <returns>Number of vacation days taken</returns>
     [HttpGet("vacationDaysTaken/{year:int}")]
-    [ProducesResponseType(typeof(Guid), 200)]
+    [ProducesResponseType(typeof(int), 200)]
     public async Task<ActionResult<int>> GetEmployeeVacationDaysTaken(int year)
     {
         var currentEmployee = await _employeeService.GetOrCreateCurrentEmployeeAsync();

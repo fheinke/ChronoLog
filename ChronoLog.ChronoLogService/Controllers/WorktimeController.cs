@@ -9,7 +9,7 @@ namespace ChronoLog.ChronoLogService.Controllers;
 /// <summary>
 /// Managing Worktimes API Controller: CRUD operations for worktimes.
 /// </summary>
-[Authorize(AuthenticationSchemes = "Cookies,Bearer")] 
+[Authorize(AuthenticationSchemes = "Bearer,OpenIdConnect")]
 [ApiController]
 [Route("api/[controller]")]
 public class WorktimeController : ControllerBase
@@ -37,8 +37,8 @@ public class WorktimeController : ControllerBase
         {
             WorkdayId = worktime.WorkdayId,
             StartTime = worktime.StartTime,
-            EndTime = worktime.EndTime ?? null,
-            BreakTime = worktime.BreakTime ?? null
+            EndTime = worktime.EndTime,
+            BreakTime = worktime.BreakTime
         };
         var createdWorktime = await _worktimeService.CreateWorktimeAsync(worktimeModel);
         if (createdWorktime != Guid.Empty)
@@ -65,8 +65,8 @@ public class WorktimeController : ControllerBase
     /// <param name="endDate"></param>
     /// <returns>List of WorktimeModel</returns>
     [HttpGet("startdate/{startDate}/enddate/{endDate}")]
-    [ProducesResponseType(typeof(WorktimeModel), 200)]
-    public async Task<ActionResult<WorktimeModel>> GetWorktimeById([FromRoute] DateOnly startDate,
+    [ProducesResponseType(typeof(List<WorktimeModel>), 200)]
+    public async Task<ActionResult<List<WorktimeModel>>> GetWorktimeByDateRange([FromRoute] DateOnly startDate,
         [FromRoute] DateOnly endDate)
     {
         var worktimes = await _worktimeService.GetWorktimesAsync(startDate.ToDateTime(TimeOnly.MinValue),

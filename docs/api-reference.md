@@ -988,7 +988,7 @@ curl -X PATCH https://chronolog.example.com/api/employee \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
-    "province": "Bayern",
+    "province": "BW",
     "vacationDaysPerYear": 30,
     "dailyWorkingTimeInHours": 8.0
   }'

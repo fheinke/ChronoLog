@@ -9,7 +9,7 @@ namespace ChronoLog.ChronoLogService.Controllers;
 /// <summary>
 /// Managing Projects API Controller: CRUD operations for projects.
 /// </summary>
-[Authorize(Policy = "ProjectManagement", AuthenticationSchemes = "Cookies,Bearer")]
+[Authorize(Policy = "ProjectManagement", AuthenticationSchemes = "Bearer,OpenIdConnect")]
 [ApiController]
 [Route("api/[controller]")]
 public class ProjectController : ControllerBase
@@ -121,6 +121,6 @@ public class ProjectController : ControllerBase
         var result = await _projectService.DeleteProjectAsync(projectId);
         if (result)
             return NoContent();
-        return BadRequest("Failed to delete project. It my be the default project.");
+        return BadRequest("Failed to delete project. It may be the default project.");
     }
 }

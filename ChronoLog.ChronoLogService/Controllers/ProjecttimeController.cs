@@ -9,7 +9,7 @@ namespace ChronoLog.ChronoLogService.Controllers;
 /// <summary>
 /// Managing Projecttimes API Controller: CRUD operations for projecttimes.
 /// </summary>
-[Authorize(AuthenticationSchemes = "Cookies,Bearer")] 
+[Authorize(AuthenticationSchemes = "Bearer,OpenIdConnect")]
 [ApiController]
 [Route("api/[controller]")]
 public class ProjecttimeController : ControllerBase
@@ -67,7 +67,7 @@ public class ProjecttimeController : ControllerBase
     /// <param name="projecttimeIds"></param>
     /// <returns>List of ProjecttimeModel</returns>
     [HttpGet("{projecttimeIds}")]
-    [ProducesResponseType(typeof(ProjecttimeModel), 200)]
+    [ProducesResponseType(typeof(List<ProjecttimeModel>), 200)]
     [ProducesResponseType(404)]
     public async Task<ActionResult<List<ProjecttimeModel>>> GetProjecttimes([FromRoute] string projecttimeIds)
     {
