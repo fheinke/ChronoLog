@@ -13,10 +13,18 @@ COPY ["ChronoLog.Applications/ChronoLog.Applications.csproj", "ChronoLog.Applica
 COPY ["ChronoLog.ChronoLogService/ChronoLog.ChronoLogService.csproj", "ChronoLog.ChronoLogService/"]
 COPY ["ChronoLog.Core/ChronoLog.Core.csproj", "ChronoLog.Core/"]
 COPY ["ChronoLog.SqlDatabase/ChronoLog.SqlDatabase.csproj", "ChronoLog.SqlDatabase/"]
+COPY ["ChronoLog.Tests/ChronoLog.Tests.csproj", "ChronoLog.Tests/"]
 
 RUN dotnet restore "ChronoLog.ChronoLogService/ChronoLog.ChronoLogService.csproj"
+RUN dotnet restore "ChronoLog.Tests/ChronoLog.Tests.csproj"
 
 COPY . .
+
+# Build and test
+RUN dotnet test "ChronoLog.Tests/ChronoLog.Tests.csproj" \
+    -c $BUILD_CONFIGURATION \
+    --no-restore \
+    --logger "trx;LogFileName=test-results.trx"
 
 WORKDIR "/src/ChronoLog.ChronoLogService"
 RUN dotnet build "ChronoLog.ChronoLogService.csproj" -c $BUILD_CONFIGURATION -o /app/build
