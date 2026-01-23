@@ -93,6 +93,20 @@ public class WorkdayController : ControllerBase
             workday.Date, workday.Type, workday.Worktimes, workday.Projecttimes)).ToList();
         return Ok(response);
     }
+    
+    /// <summary>
+    /// Returns Workday summaries within a specified date range.
+    /// </summary>
+    /// <param name="startDate"></param>
+    /// <param name="endDate"></param>
+    /// <returns>List of WorkdaySummaryResponse</returns>
+    [HttpGet("summaries/startdate/{startDate}/enddate/{endDate}")]
+    [ProducesResponseType(typeof(List<WorkdaySummaryResponse>), 200)]
+    public async Task<ActionResult<List<WorkdaySummaryResponse>>> GetWorkdaySummaries([FromRoute] DateOnly startDate, [FromRoute] DateOnly endDate)
+    {
+        var response = await _workdayService.GetWorkdaySummaryAsync(startDate.ToDateTime(TimeOnly.MinValue), endDate.ToDateTime(TimeOnly.MaxValue));
+        return Ok(response);
+    }
 
     /// <summary>
     /// Returns a Workday by its ID.
