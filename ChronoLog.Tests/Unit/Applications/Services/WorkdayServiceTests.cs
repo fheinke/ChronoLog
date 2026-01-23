@@ -40,7 +40,7 @@ public class WorkdayServiceTests
                 Type = WorkdayType.Homeoffice
             }
         );
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var mockEmployeeContext = new Mock<IEmployeeContextService>();
         mockEmployeeContext.Setup(x => x.GetOrCreateCurrentEmployeeAsync())
