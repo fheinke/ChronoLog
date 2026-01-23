@@ -247,6 +247,19 @@ app.UseStaticFiles();
 if (useReverseProxy)
     app.UseForwardedHeaders();
 
+// Health Check Endpoint
+app.MapHealthChecks("/.well-known/readiness", new HealthCheckOptions
+{
+    Predicate = check => check.Name == "DbConnectionCheck",
+    ResultStatusCodes =
+    {
+        [HealthStatus.Healthy] = StatusCodes.Status200OK,
+        [HealthStatus.Degraded] = StatusCodes.Status503ServiceUnavailable,
+        [HealthStatus.Unhealthy] = StatusCodes.Status503ServiceUnavailable
+    },
+    AllowCachingResponses = false
+}).AllowAnonymous();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -264,20 +277,5 @@ app.Use(async (context, next) =>
 // Endpoints
 app.MapStaticAssets();
 app.MapControllers();
-app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode();
-
-// Health Check Endpoint
-app.MapHealthChecks("/.well-known/readiness", new HealthCheckOptions
-{
-    Predicate = check => check.Name == "DbConnectionCheck",
-    ResultStatusCodes =
-    {
-        [HealthStatus.Healthy] = StatusCodes.Status200OK,
-        [HealthStatus.Degraded] = StatusCodes.Status503ServiceUnavailable,
-        [HealthStatus.Unhealthy] = StatusCodes.Status503ServiceUnavailable
-    },
-    AllowCachingResponses = false
-});
 
 app.Run();
