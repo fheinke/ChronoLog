@@ -2,7 +2,9 @@
 @using ChronoLog.Core.Interfaces
 @using ChronoLog.Core.Models
 @using ChronoLog.Core.Models.DisplayObjects
+@using ChronoLog.Core.Models.DTOs
 @using ChronoLog.Core.Models.HelperObjects
+@inject DialogService DialogService
 @inject IEmployeeContextService EmployeeContextService
 @inject IWorkdayService WorkdayService
 
@@ -65,6 +67,18 @@
             </RadzenCard>
         </RadzenColumn>
     </RadzenRow>
+    
+    <!-- Detailed Overview -->
+    <RadzenCard>
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween"
+                     AlignItems="AlignItems.Center" Gap="1rem">
+            <RadzenStack Gap="0.5rem">
+                <RadzenText TextStyle="TextStyle.H6">Detailed Workday Overview</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2">View all workdays for @_selectedYear</RadzenText>
+            </RadzenStack>
+            <RadzenButton Text="Show Overview" Icon="visibility" Click="@ShowWorkdayOverview" ButtonStyle="ButtonStyle.Primary"/>
+        </RadzenStack>
+    </RadzenCard>
 
     <!-- Absence Details -->
     <RadzenCard>
@@ -102,6 +116,7 @@
     private int _selectedYear = DateTime.UtcNow.Year;
 
     private List<AbsenceEntryModel> _absenceDays = [];
+    private List<WorkdaySummaryResponse> _workdaySummaries = [];
     private int _vacationDaysPerYear;
     private int RemainingVacationDays => _vacationDaysPerYear - _absenceDays.Count(a => a.AbsenceTypes.Split(", ").Contains(nameof(WorkdayType.Urlaub)));
     private double _totalOvertime;
@@ -148,4 +163,19 @@
     }
 
     private string GetOvertimeColor() => _totalOvertime >= 0 ? "color: rgba(76, 175, 80, 1)" : "color: rgba(244, 67, 54, 1)";
+    
+    private async Task ShowWorkdayOverview()
+    {
+        var startDate = new DateTime(_selectedYear, 1, 1);
+        var endDate = new DateTime(_selectedYear, 12, 31);
+        _workdaySummaries = await WorkdayService.GetWorkdaySummaryAsync(startDate, endDate);
+
+        await DialogService.OpenAsync<WorkdayOverviewDialog>($"Workdays {_selectedYear}",
+            new Dictionary<string, object>
+            {
+                { "WorkdaySummary", _workdaySummaries },
+                { "Year", _selectedYear }
+            },
+            new DialogOptions { Width = "90%", Height = "80vh", Resizable = true, Draggable = true });
+    }
 }

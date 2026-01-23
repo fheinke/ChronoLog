@@ -1,0 +1,58 @@
+@using ChronoLog.Core.Models.DTOs
+@using ChronoLog.Core.Models
+@inject DialogService DialogService
+
+<RadzenStack Gap="1rem">
+    <RadzenDataGrid Data="@WorkdaySummary" TItem="WorkdaySummaryResponse" AllowPaging="true" PageSize="20"
+                    AllowSorting="true" AllowFiltering="true" FilterMode="FilterMode.Simple">
+        <Columns>
+            <RadzenDataGridColumn TItem="WorkdaySummaryResponse" Property="Date" Title="Date" Width="120px">
+                <Template Context="data">
+                    @data.Date.ToString("dd.MM.yyyy")
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="WorkdaySummaryResponse" Property="Type" Title="Type" Width="150px">
+                <Template Context="data">
+                    <RadzenBadge Text="@data.Type.ToString()" Variant="Variant.Outlined"
+                                 BadgeStyle="@GetBadgeStyle(data.Type)"/>
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="WorkdaySummaryResponse" Property="TotalWorktime" Title="Hours Worked"
+                                  Width="130px">
+                <Template Context="data">
+                    @data.TotalWorktime.ToString(@"hh\:mm")
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="WorkdaySummaryResponse" Property="OvertimeInHours" Title="Daily Overtime"
+                                  Width="130px">
+                <Template Context="data">
+                    <span style="@GetOvertimeStyle(data.OvertimeInHours)">
+                        @(data.OvertimeInHours >= 0 ? "+" : "")@data.OvertimeInHours.ToString("F2") h
+                    </span>
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+        <RadzenButton Text="Close" Click="@(() => DialogService.Close())" ButtonStyle="ButtonStyle.Light"/>
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter] public List<WorkdaySummaryResponse> WorkdaySummary { get; set; } = [];
+    [Parameter] public int Year { get; set; }
+
+    private static BadgeStyle GetBadgeStyle(WorkdayType type) => type switch
+    {
+        WorkdayType.Office => BadgeStyle.Primary,
+        WorkdayType.Homeoffice => BadgeStyle.Info,
+        WorkdayType.Urlaub => BadgeStyle.Success,
+        WorkdayType.Krankheitstag => BadgeStyle.Warning,
+        WorkdayType.Gleitzeittag => BadgeStyle.Success,
+        _ => BadgeStyle.Light
+    };
+
+    private static string GetOvertimeStyle(double overtime) =>
+        overtime >= 0 ? "color: rgba(76, 175, 80, 1); font-weight: 600;" : "color: rgba(244, 67, 54, 1); font-weight: 600;";
+}

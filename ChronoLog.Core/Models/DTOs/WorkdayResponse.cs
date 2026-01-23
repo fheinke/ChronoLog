@@ -11,6 +11,14 @@ public record WorkdayResponse(
     List<ProjecttimeModel> Projecttimes
 );
 
+public record WorkdaySummaryResponse(
+    Guid WorkdayId,
+    DateOnly Date,
+    TimeSpan TotalWorktime,
+    WorkdayType Type,
+    double OvertimeInHours
+);
+
 public record WorkdayTypesResponse(
     List<WorkdayType> Types,
     List<WorkdayType> WorkingDays,
