@@ -183,12 +183,9 @@ public class WorkdayService : IWorkdayService
     {
         var totalWorktime = TimeSpan.Zero;
 
-        foreach (var worktime in workday.Worktimes)
+        foreach (var worktime in workday.Worktimes.Where(wt => wt.EndTime.HasValue))
         {
-            if (!worktime.EndTime.HasValue)
-                continue;
-
-            var duration = worktime.EndTime.Value - worktime.StartTime;
+            var duration = worktime.EndTime!.Value - worktime.StartTime;
             totalWorktime += duration;
 
             if (worktime.BreakTime.HasValue)
@@ -201,22 +198,19 @@ public class WorkdayService : IWorkdayService
     private static double CalculateDailyOvertime(WorkdayViewModel workday, double dailyWorkingTimeInHours)
     {
         var totalOvertime = 0.0;
-
         if (workday.Type == WorkdayType.Gleitzeittag) return -dailyWorkingTimeInHours;
-        if (workday.Type.IsNonWorkingDay()) return totalOvertime;
 
-        foreach (var worktime in workday.Worktimes)
+        foreach (var worktime in workday.Worktimes.Where(wt => wt.EndTime.HasValue))
         {
-            if (!worktime.EndTime.HasValue)
-                continue;
-
-            var duration = (worktime.EndTime.Value - worktime.StartTime).TotalHours;
+            var duration = (worktime.EndTime!.Value - worktime.StartTime).TotalHours;
             totalOvertime += duration;
 
             if (worktime.BreakTime.HasValue)
                 totalOvertime -= worktime.BreakTime.Value.TotalHours;
         }
 
+        if (workday.Type.IsNonWorkingDay())
+            return totalOvertime;
         return totalOvertime - dailyWorkingTimeInHours;
     }
 }
