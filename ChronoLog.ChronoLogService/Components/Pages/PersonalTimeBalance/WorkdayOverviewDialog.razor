@@ -23,7 +23,7 @@
                     @data.TotalWorktime.ToString(@"hh\:mm")
                 </Template>
             </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="WorkdaySummaryResponse" Property="DailyOvertime" Title="Daily Overtime"
+            <RadzenDataGridColumn TItem="WorkdaySummaryResponse" Property="OvertimeInHours" Title="Daily Overtime"
                                   Width="130px">
                 <Template Context="data">
                     <span style="@GetOvertimeStyle(data.OvertimeInHours)">
