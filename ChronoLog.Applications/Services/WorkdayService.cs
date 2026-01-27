@@ -199,6 +199,7 @@ public class WorkdayService : IWorkdayService
     {
         var totalOvertime = 0.0;
         if (workday.Type == WorkdayType.Gleitzeittag) return -dailyWorkingTimeInHours;
+        if (workday.Worktimes.Count == 0) return totalOvertime;
 
         foreach (var worktime in workday.Worktimes.Where(wt => wt.EndTime.HasValue))
         {
