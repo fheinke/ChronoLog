@@ -71,13 +71,13 @@
                 <RadzenStack Gap="0.5rem">
                     <RadzenText TextStyle="TextStyle.H6">Weekly Working Time</RadzenText>
                     <RadzenText TextStyle="TextStyle.H3" Style="color: var(--rz-primary)">
-                        @_totalWorkingHours.TotalHours.ToString("F2") h
+                        @_totalWorkingHoursThisWeek.TotalHours.ToString("F2") h
                     </RadzenText>
                     <RadzenText TextStyle="TextStyle.Body2">Booked hours this week</RadzenText>
                 </RadzenStack>
             </RadzenCard>
         </RadzenColumn>
-        
+
         <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
             <RadzenCard>
                 <RadzenStack Gap="0.5rem">
@@ -94,8 +94,8 @@
             <RadzenCard>
                 <RadzenStack Gap="0.5rem">
                     <RadzenText TextStyle="TextStyle.H6">Weekly Balance</RadzenText>
-                    <RadzenText TextStyle="TextStyle.H3" Style="@GetOvertimeColor(_weeklyOvertime)">
-                        @(_weeklyOvertime.TotalHours >= 0 ? "+" : "")@_weeklyOvertime.TotalHours.ToString("F2") h
+                    <RadzenText TextStyle="TextStyle.H3" Style="@GetOvertimeColor(_weeklyOvertimeBalance)">
+                        @(_weeklyOvertimeBalance.TotalHours >= 0 ? "+" : "")@_weeklyOvertimeBalance.TotalHours.ToString("F2") h
                     </RadzenText>
                     <RadzenText TextStyle="TextStyle.Body2">Overtime this week</RadzenText>
                 </RadzenStack>
@@ -106,8 +106,8 @@
             <RadzenCard>
                 <RadzenStack Gap="0.5rem">
                     <RadzenText TextStyle="TextStyle.H6">Monthly Balance</RadzenText>
-                    <RadzenText TextStyle="TextStyle.H3" Style="@GetOvertimeColor(_monthlyOvertime)">
-                        @(_monthlyOvertime.TotalHours >= 0 ? "+" : "")@_monthlyOvertime.TotalHours.ToString("F2") h
+                    <RadzenText TextStyle="TextStyle.H3" Style="@GetOvertimeColor(_monthlyOvertimeBalance)">
+                        @(_monthlyOvertimeBalance.TotalHours >= 0 ? "+" : "")@_monthlyOvertimeBalance.TotalHours.ToString("F2") h
                     </RadzenText>
                     <RadzenText TextStyle="TextStyle.Body2">Overtime
                         in @_selectedDate.ToString("MMMM yyyy")</RadzenText>
@@ -176,9 +176,9 @@
     private DateTime _dateRangeEnd;
 
     private double _dailyWorkingHours;
-    private TimeSpan _totalWorkingHours;
-    private TimeSpan _weeklyOvertime;
-    private TimeSpan _monthlyOvertime;
+    private TimeSpan _totalWorkingHoursThisWeek;
+    private TimeSpan _weeklyOvertimeBalance;
+    private TimeSpan _monthlyOvertimeBalance;
     private int _officeDays;
 
     private ProjectModel? _defaultProject;
@@ -191,7 +191,7 @@
     private RenderFragment<ProjecttimeModel> DateTemplate => item => __builder =>
     {
         var workday = _workdays.FirstOrDefault(w => w.WorkdayId == item.WorkdayId);
-        if (workday != null)
+        if (workday is not null)
         {
             <text>@workday.Date.ToString("dd.MM.yyyy")</text>
         }
@@ -302,9 +302,9 @@
             .ToList();
         _missingWorktimeDates = _missingWorktimeDates.Distinct().OrderBy(d => d).ToList();
 
-        _totalWorkingHours = await GetTotalWorkingHours();
-        _weeklyOvertime = CalculateWeeklyOvertime();
-        _monthlyOvertime = await CalculateMonthlyOvertime();
+        _totalWorkingHoursThisWeek = await GetTotalWorkingHours();
+        _weeklyOvertimeBalance = CalculateWeeklyOvertime();
+        _monthlyOvertimeBalance = await CalculateMonthlyOvertime();
 
         StateHasChanged();
     }
@@ -350,8 +350,10 @@
 
     private TimeSpan CalculateWeeklyOvertime()
     {
-        var expectedHours = _workdays.Count(w => w.Type.IsWorkingDay()) * _dailyWorkingHours;
-        var actualHours = _totalWorkingHours.TotalHours;
+        var expectedHours = _workdays.Count(w =>
+            w.Type.IsWorkingDay() &&
+            w.Worktimes.Count > 0) * _dailyWorkingHours;
+        var actualHours = _totalWorkingHoursThisWeek.TotalHours;
         return TimeSpan.FromHours(actualHours - expectedHours);
     }
 
@@ -361,7 +363,9 @@
         var monthEnd = monthStart.AddMonths(1).AddDays(-1);
 
         var monthWorkdays = await WorkdayService.GetWorkdaysAsync(monthStart, monthEnd);
-        var expectedHours = monthWorkdays.Count(w => w.Type.IsWorkingDay()) * _dailyWorkingHours;
+        var expectedHours = monthWorkdays.Count(w =>
+            w.Type.IsWorkingDay() &&
+            w.Worktimes.Count > 0) * _dailyWorkingHours;
 
         var actualHours = await WorktimeService.GetTotalWorktimeAsync(monthStart, monthEnd);
         return actualHours.HasValue
