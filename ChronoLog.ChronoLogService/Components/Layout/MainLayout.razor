@@ -39,7 +39,7 @@
                     </Template>
                     <ChildContent>
                         <RadzenProfileMenuItem
-                            Text="@($"{_remainingVacationDays} / {_currentEmployee?.VacationDaysPerYear} Vacationdays")"
+                            Text="@($"{_vacationDaysTaken} / {_currentEmployee?.VacationDaysPerYear} Vacationdays")"
                             Icon="event"
                             Style="pointer-events: none; opacity: 0.9;"/>
 
@@ -95,15 +95,14 @@
     private bool _isMobile;
 
     private EmployeeModel? _currentEmployee;
-    private int _remainingVacationDays;
+    private int _vacationDaysTaken;
 
     private string ThemeIcon => ThemeService.Theme == "material" ? "dark_mode" : "light_mode";
 
     protected override async Task OnInitializedAsync()
     {
         _currentEmployee ??= await EmployeeContextService.GetOrCreateCurrentEmployeeAsync();
-        var absenceDays = await EmployeeContextService.GetEmployeeAbsenceDaysAsync(_currentEmployee.EmployeeId, DateTime.UtcNow.Year);
-        _remainingVacationDays = absenceDays.Count(a => a.AbsenceTypes.Split(", ").Contains(nameof(WorkdayType.Urlaub)));
+        _vacationDaysTaken = await EmployeeContextService.GetEmployeeVacationDaysCountAsync(_currentEmployee.EmployeeId, DateTime.UtcNow.Year);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
