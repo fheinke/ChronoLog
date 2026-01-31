@@ -187,7 +187,7 @@
     private List<WorkdayViewModel> _workdays = [];
     private List<ProjecttimeModel> _projecttimes = [];
     private List<DateTime> _missingWorktimeDates = [];
-
+    
     private RenderFragment<ProjecttimeModel> DateTemplate => item => __builder =>
     {
         var workday = _workdays.FirstOrDefault(w => w.WorkdayId == item.WorkdayId);

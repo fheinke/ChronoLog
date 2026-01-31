@@ -12,29 +12,29 @@
     <Columns>
         @if (ShowDateColumn)
         {
-            <RadzenDataGridColumn TItem="ProjecttimeModel" Title="Date" Sortable="true">
+            <RadzenDataGridColumn TItem="ProjecttimeModel" Title="Date" Sortable="false" Filterable="false">
                 <Template Context="item">
                     @DateColumnTemplate(item)
                 </Template>
             </RadzenDataGridColumn>
         }
 
-        <RadzenDataGridColumn TItem="ProjecttimeModel" Property="Name" Title="Project Name">
+        <RadzenDataGridColumn TItem="ProjecttimeModel" Property="Name" Title="Project Name" Sortable="false" Filterable="false">
             <Template Context="item">@ProjectNameTemplate(item)</Template>
         </RadzenDataGridColumn>
 
-        <RadzenDataGridColumn TItem="ProjecttimeModel" Property="Name" Title="Response Object">
+        <RadzenDataGridColumn TItem="ProjecttimeModel" Property="Name" Title="Response Object" Sortable="false" Filterable="false">
             <Template Context="item">@ResponseObjectTemplate(item)</Template>
         </RadzenDataGridColumn>
 
-        <RadzenDataGridColumn TItem="ProjecttimeModel" Property="TimeSpent" Title="Time Spent (h)">
+        <RadzenDataGridColumn TItem="ProjecttimeModel" Property="TimeSpent" Title="Time Spent (h)" Sortable="false" Filterable="false">
             <Template Context="item">@TimeSpentTemplate(item)</Template>
             <FooterTemplate>
                 Total: <strong>@TotalTimeSpent.ToString("F2") h</strong>
             </FooterTemplate>
         </RadzenDataGridColumn>
 
-        <RadzenDataGridColumn TItem="ProjecttimeModel" Title="Response Text">
+        <RadzenDataGridColumn TItem="ProjecttimeModel" Title="Response Text" Sortable="false" Filterable="false">
             <Template Context="item">@ResponseTextTemplate(item)</Template>
         </RadzenDataGridColumn>
     </Columns>
