@@ -61,7 +61,8 @@ else
                 </RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="EmployeeModel" Property="LastSeen" Title="Last seen">
                     <Template Context="employee">
-                        @(employee.LastSeen.ToLocalTime().ToString("g", CultureInfo.CurrentCulture))
+                        @(TimeZoneInfo.ConvertTimeFromUtc(employee.LastSeen, TimeZoneInfo.FindSystemTimeZoneById("Europe/Berlin"))
+                            .ToString("g", CultureInfo.CurrentCulture))
                     </Template>
                 </RadzenDataGridColumn>
 
@@ -84,7 +85,7 @@ else
 
 @code {
     private bool _isAuthorized;
-    
+
     private List<EmployeeModel> _employees = null!;
     private RadzenDataGrid<EmployeeModel> _grid = null!;
 
@@ -107,7 +108,7 @@ else
     {
         await _grid.UpdateRow(employee);
     }
-    
+
     private async Task OnUpdateRow(EmployeeModel employee)
     {
         try
