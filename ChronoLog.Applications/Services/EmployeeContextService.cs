@@ -108,12 +108,14 @@ public class EmployeeContextService : IEmployeeContextService
         await _initializationLock.WaitAsync();
         try
         {
-            var absenceEntries = await _sqlDbContext.Workdays
-                .Where(w => w.EmployeeId == employeeId)
-                .Where(w => w.Date.Year == year)
+            var workdays = await _sqlDbContext.Workdays
+                .AsNoTracking()
+                .Where(w =>
+                    w.EmployeeId == employeeId && 
+                    w.Date.Year == year)
                 .ToListAsync();
 
-            absenceEntries = absenceEntries
+            var absenceEntries = workdays
                 .Where(w => w.Type.IsNonWorkingDay())
                 .OrderBy(w => w.Date)
                 .ToList();
@@ -160,7 +162,7 @@ public class EmployeeContextService : IEmployeeContextService
 
         return absenceDays;
     }
-    
+
     public async Task<int> GetEmployeeVacationDaysCountAsync(Guid employeeId, int year)
     {
         int vacationDays;
@@ -177,6 +179,7 @@ public class EmployeeContextService : IEmployeeContextService
         {
             _initializationLock.Release();
         }
+
         return vacationDays;
     }
 
