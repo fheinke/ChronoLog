@@ -1,6 +1,5 @@
 @page "/timebalance"
 @using ChronoLog.Core.Interfaces
-@using ChronoLog.Core.Models
 @using ChronoLog.Core.Models.DisplayObjects
 @using ChronoLog.Core.Models.DTOs
 @using ChronoLog.Core.Models.HelperObjects
@@ -24,7 +23,8 @@
                     @_selectedYear
                 </RadzenText>
                 <RadzenButton Icon="chevron_right" ButtonStyle="ButtonStyle.Light" Click="@NextYear"/>
-                <RadzenButton Text="Current Year" ButtonStyle="ButtonStyle.Secondary" Click="@(() => OnYearChanged(DateTime.UtcNow.Year))"/>
+                <RadzenButton Text="Current Year" ButtonStyle="ButtonStyle.Secondary"
+                              Click="@(() => OnYearChanged(DateTime.UtcNow.Year))"/>
             </RadzenStack>
         </RadzenStack>
     </RadzenCard>
@@ -32,9 +32,12 @@
     <!-- Overview Cards -->
     <RadzenRow Gap="1rem">
         <RadzenColumn Size="12" SizeMD="4">
-            <RadzenCard>
+            <RadzenCard Style="height: 150px;">
                 <RadzenStack Gap="0.5rem">
-                    <RadzenText TextStyle="TextStyle.H6">Office Days @_selectedYear</RadzenText>
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                        <RadzenText TextStyle="TextStyle.H6">Office Days @_selectedYear</RadzenText>
+                        <RadzenButton Icon="info" ButtonStyle="ButtonStyle.Info" Variant="Variant.Flat" Size="ButtonSize.Small" Click="@OpenWorkdayTypeSummaryDialog" />
+                    </RadzenStack>
                     <RadzenText TextStyle="TextStyle.H3" Style="color: rgba(33, 150, 243, 1)">
                         @_officeDays
                     </RadzenText>
@@ -42,21 +45,23 @@
                 </RadzenStack>
             </RadzenCard>
         </RadzenColumn>
-        
+
         <RadzenColumn Size="12" SizeMD="4">
-            <RadzenCard>
+            <RadzenCard Style="height: 150px;">
                 <RadzenStack Gap="0.5rem">
                     <RadzenText TextStyle="TextStyle.H6">Vacation @_selectedYear</RadzenText>
                     <RadzenText TextStyle="TextStyle.H3" Style="color: rgba(103, 58, 183, 1)">
                         @_vacationDaysTaken / @_vacationDaysPerYear
                     </RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body2">Remaining: @(_vacationDaysPerYear - _vacationDaysTaken) Days</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        Remaining: @(_vacationDaysPerYear - _vacationDaysTaken) Days
+                    </RadzenText>
                 </RadzenStack>
             </RadzenCard>
         </RadzenColumn>
 
         <RadzenColumn Size="12" SizeMD="4">
-            <RadzenCard>
+            <RadzenCard Style="height: 150px;">
                 <RadzenStack Gap="0.5rem">
                     <RadzenText TextStyle="TextStyle.H6">Total Overtime</RadzenText>
                     <RadzenText TextStyle="TextStyle.H3" Style="@GetOvertimeColor()">
@@ -67,7 +72,7 @@
             </RadzenCard>
         </RadzenColumn>
     </RadzenRow>
-    
+
     <!-- Detailed Overview -->
     <RadzenCard>
         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween"
@@ -76,13 +81,15 @@
                 <RadzenText TextStyle="TextStyle.H6">Detailed Workday Overview</RadzenText>
                 <RadzenText TextStyle="TextStyle.Body2">View all workdays for @_selectedYear</RadzenText>
             </RadzenStack>
-            <RadzenButton Text="Show Overview" Icon="visibility" Click="@ShowWorkdayOverview" ButtonStyle="ButtonStyle.Primary"/>
+            <RadzenButton Text="Show Overview" Icon="visibility" Click="@ShowWorkdayOverview"
+                          ButtonStyle="ButtonStyle.Primary"/>
         </RadzenStack>
     </RadzenCard>
 
     <!-- Absence Details -->
     <RadzenCard>
-        <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 1rem">Absence overview for @_selectedYear</RadzenText>
+        <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 1rem">Absence overview
+            for @_selectedYear</RadzenText>
         @if (_absenceDays.Any())
         {
             <RadzenDataGrid Data="@_absenceDays" TItem="AbsenceEntryModel" AllowPaging="true" PageSize="10">
@@ -138,7 +145,7 @@
         _absenceDays = await EmployeeContextService.GetEmployeeAbsenceDaysAsync(_currentEmployee.EmployeeId, _selectedYear);
         _vacationDaysTaken = await EmployeeContextService.GetEmployeeVacationDaysCountAsync(_currentEmployee.EmployeeId, _selectedYear);
     }
-    
+
     private async Task LoadOfficeDaysAsync()
     {
         _officeDays = await WorkdayService.GetOfficeDaysCountAsync(_selectedYear);
@@ -162,7 +169,7 @@
     }
 
     private string GetOvertimeColor() => _totalOvertime >= 0 ? "color: rgba(76, 175, 80, 1)" : "color: rgba(244, 67, 54, 1)";
-    
+
     private async Task ShowWorkdayOverview()
     {
         var startDate = new DateTime(_selectedYear, 1, 1);
@@ -177,4 +184,31 @@
             },
             new DialogOptions { Width = "90%", Height = "80vh", Resizable = true, Draggable = true });
     }
+
+    private async Task OpenWorkdayTypeSummaryDialog()
+    {
+        var workdayCounts = await WorkdayService.GetWorkdayTypeSummaryAsync(_selectedYear);
+
+        var aggregatedCounts = workdayCounts
+            .SelectMany(dict => dict)
+            .GroupBy(pair => pair.Key)
+            .ToDictionary(group => group.Key, group => group.Sum(pair => pair.Value));
+
+        await DialogService.OpenAsync<WorkdayTypeSummaryDialog>(
+            "Workday Details",
+            new Dictionary<string, object>
+            {
+                { "WorkdayTypeCounts", aggregatedCounts }
+            },
+            new DialogOptions
+            {
+                Width = "600px",
+                Height = "600px",
+                CloseDialogOnEsc = true,
+                CloseDialogOnOverlayClick = true,
+                ShowTitle = false
+            });
+    }
+
 }
+
