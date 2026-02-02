@@ -179,6 +179,17 @@ public class WorkdayService : IWorkdayService
         return officeDaysCount;
     }
 
+    public async Task<List<Dictionary<WorkdayType, int>>> GetWorkdayTypeSummaryAsync(int year)
+    {
+        return await GetWorkdayTypeSummaryInternal(year, null, null);
+    }
+
+    public async Task<List<Dictionary<WorkdayType, int>>> GetWorkdayTypeSummaryAsync(DateTime startDate,
+        DateTime endDate)
+    {
+        return await GetWorkdayTypeSummaryInternal(null, startDate, endDate);
+    }
+
     private static TimeSpan CalculateDailyWorktime(WorkdayViewModel workday)
     {
         var totalWorktime = TimeSpan.Zero;
@@ -213,5 +224,33 @@ public class WorkdayService : IWorkdayService
         if (workday.Type.IsNonWorkingDay())
             return totalOvertime;
         return totalOvertime - dailyWorkingTimeInHours;
+    }
+
+    private async Task<List<Dictionary<WorkdayType, int>>> GetWorkdayTypeSummaryInternal(int? year, DateTime? startDate,
+        DateTime? endDate)
+    {
+        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
+        var workdayTypes = Enum.GetValues<WorkdayType>();
+        var workdayTypeSummary = new List<Dictionary<WorkdayType, int>>();
+
+        foreach (var workdayType in workdayTypes)
+        {
+            var query = _sqlDbContext.Workdays
+                .AsNoTracking()
+                .Where(w => w.EmployeeId == employeeId && w.Type == workdayType);
+
+            query = year.HasValue
+                ? query.Where(w => w.Date.Year == year.Value)
+                : query.Where(w => w.Date >= startDate && w.Date <= endDate);
+
+            var count = await query.CountAsync();
+
+            workdayTypeSummary.Add(new Dictionary<WorkdayType, int>
+            {
+                { workdayType, count }
+            });
+        }
+
+        return workdayTypeSummary;
     }
 }

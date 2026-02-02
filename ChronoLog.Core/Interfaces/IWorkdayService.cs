@@ -17,4 +17,6 @@ public interface IWorkdayService
     Task<List<WorkdaySummaryResponse>> GetWorkdaySummaryAsync(DateTime startDate, DateTime endDate);
     Task<int> GetOfficeDaysCountAsync(int year);
     Task<int> GetOfficeDaysCountAsync(DateTime startDate, DateTime endDate);
+    Task<List<Dictionary<WorkdayType, int>>> GetWorkdayTypeSummaryAsync(int year);
+    Task<List<Dictionary<WorkdayType, int>>> GetWorkdayTypeSummaryAsync(DateTime startDate, DateTime endDate);
 }
