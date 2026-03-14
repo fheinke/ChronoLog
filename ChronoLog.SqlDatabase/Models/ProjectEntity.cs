@@ -7,7 +7,7 @@ public class ProjectEntity
     [Key]
     public Guid ProjectId { get; set; }
     
-    public virtual ICollection<ProjecttimeEntity> Projecttimes { get; set; } = new List<ProjecttimeEntity>();
+    public virtual ICollection<TimeEntryEntity> TimeEntries { get; set; } = new List<TimeEntryEntity>();
     
     [Required]
     public bool IsDefault { get; set; }

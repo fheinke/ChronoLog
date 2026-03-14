@@ -4,6 +4,7 @@
 @using ChronoLog.Core.Interfaces
 @using ChronoLog.Core.Models
 @using ChronoLog.Core.Models.DisplayObjects
+@using ChronoLog.Core.Models.ViewModels
 @using PublicHoliday
 @inject IWorkdayService WorkdayService
 @inject IEmployeeContextService EmployeeContextService
@@ -231,7 +232,7 @@
             args.Data.Date = data.Date;
             args.Data.Type = data.Type;
             args.Data.Worktimes = data.Worktimes;
-            args.Data.Projecttimes = data.Projecttimes;
+            args.Data.TimeEntries = data.TimeEntries;
         }
 
         await _scheduler?.Reload()!;

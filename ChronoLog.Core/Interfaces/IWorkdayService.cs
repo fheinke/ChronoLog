@@ -1,6 +1,7 @@
 using ChronoLog.Core.Models;
 using ChronoLog.Core.Models.DisplayObjects;
 using ChronoLog.Core.Models.DTOs;
+using ChronoLog.Core.Models.ViewModels;
 
 namespace ChronoLog.Core.Interfaces;
 

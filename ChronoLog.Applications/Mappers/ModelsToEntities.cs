@@ -41,14 +41,14 @@ public static class ModelsToEntities
         };
     }
     
-    public static ProjecttimeEntity ToEntity(this ProjecttimeModel model)
+    public static TimeEntryEntity ToEntity(this TimeEntryModel model)
     {
-        return new ProjecttimeEntity
+        return new TimeEntryEntity
         {
-            ProjecttimeId = model.ProjecttimeId,
+            TimeEntryId = model.TimeEntryId,
             WorkdayId = model.WorkdayId,
             ProjectId = model.ProjectId,
-            TimeSpent = model.TimeSpent,
+            Duration = model.Duration,
             ResponseText = model.ResponseText
         };
     }

@@ -5,6 +5,7 @@ using ChronoLog.Core.Interfaces;
 using ChronoLog.Core.Models;
 using ChronoLog.Core.Models.DisplayObjects;
 using ChronoLog.Core.Models.DTOs;
+using ChronoLog.Core.Models.ViewModels;
 using ChronoLog.SqlDatabase.Context;
 using Microsoft.EntityFrameworkCore;
 
@@ -54,7 +55,7 @@ public class WorkdayService : IWorkdayService
         var workdays = await query
             .OrderBy(w => w.Date)
             .Include(w => w.Worktimes.OrderBy(x => x.StartTime))
-            .Include(w => w.Projecttimes)
+            .Include(w => w.TimeEntries)
             .Select(w => w.ToViewModel())
             .ToListAsync();
 
@@ -70,7 +71,7 @@ public class WorkdayService : IWorkdayService
             .AsNoTracking()
             .Where(w => w.WorkdayId == workdayId)
             .Include(w => w.Worktimes)
-            .Include(w => w.Projecttimes)
+            .Include(w => w.TimeEntries)
             .Select(w => w.ToViewModel())
             .FirstOrDefaultAsync();
 

@@ -13,7 +13,7 @@ public class WorkdayEntity
     [ForeignKey(nameof(EmployeeId))] public EmployeeEntity Employee { get; set; } = null!;
 
     public virtual ICollection<WorktimeEntity> Worktimes { get; set; } = new List<WorktimeEntity>();
-    public virtual ICollection<ProjecttimeEntity> Projecttimes { get; set; } = new List<ProjecttimeEntity>();
+    public virtual ICollection<TimeEntryEntity> TimeEntries { get; set; } = new List<TimeEntryEntity>();
 
     [Required] public DateTime Date { get; set; }
     [Required] public WorkdayType Type { get; set; }

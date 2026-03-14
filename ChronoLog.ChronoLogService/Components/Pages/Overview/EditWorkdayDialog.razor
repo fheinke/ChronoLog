@@ -2,13 +2,14 @@
 @using ChronoLog.Core.Interfaces
 @using ChronoLog.Core.Models
 @using ChronoLog.Core.Models.DisplayObjects
+@using ChronoLog.Core.Models.ViewModels
 @using Radzen.Blazor.Rendering
 @inject DialogService DialogService
 @inject NotificationService NotificationService
 @inject IWorkdayService WorkdayService
 @inject IWorktimeService WorktimeService
 @inject IProjectService ProjectService
-@inject IProjecttimeService ProjecttimeService
+@inject ITimeEntryService TimeEntryService
 @inject ILogger<EditWorkdayDialog> Logger
 
 <style>
@@ -143,40 +144,40 @@ else
 
                     <!-- Project edit -->
                     <RadzenCard Variant="Variant.Flat">
-                        <RadzenDataGrid @ref="@_projecttimeGrid"
-                                        Data="@_projecttimes"
-                                        TItem="ProjecttimeModel"
+                        <RadzenDataGrid @ref="@_timeEntryGrid"
+                                        Data="@_timeEntries"
+                                        TItem="TimeEntryModel"
                                         AllowAlternatingRows="false"
                                         AllowFiltering="false"
                                         AllowPaging="true"
                                         AllowSorting="false"
                                         PageSize="15"
                                         EditMode="DataGridEditMode.Single"
-                                        RowUpdate="@OnUpdateProjecttimeRow"
-                                        RowCreate="@OnCreateProjecttimeRow"
-                                        Sort="@ClearPendingProjecttimeInsertions"
-                                        Page="@ClearPendingProjecttimeInsertions"
-                                        Filter="@ClearPendingProjecttimeInsertions">
+                                        RowUpdate="@OnUpdateTimeEntryRow"
+                                        RowCreate="@OnCreateTimeEntryRow"
+                                        Sort="@ClearPendingTimeEntryInsertions"
+                                        Page="@ClearPendingTimeEntryInsertions"
+                                        Filter="@ClearPendingTimeEntryInsertions">
                             <HeaderTemplate>
                                 <RadzenButton ButtonStyle="ButtonStyle.Success" Variant="Variant.Outlined"
-                                              Icon="add_circle" Click="@InsertProjecttimeRow"
-                                              Disabled="@(_projecttimesToInsert.Any())"/>
+                                              Icon="add_circle" Click="@InsertTimeEntryRow"
+                                              Disabled="@(_timeEntriesToInsert.Any())"/>
                             </HeaderTemplate>
                             <Columns>
-                                <RadzenDataGridColumn TItem="ProjecttimeModel" Title="Project" Width="250px">
-                                    <Template Context="projecttime">
+                                <RadzenDataGridColumn TItem="TimeEntryModel" Title="Project" Width="250px">
+                                    <Template Context="timeEntry">
                                         <div class="rz-d-flex rz-align-items-center">
-                                            @(_projects.FirstOrDefault(p => p.ProjectId == projecttime.ProjectId)?.Name)
+                                            @(_projects.FirstOrDefault(p => p.ProjectId == timeEntry.ProjectId)?.Name)
                                             <RadzenButton Icon="info"
                                                           @ref="_projectInfoButton"
                                                           ButtonStyle="ButtonStyle.Info"
                                                           Variant="Variant.Outlined"
                                                           Size="ButtonSize.Small"
-                                                          Click="@(() => ShowProjectInfo(projecttime.ProjectId, _projectInfoButton))"
+                                                          Click="@(() => ShowProjectInfo(timeEntry.ProjectId, _projectInfoButton))"
                                                           @onclick:stopPropagation="true"/>
                                         </div>
                                     </Template>
-                                    <EditTemplate Context="projecttime">
+                                    <EditTemplate Context="timeEntry">
                                         <div class="rz-dropdown-wrapper rz-d-flex rz-align-items-center"
                                              style="position: relative; display: flex; align-items: center;">
                                             <RadzenFormField Text="Project" Style="width: 100%">
@@ -184,7 +185,7 @@ else
                                                     <RadzenDropDown Data="@_projects"
                                                                     TextProperty="Name"
                                                                     ValueProperty="ProjectId"
-                                                                    @bind-Value="projecttime.ProjectId"
+                                                                    @bind-Value="timeEntry.ProjectId"
                                                                     Name="ProjectSelect"/>
                                                     <RadzenRequiredValidator Component="ProjectSelect"
                                                                              Text="Project is mandatory."/>
@@ -195,62 +196,62 @@ else
                                                           ButtonStyle="ButtonStyle.Info"
                                                           Variant="Variant.Outlined"
                                                           Size="ButtonSize.Small"
-                                                          Click="@(() => ShowProjectInfo(projecttime.ProjectId, _projectInfoButton))"
+                                                          Click="@(() => ShowProjectInfo(timeEntry.ProjectId, _projectInfoButton))"
                                                           @onclick:stopPropagation="true"/>
                                         </div>
                                     </EditTemplate>
                                 </RadzenDataGridColumn>
-                                <RadzenDataGridColumn TItem="ProjecttimeModel" Property="TimeSpent" Title="Time Spent"
+                                <RadzenDataGridColumn TItem="TimeEntryModel" Property="Duration" Title="Duration"
                                                       Width="120px">
-                                    <EditTemplate Context="projecttime">
-                                        <RadzenTimeSpanPicker Value="@(projecttime.TimeSpent)"
-                                                              ValueChanged="@((TimeSpan ts) => projecttime.TimeSpent = ts)"
+                                    <EditTemplate Context="timeEntry">
+                                        <RadzenTimeSpanPicker Value="@(timeEntry.Duration)"
+                                                              ValueChanged="@((TimeSpan ts) => timeEntry.Duration = ts)"
                                                               Min="@TimeSpan.Zero"
                                                               Max="@TimeSpan.FromMinutes(1439)"/>
                                     </EditTemplate>
-                                    <Template Context="projecttime">
-                                        @projecttime.TimeSpent.ToString(@"hh\:mm\:ss")
+                                    <Template Context="timeEntry">
+                                        @timeEntry.Duration.ToString(@"hh\:mm\:ss")
                                     </Template>
                                 </RadzenDataGridColumn>
-                                <RadzenDataGridColumn TItem="ProjecttimeModel"
+                                <RadzenDataGridColumn TItem="TimeEntryModel"
                                                       Property="ResponseText"
                                                       Title="Custom Response Text"
                                                       Width="250px">
-                                    <EditTemplate Context="projecttime">
+                                    <EditTemplate Context="timeEntry">
                                         <RadzenFormField Text="Custom Response Text">
                                             <ChildContent>
                                                 <RadzenTextBox Name="ResponseText"
-                                                               @bind-Value="@projecttime.ResponseText"/>
+                                                               @bind-Value="@timeEntry.ResponseText"/>
                                             </ChildContent>
                                         </RadzenFormField>
                                     </EditTemplate>
-                                    <Template Context="projecttime">
-                                        <span>@projecttime.ResponseText</span>
+                                    <Template Context="timeEntry">
+                                        <span>@timeEntry.ResponseText</span>
                                     </Template>
                                 </RadzenDataGridColumn>
-                                <RadzenDataGridColumn Context="projecttime" Filterable="false" Sortable="false"
+                                <RadzenDataGridColumn Context="timeEntry" Filterable="false" Sortable="false"
                                                       TextAlign="TextAlign.Right" Width="150px" Frozen="true"
                                                       FrozenPosition="FrozenColumnPosition.Right">
-                                    <Template Context="projecttime">
+                                    <Template Context="timeEntry">
                                         <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat"
                                                       Size="ButtonSize.Medium" class="rz-my-1 rz-ms-1"
-                                                      Click="@(_ => EditProjecttimeRow(projecttime))"
+                                                      Click="@(_ => EditTimeEntryRow(timeEntry))"
                                                       @onclick:stopPropagation="true"/>
                                     </Template>
-                                    <EditTemplate Context="projecttime">
+                                    <EditTemplate Context="timeEntry">
                                         <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success"
                                                       Variant="Variant.Flat" Size="ButtonSize.Medium"
-                                                      Click="@(_ => SaveProjecttimeRow(projecttime))"
+                                                      Click="@(_ => SaveTimeEntryRow(timeEntry))"
                                                       aria-label="Save"/>
                                         <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light"
                                                       Variant="Variant.Flat" Size="ButtonSize.Medium"
                                                       class="rz-my-1 rz-ms-1"
-                                                      Click="@(_ => CancelProjecttimeEdit(projecttime))"
+                                                      Click="@(_ => CancelTimeEntryEdit(timeEntry))"
                                                       aria-label="Cancel"/>
                                         <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger"
                                                       Variant="Variant.Flat" Size="ButtonSize.Medium"
                                                       Shade="Shade.Lighter" class="rz-my-1 rz-ms-1"
-                                                      Click="@(_ => DeleteProjecttimeRow(projecttime))"
+                                                      Click="@(_ => DeleteTimeEntryRow(timeEntry))"
                                                       aria-label="Delete"/>
                                     </EditTemplate>
                                 </RadzenDataGridColumn>
@@ -325,7 +326,7 @@ else
         if (Workday is not null)
         {
             _worktimes = Workday.Worktimes.ToList();
-            _projecttimes = Workday.Projecttimes
+            _timeEntries = Workday.TimeEntries
                 .OrderBy(x => _projects.FirstOrDefault(p => p.ProjectId == x.ProjectId)?.Name)
                 .ToList();
         }
@@ -333,7 +334,7 @@ else
         {
             await CreateWorkdayIfNotExists();
             _worktimes = [];
-            _projecttimes = [];
+            _timeEntries = [];
         }
     }
 
@@ -353,11 +354,11 @@ else
     private async Task SaveWorkdayTypeChange()
     {
         if (Workday is null) return;
-        var hasWorktimesAndProjects = _worktimes.Any() || _projecttimes.Any();
+        var hasWorktimesAndProjects = _worktimes.Any() || _timeEntries.Any();
 
         if (WorkdayTypeHasChanged && !IsWorkingDay && hasWorktimesAndProjects)
         {
-            var confirmed = await DialogService.Confirm("Changing the workday type will delete ALL associated work- and project times. Do you want to proceed?", "Confirm Workday Type Change",
+            var confirmed = await DialogService.Confirm("Changing the workday type will delete ALL associated worktimes and time entries. Do you want to proceed?", "Confirm Workday Type Change",
                 new ConfirmOptions
                 {
                     OkButtonText = "Yes",
@@ -402,17 +403,17 @@ else
             }
         }
 
-        if (!IsWorkingDay && _projecttimes.Any())
+        if (!IsWorkingDay && _timeEntries.Any())
         {
-            foreach (var projecttime in _projecttimes.ToList())
+            foreach (var timeEntry in _timeEntries.ToList())
             {
-                if (!await ProjecttimeService.DeleteProjecttimeAsync(projecttime.ProjecttimeId))
+                if (!await TimeEntryService.DeleteTimeEntryAsync(timeEntry.TimeEntryId))
                 {
-                    NotificationService.Notify(NotificationSeverity.Error, "Deletion of project time failed.", duration: 4000);
+                    NotificationService.Notify(NotificationSeverity.Error, "Deletion of time entry failed.", duration: 4000);
                     continue;
                 }
 
-                _projecttimes.Remove(projecttime);
+                _timeEntries.Remove(timeEntry);
             }
         }
 
@@ -486,5 +487,4 @@ else
     {
         DialogService.Close(model);
     }
-
 }

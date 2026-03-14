@@ -1,4 +1,5 @@
 using ChronoLog.Core.Models.DisplayObjects;
+using ChronoLog.Core.Models.ViewModels;
 using ChronoLog.SqlDatabase.Models;
 
 namespace ChronoLog.Applications.Mappers;
@@ -40,7 +41,7 @@ public static class EntitiesToModels
             Date = entity.Date,
             Type = entity.Type,
             Worktimes = entity.Worktimes.Select(wt => wt.ToModel()).ToList(),
-            Projecttimes = entity.Projecttimes.Select(pt => pt.ToModel()).ToList()
+            TimeEntries = entity.TimeEntries.Select(pt => pt.ToModel()).ToList()
         };
     }
 
@@ -56,14 +57,14 @@ public static class EntitiesToModels
         };
     }
     
-    public static ProjecttimeModel ToModel(this ProjecttimeEntity entity)
+    public static TimeEntryModel ToModel(this TimeEntryEntity entity)
     {
-        return new ProjecttimeModel
+        return new TimeEntryModel
         {
-            ProjecttimeId = entity.ProjecttimeId,
+            TimeEntryId = entity.TimeEntryId,
             WorkdayId = entity.WorkdayId,
             ProjectId = entity.ProjectId,
-            TimeSpent = entity.TimeSpent,
+            Duration = entity.Duration,
             ResponseText = entity.ResponseText
         };
     }

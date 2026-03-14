@@ -10,9 +10,9 @@ public partial class EditWorkdayDialog
     private List<WorktimeModel> _worktimes = [];
     private readonly List<WorktimeModel> _worktimesToInsert = [];
 
-    private RadzenDataGrid<ProjecttimeModel> _projecttimeGrid = new();
-    private List<ProjecttimeModel> _projecttimes = [];
-    private readonly List<ProjecttimeModel> _projecttimesToInsert = [];
+    private RadzenDataGrid<TimeEntryModel> _timeEntryGrid = new();
+    private List<TimeEntryModel> _timeEntries = [];
+    private readonly List<TimeEntryModel> _timeEntriesToInsert = [];
 
     private void ClearPendingWorktimeInsertions() =>
         _worktimesToInsert.Clear();
@@ -173,134 +173,132 @@ public partial class EditWorkdayDialog
         return false;
     }
     
-    private void ClearPendingProjecttimeInsertions() =>
-        _projecttimesToInsert.Clear();
+    private void ClearPendingTimeEntryInsertions() =>
+        _timeEntriesToInsert.Clear();
 
-    private void RemovePendingProjecttimeInsertion(ProjecttimeModel projecttime) =>
-        _projecttimesToInsert.RemoveAll(p => p.ProjecttimeId == projecttime.ProjecttimeId);
+    private void RemovePendingTimeEntryInsertion(TimeEntryModel timeEntry) =>
+        _timeEntriesToInsert.RemoveAll(p => p.TimeEntryId == timeEntry.TimeEntryId);
 
-    private async Task EditProjecttimeRow(ProjecttimeModel projecttime)
+    private async Task EditTimeEntryRow(TimeEntryModel timeEntry)
     {
-        if (!_projecttimeGrid.IsValid) return;
+        if (!_timeEntryGrid.IsValid) return;
 
-        ClearPendingProjecttimeInsertions();
-        await _projecttimeGrid.EditRow(projecttime);
+        ClearPendingTimeEntryInsertions();
+        await _timeEntryGrid.EditRow(timeEntry);
     }
 
-    private async Task OnUpdateProjecttimeRow(ProjecttimeModel projecttime)
+    private async Task OnUpdateTimeEntryRow(TimeEntryModel timeEntry)
     {
-        RemovePendingProjecttimeInsertion(projecttime);
+        RemovePendingTimeEntryInsertion(timeEntry);
         try
         {
-            if (!await ProjecttimeService.UpdateProjecttimeAsync(projecttime))
+            if (!await TimeEntryService.UpdateTimeEntryAsync(timeEntry))
             {
-                _projecttimeGrid.CancelEditRow(projecttime);
-                NotificationService.Notify(NotificationSeverity.Error, "Update of project time failed.",
+                _timeEntryGrid.CancelEditRow(timeEntry);
+                NotificationService.Notify(NotificationSeverity.Error, "Update of time entry failed.",
                     duration: 4000);
             }
         }
         catch (Exception ex)
         {
-            _projecttimeGrid.CancelEditRow(projecttime);
-            NotificationService.Notify(NotificationSeverity.Error, "Update of project time failed.", duration: 4000);
-            Logger?.LogError(ex, "Error updating project time row.");
+            _timeEntryGrid.CancelEditRow(timeEntry);
+            NotificationService.Notify(NotificationSeverity.Error, "Update of time entry failed.", duration: 4000);
+            Logger?.LogError(ex, "Error updating time entry row.");
         }
     }
 
-    private async Task SaveProjecttimeRow(ProjecttimeModel projecttime)
+    private async Task SaveTimeEntryRow(TimeEntryModel timeEntry)
     {
-        if (projecttime.ProjectId == Guid.Empty)
+        if (timeEntry.ProjectId == Guid.Empty)
         {
             NotificationService.Notify(NotificationSeverity.Error, "Please select a project.", duration: 4000);
             return;
         }
-        await _projecttimeGrid.UpdateRow(projecttime);
+        await _timeEntryGrid.UpdateRow(timeEntry);
     }
 
-    private void CancelProjecttimeEdit(ProjecttimeModel projecttime)
+    private void CancelTimeEntryEdit(TimeEntryModel timeEntry)
     {
-        RemovePendingProjecttimeInsertion(projecttime);
-        _projecttimeGrid.CancelEditRow(projecttime);
+        RemovePendingTimeEntryInsertion(timeEntry);
+        _timeEntryGrid.CancelEditRow(timeEntry);
     }
 
-    private async Task DeleteProjecttimeRow(ProjecttimeModel projecttime)
+    private async Task DeleteTimeEntryRow(TimeEntryModel timeEntry)
     {
-        RemovePendingProjecttimeInsertion(projecttime);
+        RemovePendingTimeEntryInsertion(timeEntry);
 
-        var projecttimeIdExists = _projecttimes.Any(p => p.ProjecttimeId == projecttime.ProjecttimeId && p.ProjecttimeId != Guid.Empty);
-        if (projecttimeIdExists)
+        var timeEntryIdExists = _timeEntries.Any(p => p.TimeEntryId == timeEntry.TimeEntryId && p.TimeEntryId != Guid.Empty);
+        if (timeEntryIdExists)
         {
             try
             {
-                if (!await ProjecttimeService.DeleteProjecttimeAsync(projecttime.ProjecttimeId))
+                if (!await TimeEntryService.DeleteTimeEntryAsync(timeEntry.TimeEntryId))
                 {
-                    NotificationService.Notify(NotificationSeverity.Error, "Deletion of project time failed.", duration: 4000);
+                    NotificationService.Notify(NotificationSeverity.Error, "Deletion of time entry failed.", duration: 4000);
                     return;
                 }
 
-                _projecttimes.RemoveAll(p => p.ProjecttimeId == projecttime.ProjecttimeId);
+                _timeEntries.RemoveAll(p => p.TimeEntryId == timeEntry.TimeEntryId);
             }
             catch (Exception ex)
             {
-                NotificationService.Notify(NotificationSeverity.Error, "Deletion of project time failed.", duration: 4000);
-                Logger?.LogError(ex, "Error deleting project time row.");
+                NotificationService.Notify(NotificationSeverity.Error, "Deletion of time entry failed.", duration: 4000);
+                Logger?.LogError(ex, "Error deleting time entry row.");
                 return;
             }
         }
         else
         {
-            _projecttimeGrid.CancelEditRow(projecttime);
+            _timeEntryGrid.CancelEditRow(timeEntry);
         }
         
-        await _projecttimeGrid.Reload();
+        await _timeEntryGrid.Reload();
     }
 
-    private async Task InsertProjecttimeRow()
+    private async Task InsertTimeEntryRow()
     {
-        if (!_projecttimeGrid.IsValid) return;
+        if (!_timeEntryGrid.IsValid) return;
 
-        ClearPendingProjecttimeInsertions();
-        var newProjecttime = new ProjecttimeModel();
+        ClearPendingTimeEntryInsertions();
+        var newTimeEntry = new TimeEntryModel();
         try
         {
-            _projecttimesToInsert.Add(newProjecttime);
-            await _projecttimeGrid.InsertRow(newProjecttime);
+            _timeEntriesToInsert.Add(newTimeEntry);
+            await _timeEntryGrid.InsertRow(newTimeEntry);
         }
         catch (Exception ex)
         {
-            _projecttimesToInsert.RemoveAll(p => p.ProjecttimeId == newProjecttime.ProjecttimeId);
-            NotificationService.Notify(NotificationSeverity.Error, "Insertion of project time failed.", duration: 4000);
-            Logger?.LogError(ex, "Error inserting project time row.");
+            _timeEntriesToInsert.RemoveAll(p => p.TimeEntryId == newTimeEntry.TimeEntryId);
+            NotificationService.Notify(NotificationSeverity.Error, "Insertion of time entry failed.", duration: 4000);
+            Logger?.LogError(ex, "Error inserting time entry row.");
         }
     }
 
-    private async Task OnCreateProjecttimeRow(ProjecttimeModel projecttime)
+    private async Task OnCreateTimeEntryRow(TimeEntryModel timeEntry)
     {
         if (Workday is null) return;
 
-        projecttime.WorkdayId = Workday.WorkdayId;
+        timeEntry.WorkdayId = Workday.WorkdayId;
         try
         {
-            var createdProjecttimeId = await ProjecttimeService.CreateProjecttimeAsync(projecttime);
-            var createdProjecttime = await ProjecttimeService.GetProjecttimeAsync(createdProjecttimeId);
-            
-            //Workday.Projecttimes.Add(createdProjecttime);
+            var createdTimeEntryId = await TimeEntryService.CreateTimeEntryAsync(timeEntry);
+            var createdTimeEntry = await TimeEntryService.GetTimeEntryAsync(createdTimeEntryId);
 
-            if (createdProjecttime is not null) _projecttimes.Add(createdProjecttime);
-            _projecttimes = _projecttimes
+            if (createdTimeEntry is not null) _timeEntries.Add(createdTimeEntry);
+            _timeEntries = _timeEntries
                 .OrderBy(x => _projects
                     .FirstOrDefault(p => p.ProjectId == x.ProjectId)?.Name)
                 .ToList();
         }
         catch (Exception ex)
         {
-            NotificationService.Notify(NotificationSeverity.Error, "Create of project time failed.", duration: 4000);
-            Logger?.LogError(ex, "Error creating project time row.");
+            NotificationService.Notify(NotificationSeverity.Error, "Create of time entry failed.", duration: 4000);
+            Logger?.LogError(ex, "Error creating time entry row.");
         }
         finally
         {
-            _projecttimesToInsert.RemoveAll(p => p.ProjecttimeId == projecttime.ProjecttimeId);
-            await _projecttimeGrid.Reload();
+            _timeEntriesToInsert.RemoveAll(p => p.TimeEntryId == timeEntry.TimeEntryId);
+            await _timeEntryGrid.Reload();
         }
     }
 }

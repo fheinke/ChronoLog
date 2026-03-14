@@ -1,4 +1,6 @@
-namespace ChronoLog.Core.Models.DisplayObjects;
+using ChronoLog.Core.Models.DisplayObjects;
+
+namespace ChronoLog.Core.Models.ViewModels;
 
 public class WorkdayViewModel
 {
@@ -7,7 +9,7 @@ public class WorkdayViewModel
     public DateTime Date { get; set; }
     public WorkdayType Type { get; set; }
     public List<WorktimeModel> Worktimes { get; set; }
-    public List<ProjecttimeModel> Projecttimes { get; set; }
+    public List<TimeEntryModel> TimeEntries { get; set; }
     
     public string TypeText => Type.ToString();
     
