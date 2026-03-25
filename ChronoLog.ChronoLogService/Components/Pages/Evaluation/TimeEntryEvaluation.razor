@@ -1,9 +1,9 @@
 @page "/evaluation"
 @using System.Globalization
+@using ChronoLog.ChronoLogService.ViewModels
 @using ChronoLog.Core
 @using ChronoLog.Core.Interfaces
 @using ChronoLog.Core.Models.DisplayObjects
-@using ChronoLog.Core.Models.ViewModels
 @inject IJSRuntime JsRuntime
 @inject NotificationService NotificationService
 @inject IEmployeeContextService EmployeeContextService
@@ -185,7 +185,7 @@
     private ProjectModel? _defaultProject;
     private List<ProjectModel> _projects = [];
     private Dictionary<Guid, ProjectModel> _projectLookup = [];
-    private List<WorkdayViewModel> _workdays = [];
+    private List<WorkdaySummaryViewModel> _workdays = [];
     private List<TimeEntryModel> _timeEntries = [];
     private List<DateTime> _missingWorktimeDates = [];
     
@@ -262,7 +262,8 @@
 
     private async Task UpdateWorkdayDataAsync()
     {
-        _workdays = await WorkdayService.GetWorkdaysAsync(_dateRangeStart, _dateRangeEnd);
+        var responses = await WorkdayService.GetWorkdaysAsync(_dateRangeStart, _dateRangeEnd);
+        _workdays = responses.Select(WorkdaySummaryViewModel.FromResponse).ToList();
         _timeEntries = await TimeEntryService.GetTimeEntriesAsync(_dateRangeStart, _dateRangeEnd);
         _officeDays = await WorkdayService.GetOfficeDaysCountAsync(_dateRangeStart, _dateRangeEnd);
         _missingWorktimeDates.Clear();

@@ -1,5 +1,4 @@
 using ChronoLog.Core.Models.DisplayObjects;
-using ChronoLog.Core.Models.ViewModels;
 using ChronoLog.SqlDatabase.Models;
 
 namespace ChronoLog.Applications.Mappers;
@@ -16,21 +15,6 @@ public static class EntitiesToModels
             Description = entity.Description,
             ResponseObject = entity.ResponseObject,
             DefaultResponseText = entity.DefaultResponseText
-        };
-    }
-
-    public static WorkdayViewModel ToViewModel(this WorkdayEntity entity)
-    {
-        ArgumentNullException.ThrowIfNull(entity);
-
-        return new WorkdayViewModel
-        {
-            WorkdayId = entity.WorkdayId,
-            EmployeeId = entity.EmployeeId,
-            Date = entity.Date,
-            Type = entity.Type,
-            Worktimes = entity.Worktimes.Select(wt => wt.ToModel()).ToList(),
-            TimeEntries = entity.TimeEntries.Select(pt => pt.ToModel()).ToList()
         };
     }
 

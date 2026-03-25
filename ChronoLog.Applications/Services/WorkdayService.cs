@@ -5,7 +5,6 @@ using ChronoLog.Core.Interfaces;
 using ChronoLog.Core.Models;
 using ChronoLog.Core.Models.DisplayObjects;
 using ChronoLog.Core.Models.DTOs;
-using ChronoLog.Core.Models.ViewModels;
 using ChronoLog.SqlDatabase.Context;
 using Microsoft.EntityFrameworkCore;
 
@@ -36,13 +35,13 @@ public class WorkdayService : IWorkdayService
         return affectedRows > 0 ? model.WorkdayId : Guid.Empty;
     }
 
-    public async Task<List<WorkdayViewModel>> GetWorkdaysAsync() =>
+    public async Task<List<WorkdayResponse>> GetWorkdaysAsync() =>
         await GetWorkdaysInternalAsync(null, null);
 
-    public async Task<List<WorkdayViewModel>> GetWorkdaysAsync(DateTime startDate, DateTime endDate) =>
+    public async Task<List<WorkdayResponse>> GetWorkdaysAsync(DateTime startDate, DateTime endDate) =>
         await GetWorkdaysInternalAsync(startDate, endDate);
 
-    private async Task<List<WorkdayViewModel>> GetWorkdaysInternalAsync(DateTime? startDate, DateTime? endDate)
+    private async Task<List<WorkdayResponse>> GetWorkdaysInternalAsync(DateTime? startDate, DateTime? endDate)
     {
         var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
         var query = _sqlDbContext.Workdays
@@ -56,27 +55,29 @@ public class WorkdayService : IWorkdayService
             .OrderBy(w => w.Date)
             .Include(w => w.Worktimes.OrderBy(x => x.StartTime))
             .Include(w => w.TimeEntries)
-            .Select(w => w.ToViewModel())
+            .Select(w => w.ToResponse())
             .ToListAsync();
 
-        foreach (var workday in workdays)
-            workday.Worktimes = workday.Worktimes.OrderBy(x => x.StartTime).ToList();
-
+        workdays = workdays
+            .Select(w => w with { Worktimes = w.Worktimes.OrderBy(x => x.StartTime).ToList() })
+            .ToList();
+        
         return workdays;
     }
 
-    public async Task<WorkdayViewModel?> GetWorkdayByIdAsync(Guid workdayId)
+    public async Task<WorkdayResponse?> GetWorkdayByIdAsync(Guid workdayId)
     {
         var workday = await _sqlDbContext.Workdays
             .AsNoTracking()
             .Where(w => w.WorkdayId == workdayId)
             .Include(w => w.Worktimes)
             .Include(w => w.TimeEntries)
-            .Select(w => w.ToViewModel())
+            .Select(w => w.ToResponse())
             .FirstOrDefaultAsync();
 
-        workday?.Worktimes = workday.Worktimes.OrderBy(x => x.StartTime).ToList();
-
+        if (workday is not null)
+            workday = workday with { Worktimes = workday.Worktimes.OrderBy(x => x.StartTime).ToList() };
+        
         return workday ?? null;
     }
 
@@ -112,7 +113,7 @@ public class WorkdayService : IWorkdayService
             .AsNoTracking()
             .Where(w => w.WorkdayId == workdayId)
             .Include(w => w.Worktimes)
-            .Select(w => w.ToViewModel())
+            .Select(w => w.ToResponse())
             .FirstOrDefaultAsync();
         if (workday == null || workday.Worktimes.Count == 0)
             return TimeSpan.Zero;
@@ -128,7 +129,7 @@ public class WorkdayService : IWorkdayService
             .AsNoTracking()
             .Include(w => w.Worktimes)
             .Where(wd => wd.EmployeeId == employee.EmployeeId)
-            .Select(wd => wd.ToViewModel())
+            .Select(wd => wd.ToResponse())
             .ToListAsync();
 
         var totalOvertime = workdays.Sum(workday => CalculateDailyOvertime(workday, employee.DailyWorkingTimeInHours));
@@ -142,7 +143,7 @@ public class WorkdayService : IWorkdayService
             .AsNoTracking()
             .Include(w => w.Worktimes)
             .Where(wd => wd.EmployeeId == employee.EmployeeId && wd.Date >= startDate && wd.Date <= endDate)
-            .Select(wd => wd.ToViewModel())
+            .Select(wd => wd.ToResponse())
             .ToListAsync();
 
         var workdaySummaries = (from workday in workdays
@@ -191,7 +192,7 @@ public class WorkdayService : IWorkdayService
         return await GetWorkdayTypeSummaryInternal(null, startDate, endDate);
     }
 
-    private static TimeSpan CalculateDailyWorktime(WorkdayViewModel workday)
+    private static TimeSpan CalculateDailyWorktime(WorkdayResponse workday)
     {
         var totalWorktime = TimeSpan.Zero;
 
@@ -207,7 +208,7 @@ public class WorkdayService : IWorkdayService
         return totalWorktime;
     }
 
-    private static double CalculateDailyOvertime(WorkdayViewModel workday, double dailyWorkingTimeInHours)
+    private static double CalculateDailyOvertime(WorkdayResponse workday, double dailyWorkingTimeInHours)
     {
         var totalOvertime = 0.0;
         if (workday.Type == WorkdayType.Gleitzeittag) return -dailyWorkingTimeInHours;

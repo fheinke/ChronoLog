@@ -1,8 +1,8 @@
+@using ChronoLog.ChronoLogService.ViewModels
 @using ChronoLog.Core
 @using ChronoLog.Core.Interfaces
 @using ChronoLog.Core.Models
 @using ChronoLog.Core.Models.DisplayObjects
-@using ChronoLog.Core.Models.ViewModels
 @using Radzen.Blazor.Rendering
 @inject DialogService DialogService
 @inject NotificationService NotificationService
@@ -32,7 +32,7 @@
 }
 else
 {
-    <RadzenTemplateForm TItem="WorkdayViewModel" Data="@Workday" Submit="@OnSubmit">
+    <RadzenTemplateForm TItem="WorkdaySummaryViewModel" Data="@Workday" Submit="@OnSubmit">
         <RadzenStack Gap="1rem">
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
                 <RadzenLabel Text="Workday Type" Component="WorkdayTypeDropdown"/>
@@ -300,7 +300,7 @@ else
 </Popup>
 
 @code {
-    [Parameter] public WorkdayViewModel? Workday { get; set; }
+    [Parameter] public WorkdaySummaryViewModel? Workday { get; set; }
     [Parameter] public DateTime SelectedDate { get; set; }
 
     private static readonly IEnumerable<WorkdayType> WorkdayTypes = Enum.GetValues(typeof(WorkdayType)).Cast<WorkdayType>();
@@ -347,7 +347,8 @@ else
             Type = WorkdayType.Homeoffice
         };
         var workdayId = await WorkdayService.CreateWorkdayAsync(newWorkday);
-        Workday = await WorkdayService.GetWorkdayByIdAsync(workdayId);
+        var response = await WorkdayService.GetWorkdayByIdAsync(workdayId);
+        if (response is not null) Workday = WorkdaySummaryViewModel.FromResponse(response);
         _originalWorkdayType = Workday?.Type;
     }
 
@@ -483,7 +484,7 @@ else
         return totalWorktime;
     }
 
-    void OnSubmit(WorkdayViewModel model)
+    void OnSubmit(WorkdaySummaryViewModel model)
     {
         DialogService.Close(model);
     }
