@@ -1,4 +1,5 @@
 @page "/personalsettings"
+@using ChronoLog.Applications.Mappers
 @using ChronoLog.Core.Interfaces
 @using ChronoLog.Core.Models
 @using ChronoLog.Core.Models.DisplayObjects
@@ -37,7 +38,7 @@
                                             Style="width: 100%;"/>
                         </ChildContent>
                         <Helper>
-                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                            <RadzenText TextStyle="TextStyle.Caption">
                                 Select your province for accurate public holiday calculations
                             </RadzenText>
                         </Helper>
@@ -51,7 +52,7 @@
                                            Min="0" Max="365" ShowUpDown="true"/>
                         </ChildContent>
                         <Helper>
-                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                            <RadzenText TextStyle="TextStyle.Caption">
                                 Number of vacation days you have per year
                             </RadzenText>
                         </Helper>
@@ -67,7 +68,7 @@
                                            Min="0" Max="24" Step="0.25" ShowUpDown="true"/>
                         </ChildContent>
                         <Helper>
-                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                            <RadzenText TextStyle="TextStyle.Caption">
                                 Your standard daily working time in hours
                             </RadzenText>
                         </Helper>
@@ -81,7 +82,7 @@
                                            Step="0.25" ShowUpDown="true" Format="0.00"/>
                         </ChildContent>
                         <Helper>
-                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                            <RadzenText TextStyle="TextStyle.Caption">
                                 Manual correction for overtime balance (positive or negative values)
                             </RadzenText>
                         </Helper>
@@ -143,7 +144,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _employee = await EmployeeContextService.GetOrCreateCurrentEmployeeAsync();
+        _employee = (await EmployeeContextService.GetOrCreateCurrentEmployeeAsync()).ToModel();
         _originalProvince = _employee.Province;
         _originalVacationDaysPerYear = _employee.VacationDaysPerYear;
         _originalDailyWorkingTimeInHours = _employee.DailyWorkingTimeInHours;
@@ -154,7 +155,7 @@
     private async Task SaveChanges()
     {
         _employee.Province = _selectedProvince;
-        if (await EmployeeContextService.UpdateEmployeeAsync(_employee))
+        if (await EmployeeContextService.UpdateEmployeeAsync(_employee.ToDto()))
         {
             _originalProvince = _employee.Province;
             _originalVacationDaysPerYear = _employee.VacationDaysPerYear;

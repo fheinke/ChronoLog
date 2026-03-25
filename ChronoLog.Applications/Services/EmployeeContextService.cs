@@ -2,7 +2,7 @@ using ChronoLog.Applications.Mappers;
 using ChronoLog.Core;
 using ChronoLog.Core.Interfaces;
 using ChronoLog.Core.Models;
-using ChronoLog.Core.Models.DisplayObjects;
+using ChronoLog.Core.Models.DTOs;
 using ChronoLog.Core.Models.HelperObjects;
 using ChronoLog.SqlDatabase.Context;
 using ChronoLog.SqlDatabase.Models;
@@ -15,7 +15,7 @@ public class EmployeeContextService : IEmployeeContextService
     private readonly IUserService _userService;
     private readonly SqlDbContext _sqlDbContext;
     private readonly SemaphoreSlim _initializationLock = new(1, 1);
-    private EmployeeModel? _cachedEmployee;
+    private EmployeeDto? _cachedEmployee;
 
     public EmployeeContextService(IUserService userService, SqlDbContext sqlDbContext)
     {
@@ -23,7 +23,7 @@ public class EmployeeContextService : IEmployeeContextService
         _sqlDbContext = sqlDbContext;
     }
 
-    private async Task<EmployeeModel?> GetCurrentEmployeeAsync()
+    private async Task<EmployeeDto?> GetCurrentEmployeeAsync()
     {
         if (_cachedEmployee is not null)
             return _cachedEmployee;
@@ -44,7 +44,7 @@ public class EmployeeContextService : IEmployeeContextService
         }
     }
 
-    public async Task<EmployeeModel> GetOrCreateCurrentEmployeeAsync()
+    public async Task<EmployeeDto> GetOrCreateCurrentEmployeeAsync()
     {
         var employee = await GetCurrentEmployeeAsync();
         if (employee is not null)
@@ -74,7 +74,7 @@ public class EmployeeContextService : IEmployeeContextService
             await _sqlDbContext.Employees.AddAsync(newEmployee);
             await _sqlDbContext.SaveChangesAsync();
 
-            _cachedEmployee = newEmployee.ToModel();
+            _cachedEmployee = newEmployee.ToDto();
             return _cachedEmployee;
         }
         finally
@@ -83,7 +83,7 @@ public class EmployeeContextService : IEmployeeContextService
         }
     }
 
-    public async Task<List<EmployeeModel>> GetAllEmployeesAsync()
+    public async Task<List<EmployeeDto>> GetAllEmployeesAsync()
     {
         await _initializationLock.WaitAsync();
         try
@@ -91,9 +91,8 @@ public class EmployeeContextService : IEmployeeContextService
             var employees = await _sqlDbContext.Employees
                 .AsNoTracking()
                 .OrderBy(e => e.Email)
-                .Select(e => e.ToModel())
                 .ToListAsync();
-            return employees;
+            return employees.Select(e => e.ToDto()).ToList();
         }
         finally
         {
@@ -183,7 +182,7 @@ public class EmployeeContextService : IEmployeeContextService
         return vacationDays;
     }
 
-    public async Task<bool> UpdateEmployeeAsync(EmployeeModel employee)
+    public async Task<bool> UpdateEmployeeAsync(EmployeeDto employee)
     {
         var existingEmployee = await _sqlDbContext.Employees
             .FirstOrDefaultAsync(e => e.EmployeeId == employee.EmployeeId);
@@ -196,11 +195,10 @@ public class EmployeeContextService : IEmployeeContextService
         existingEmployee.DailyWorkingTimeInHours = employee.DailyWorkingTimeInHours;
         existingEmployee.OvertimeCorrectionInHours = employee.OvertimeCorrectionInHours;
 
-        var affectedRows = await _sqlDbContext.SaveChangesAsync();
-        return affectedRows > 0;
+        return await _sqlDbContext.SaveChangesAsync() > 0;
     }
 
-    private async Task<EmployeeModel?> FetchAndUpdateEmployeeAsync()
+    private async Task<EmployeeDto?> FetchAndUpdateEmployeeAsync()
     {
         var userId = await _userService.GetUserIdAsync();
         if (string.IsNullOrEmpty(userId))
@@ -220,6 +218,6 @@ public class EmployeeContextService : IEmployeeContextService
         employee.LastSeen = DateTime.UtcNow;
         await _sqlDbContext.SaveChangesAsync();
 
-        return employee.ToModel();
+        return employee.ToDto();
     }
 }

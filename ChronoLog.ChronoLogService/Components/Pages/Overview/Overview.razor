@@ -1,6 +1,7 @@
 ﻿@page "/"
 @inject DialogService DialogService
 @inject NavigationManager NavigationManager
+@using ChronoLog.Applications.Mappers
 @using ChronoLog.Core.Interfaces
 @using ChronoLog.Core.Models
 @using ChronoLog.Core.Models.DisplayObjects
@@ -80,7 +81,7 @@
     private async Task LoadData()
     {
         _workdays = (await WorkdayService.GetWorkdaysAsync()).ToList();
-        _employee = await EmployeeContextService.GetOrCreateCurrentEmployeeAsync();
+        _employee = (await EmployeeContextService.GetOrCreateCurrentEmployeeAsync()).ToModel();
         _holidays = new GermanPublicHoliday { State = ParseProvinceToState(_employee.Province) };
         StateHasChanged();
     }

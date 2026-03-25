@@ -1,6 +1,6 @@
 using System.Security.Claims;
 using ChronoLog.Applications.Mappers;
-using ChronoLog.Core.Models.DisplayObjects;
+using ChronoLog.Core.Models.DTOs;
 using ChronoLog.SqlDatabase.Context;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,7 +8,7 @@ namespace ChronoLog.ChronoLogService.Authorization;
 
 public interface IApiUserService
 {
-    Task<EmployeeModel?> GetCurrentEmployeeAsync(ClaimsPrincipal user);
+    Task<EmployeeDto?> GetCurrentEmployeeAsync(ClaimsPrincipal user);
 }
 
 public class ApiUserService : IApiUserService
@@ -20,7 +20,7 @@ public class ApiUserService : IApiUserService
         _sqlDbContext = sqlDbContext;
     }
     
-    public async Task<EmployeeModel?> GetCurrentEmployeeAsync(ClaimsPrincipal user)
+    public async Task<EmployeeDto?> GetCurrentEmployeeAsync(ClaimsPrincipal user)
     {
         var userIdClaim = user.FindFirst("oid")?.Value
             ?? user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -32,6 +32,6 @@ public class ApiUserService : IApiUserService
             .AsNoTracking()
             .FirstOrDefaultAsync(e => e.ObjectId == userIdClaim);
         
-        return employee?.ToModel() ?? null;
+        return employee?.ToDto() ?? null;
     }
 }
