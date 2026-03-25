@@ -14,13 +14,11 @@ namespace ChronoLog.ChronoLogService.Controllers;
 [Route("api/[controller]")]
 public class TimeEntryController : ControllerBase
 {
-    private readonly ILogger<TimeEntryController> _logger;
     private readonly ITimeEntryService _timeEntryService;
     private readonly IProjectService _projectService;
     
-    public TimeEntryController(ILogger<TimeEntryController> logger, ITimeEntryService timeEntryService, IProjectService projectService)
+    public TimeEntryController(ITimeEntryService timeEntryService, IProjectService projectService)
     {
-        _logger = logger;
         _timeEntryService = timeEntryService;
         _projectService = projectService;
     }

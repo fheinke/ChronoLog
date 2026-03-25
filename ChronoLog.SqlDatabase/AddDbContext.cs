@@ -7,13 +7,12 @@ namespace ChronoLog.SqlDatabase;
 
 public static class AddDbContext
 {
-    public static IServiceCollection AddSqlServices(this IServiceCollection serviceCollection)
+    public static void AddSqlServices(this IServiceCollection serviceCollection)
     {
         var config = serviceCollection.BuildServiceProvider()
             .GetService<IConfiguration>();
         serviceCollection.AddDbContext<SqlDbContext>(
             x => x.UseMySQL(config!.GetConnectionString("SqlDatabase")!, y => y.CommandTimeout(120)),
             ServiceLifetime.Transient);
-        return serviceCollection;
     }
 }

@@ -37,7 +37,7 @@ builder.Services.AddAuthentication(options =>
     .AddInMemoryTokenCaches();
 
 builder.Services.AddAuthentication()
-    .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"), "Bearer");
+    .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"));
 
 builder.Services.AddAuthentication()
     .AddPolicyScheme("JWT_OR_COOKIE", "JWT_OR_COOKIE", options =>
@@ -107,7 +107,7 @@ builder.Services.AddScoped<IUserService>(sp =>
     var factory = sp.GetRequiredService<UserServiceFactory>();
     return factory.Create();
 });
-builder.Services.AddApplicationsToServiceCollection(builder.Configuration);
+builder.Services.AddApplicationsToServiceCollection();
 
 // API Documentation
 if (builder.Environment.IsDevelopment())

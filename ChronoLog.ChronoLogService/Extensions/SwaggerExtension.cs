@@ -4,7 +4,7 @@ namespace ChronoLog.ChronoLogService.Extensions;
 
 public static class SwaggerExtension
 {
-    public static IServiceCollection AddSwaggerExtension(this IServiceCollection services)
+    public static void AddSwaggerExtension(this IServiceCollection services)
     {
         services.AddEndpointsApiExplorer();
 
@@ -38,7 +38,5 @@ public static class SwaggerExtension
                 [new OpenApiSecuritySchemeReference("Bearer", document)] = []
             });
         });
-
-        return services;
     }
 }

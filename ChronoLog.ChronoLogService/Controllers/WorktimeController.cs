@@ -14,12 +14,10 @@ namespace ChronoLog.ChronoLogService.Controllers;
 [Route("api/[controller]")]
 public class WorktimeController : ControllerBase
 {
-    private readonly ILogger<WorktimeController> _logger;
     private readonly IWorktimeService _worktimeService;
 
-    public WorktimeController(ILogger<WorktimeController> logger, IWorktimeService worktimeService)
+    public WorktimeController(IWorktimeService worktimeService)
     {
-        _logger = logger;
         _worktimeService = worktimeService;
     }
 
