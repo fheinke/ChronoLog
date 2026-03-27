@@ -22,7 +22,8 @@ else
     <div style="display: flex; flex-direction: column; height: 100%; gap: 10px;">
         <RadzenCard>
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <RadzenButton Text="Create Project" ButtonStyle="ButtonStyle.Success" Variant="Variant.Outlined" Click="OpenCreateProjectDialog"/>
+                <RadzenButton Text="Create Project" ButtonStyle="ButtonStyle.Success" Variant="Variant.Outlined"
+                              Click="OpenCreateProjectDialog"/>
             </div>
         </RadzenCard>
         <RadzenCard>
@@ -57,7 +58,9 @@ else
                                 LogicalFilterOperator="LogicalFilterOperator.And"
                                 FilterPopupRenderMode="PopupRenderMode.OnDemand">
                     <Columns>
-                        <RadzenDataGridColumn Property="@nameof(ProjectModel.IsDefault)" Title="Default" Filterable="false" Sortable="false" Resizable="false" Width="30px" TextAlign="TextAlign.Center">
+                        <RadzenDataGridColumn Property="@nameof(ProjectModel.IsDefault)" Title="Default"
+                                              Filterable="false" Sortable="false" Resizable="false" Width="30px"
+                                              TextAlign="TextAlign.Center">
                             <Template Context="item">
                                 @if (item.IsDefault)
                                 {
@@ -75,7 +78,13 @@ else
                                 @item.ResponseObject
                             </Template>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn Filterable="false" Sortable="false" Resizable="false" Width="40px" TextAlign="TextAlign.Center">
+                        <RadzenDataGridColumn Property="@nameof(ProjectModel.DefaultResponseText)" Title="Default Response Text">
+                            <Template Context="item">
+                                @item.DefaultResponseText
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn Filterable="false" Sortable="false" Resizable="false" Width="40px"
+                                              TextAlign="TextAlign.Center">
                             <Template Context="item">
                                 <RadzenButton Icon="edit"
                                               ButtonStyle="ButtonStyle.Light"
@@ -99,19 +108,19 @@ else
 
 @code {
     private bool _isAuthorized;
-    
+
     private List<ProjectModel> _projects = [];
-    
+
     private RadzenDataGrid<ProjectModel>? _grid;
     private IList<ProjectModel>? _selectedProject;
     private string _searchText = "";
-    
+
     private List<ProjectModel> FilteredProjects => string.IsNullOrWhiteSpace(_searchText)
         ? _projects
-        : _projects.Where(p => 
-            p.Name.Contains(_searchText, StringComparison.OrdinalIgnoreCase) || 
+        : _projects.Where(p =>
+            p.Name.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
             p.ProjectId.ToString().Contains(_searchText, StringComparison.OrdinalIgnoreCase)
-            ).ToList();
+        ).ToList();
 
     protected override async Task OnInitializedAsync()
     {
@@ -123,7 +132,7 @@ else
             NavigationManager.NavigateTo("/");
             return;
         }
-        
+
         await LoadData();
         if (_selectedProject is null || !_selectedProject.Any())
             _selectedProject = _projects.Take(1).ToList();
@@ -140,35 +149,35 @@ else
         _searchText = string.Empty;
         if (_grid is null)
             return;
-        
+
         foreach (var column in _grid.ColumnsCollection)
             await column.SetFilterValueAsync(null);
-        
+
         await _grid.Reload();
     }
-    
+
     private void OnSearchTextChanged(object? value)
     {
         _searchText = value?.ToString() ?? string.Empty;
     }
-    
+
     private async Task OpenCreateProjectDialog()
     {
         await DialogService.OpenAsync<CreateProjectDialog>(
             "Create Project",
             new Dictionary<string, object>(),
             new DialogOptions
-                {
-                    Width = "600px", 
-                    Height = "500px",
-                    CloseDialogOnEsc = true,
-                    CloseDialogOnOverlayClick = true
-                }
+            {
+                Width = "600px",
+                Height = "500px",
+                CloseDialogOnEsc = true,
+                CloseDialogOnOverlayClick = true
+            }
         );
-        
+
         await LoadData();
     }
-    
+
     private async Task OpenEditProjectDialog(ProjectModel project)
     {
         await DialogService.OpenAsync<EditProjectDialog>(
@@ -178,17 +187,17 @@ else
                 { "Project", project }
             },
             new DialogOptions
-                {
-                    Width = "600px", 
-                    Height = "500px",
-                    CloseDialogOnEsc = true,
-                    CloseDialogOnOverlayClick = true
-                }
+            {
+                Width = "600px",
+                Height = "500px",
+                CloseDialogOnEsc = true,
+                CloseDialogOnOverlayClick = true
+            }
         );
-        
+
         await LoadData();
     }
-    
+
     private async Task ConfirmDelete(ProjectModel project)
     {
         var confirmed = await DialogService.Confirm($"Delete \"{project.Name}\" permanently?", "Delete project",
@@ -221,4 +230,5 @@ else
             Console.Error.WriteLine(ex);
         }
     }
+
 }
