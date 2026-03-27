@@ -256,6 +256,15 @@ else
                                     </EditTemplate>
                                 </RadzenDataGridColumn>
                             </Columns>
+                            
+                            <FooterTemplate>
+                                <div class="rz-d-flex rz-justify-content-end rz-p-2">
+                                    <strong>Total Project Time: </strong>&nbsp;
+                                    <span>
+                                        @(CalculateTotalProjectTime()?.ToString(@"hh\:mm\:ss") ?? "N/A")
+                                    </span>
+                                </div>
+                            </FooterTemplate>
                         </RadzenDataGrid>
                     </RadzenCard>
                 </RadzenCardGroup>
@@ -482,6 +491,20 @@ else
         }
 
         return totalWorktime;
+    }
+
+    private TimeSpan? CalculateTotalProjectTime()
+    {
+        IEnumerable<TimeEntryModel> timeEntrySource;
+        
+        if (_timeEntries.Any())
+            timeEntrySource = _timeEntries;
+        else if (Workday is not null)
+            timeEntrySource = Workday.TimeEntries;
+        else
+            return null;
+
+        return timeEntrySource.Aggregate(TimeSpan.Zero, (current, timeEntry) => current + timeEntry.Duration);
     }
 
     void OnSubmit(WorkdaySummaryViewModel model)
