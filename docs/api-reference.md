@@ -25,7 +25,7 @@ az account get-access-token --resource "api://{YOUR_CLIENT_ID}"
 2. [Workday Controller](#workday-controller)
 3. [Worktime Controller](#worktime-controller)
 4. [Project Controller](#project-controller)
-5. [Projecttime Controller](#projecttime-controller)
+5. [Project Time Entry Controller](#timeentry-controller)
 6. [Common Response Codes](#common-response-codes)
 7. [Data Models](#data-models)
 
@@ -234,16 +234,18 @@ Returns all workdays for the current employee.
     "worktimes": [
       {
         "worktimeId": "guid",
+        "workdayId": "guid",
         "startTime": "TimeOnly",
         "endTime": "TimeOnly",
-        "breakTime": "TimeSpan"
+        "breakTime": "string"
       }
     ],
-    "projecttimes": [
+    "timeEntries": [
       {
-        "projecttimeId": "guid",
+        "timeEntryId": "guid",
+        "workdayId": "guid",
         "projectId": "guid",
-        "timeSpent": "TimeSpan",
+        "duration": "string",
         "responseText": "string"
       }
     ]
@@ -284,7 +286,7 @@ Returns a specific workday by its ID.
   "date": "datetime",
   "type": "WorkdayType enum",
   "worktimes": [...],
-  "projecttimes": [...]
+  "timeEntries": [...]
 }
 ```
 
@@ -704,24 +706,25 @@ Deletes a project by its ID.
 
 ---
 
-## Projecttime Controller
+## TimeEntry Controller
 
 Manages project time entries with CRUD operations.
 
-**Base Route**: `/api/projecttime`
+**Base Route**: `/api/timeentry`
 
-### POST /api/projecttime
+### POST /api/timeentry
 
-Creates a new projecttime entry.
+Creates a new project time entry.
 
 **Authorization**: Required
 
 **Request Body**:
 ```json
 {
+  "timeEntryId": "guid",
   "workdayId": "guid",
   "projectId": "guid (optional, defaults to default project)",
-  "timeSpent": "TimeSpan",
+  "duration": "TimeSpan",
   "responseText": "string (optional)"
 }
 ```
@@ -729,22 +732,22 @@ Creates a new projecttime entry.
 **Response**: `201 Created`
 ```json
 {
-  "projecttimeId": "guid",
+  "timeEntryId": "guid",
   "workdayId": "guid",
   "projectId": "guid",
-  "timeSpent": "TimeSpan",
+  "duration": "TimeSpan",
   "responseText": "string"
 }
 ```
 
 **Error Responses**:
-- `400 Bad Request`: Failed to create projecttime
+- `400 Bad Request`: Failed to create time entry
 
 ---
 
-### GET /api/projecttime
+### GET /api/timeentry
 
-Returns all projecttimes for the current employee.
+Returns all time entries for the current employee.
 
 **Authorization**: Required
 
@@ -752,10 +755,10 @@ Returns all projecttimes for the current employee.
 ```json
 [
   {
-    "projecttimeId": "guid",
+    "timeEntryId": "guid",
     "workdayId": "guid",
     "projectId": "guid",
-    "timeSpent": "TimeSpan",
+    "duration": "TimeSpan",
     "responseText": "string"
   }
 ]
@@ -763,37 +766,37 @@ Returns all projecttimes for the current employee.
 
 ---
 
-### GET /api/projecttime/{projecttimeIds}
+### GET /api/timeentry/{timeentryIds}
 
-Returns projecttimes by a comma-separated list of IDs.
+Returns project time entries by a comma-separated list of IDs.
 
 **Authorization**: Required
 
 **Path Parameters**:
-- `projecttimeIds` (string): Comma-separated GUIDs (e.g., "guid1,guid2,guid3")
+- `timeentryIds` (string): Comma-separated GUIDs (e.g., "guid1,guid2,guid3")
 
 **Response**: `200 OK`
 ```json
 [
   {
-    "projecttimeId": "guid",
+    "timeEntryId": "guid",
     "workdayId": "guid",
     "projectId": "guid",
-    "timeSpent": "TimeSpan",
+    "duration": "TimeSpan",
     "responseText": "string"
   }
 ]
 ```
 
 **Error Responses**:
-- `400 Bad Request`: No valid projecttime IDs provided
-- `404 Not Found`: No projecttimes found
+- `400 Bad Request`: No valid time entry IDs provided
+- `404 Not Found`: No time entries found
 
 ---
 
-### GET /api/projecttime/startdate/{startDate}/enddate/{endDate}
+### GET /api/timeentry/startdate/{startDate}/enddate/{endDate}
 
-Returns projecttimes within a date range.
+Returns project time entries within a date range.
 
 **Authorization**: Required
 
@@ -801,50 +804,50 @@ Returns projecttimes within a date range.
 - `startDate` (DateTime): Start date
 - `endDate` (DateTime): End date
 
-**Response**: `200 OK` - Same structure as GET /api/projecttime
+**Response**: `200 OK` - Same structure as GET /api/timeentry
 
 ---
 
-### GET /api/projecttime/{projecttimeId}
+### GET /api/timeentry/{timeentryId}
 
-Returns a specific projecttime by its ID.
+Returns a specific project time entry by its ID.
 
 **Authorization**: Required
 
 **Path Parameters**:
-- `projecttimeId` (guid): The projecttime ID
+- `timeentryId` (guid): The timeentry ID
 
 **Response**: `200 OK`
 ```json
 {
-  "projecttimeId": "guid",
+  "timeEntryId": "guid",
   "workdayId": "guid",
   "projectId": "guid",
-  "timeSpan": "TimeSpan",
+  "duration": "TimeSpan",
   "responseText": "string"
 }
 ```
 
 **Error Responses**:
-- `404 Not Found`: Projecttime not found
+- `404 Not Found`: time entry not found
 
 ---
 
-### PATCH /api/projecttime/{projecttimeId}
+### PATCH /api/timeentry/{timeentryId}
 
-Updates an existing projecttime.
+Updates an existing project time entry.
 
 **Authorization**: Required
 
 **Path Parameters**:
-- `projecttimeId` (guid): The projecttime ID
+- `timeentryId` (guid): The project time ID
 
 **Request Body**:
 ```json
 {
   "workdayId": "guid (optional)",
   "projectId": "guid (optional)",
-  "timeSpent": "TimeSpan (optional)",
+  "duration": "TimeSpan (optional)",
   "responseText": "string (optional)"
 }
 ```
@@ -852,25 +855,25 @@ Updates an existing projecttime.
 **Response**: `204 No Content` on success
 
 **Error Responses**:
-- `404 Not Found`: Projecttime not found
-- `400 Bad Request`: Failed to update projecttime
+- `404 Not Found`: Time entry not found
+- `400 Bad Request`: Failed to update time entry
 
 ---
 
-### DELETE /api/projecttime/{projecttimeId}
+### DELETE /api/timeentry/{timeentryId}
 
-Deletes a projecttime by its ID.
+Deletes a project time entry by its ID.
 
 **Authorization**: Required
 
 **Path Parameters**:
-- `projecttimeId` (guid): The projecttime ID
+- `timeentryId` (guid): The timeentry ID
 
 **Response**: `204 No Content` on success
 
 **Error Responses**:
-- `404 Not Found`: Projecttime not found
-- `400 Bad Request`: Failed to delete projecttime
+- `404 Not Found`: Project time entry not found
+- `400 Bad Request`: Failed to delete project time entry
 
 ---
 
@@ -963,13 +966,13 @@ curl -X POST https://chronolog.example.com/api/worktime \
 ### Creating a Project Time Entry
 
 ```bash
-curl -X POST https://chronolog.example.com/api/projecttime \
+curl -X POST https://chronolog.example.com/api/timeentry \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "workdayId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
     "projectId": "2ba85f64-1234-5678-b3fc-2c963f66afa6",
-    "timeSpent": "04:00:00",
+    "duration": "04:00:00",
     "responseText": "Implemented new feature"
   }'
 ```
