@@ -8,28 +8,30 @@ namespace ChronoLog.Applications.Services;
 
 public class ProjectService : IProjectService
 {
-    private readonly SqlDbContext _sqlDbContext;
+    private readonly IDbContextFactory<SqlDbContext> _dbContextFactory;
     
-    public ProjectService(SqlDbContext sqlDbContext)
+    public ProjectService(IDbContextFactory<SqlDbContext> dbContextFactory)
     {
-        _sqlDbContext = sqlDbContext;
+        _dbContextFactory = dbContextFactory;
     }
     
     public async Task<bool> CreateProjectAsync(ProjectModel projectModel)
     {
+        await using var sqlDbContext = await _dbContextFactory.CreateDbContextAsync();
         if (projectModel.IsDefault)
-            await _sqlDbContext.Projects
+            await sqlDbContext.Projects
                 .Where(p => p.IsDefault)
                 .ExecuteUpdateAsync(p => p.SetProperty(x => x.IsDefault, false));
         
-        await _sqlDbContext.Projects.AddAsync(projectModel.ToEntity());
-        var affectedRows = await _sqlDbContext.SaveChangesAsync();
+        await sqlDbContext.Projects.AddAsync(projectModel.ToEntity());
+        var affectedRows = await sqlDbContext.SaveChangesAsync();
         return affectedRows > 0;
     }
     
     public async Task<List<ProjectModel>> GetProjectsAsync()
     {
-        var projects = await _sqlDbContext.Projects
+        await using var sqlDbContext = await _dbContextFactory.CreateDbContextAsync();
+        var projects = await sqlDbContext.Projects
             .AsNoTracking()
             .OrderBy(p => p.Name)
             .Select(p => p.ToModel())
@@ -39,7 +41,8 @@ public class ProjectService : IProjectService
 
     public async Task<ProjectModel?> GetProjectByIdAsync(Guid projectId)
     {
-        var project = await _sqlDbContext.Projects
+        await using var sqlDbContext = await _dbContextFactory.CreateDbContextAsync();
+        var project = await sqlDbContext.Projects
             .AsNoTracking()
             .Where(p => p.ProjectId == projectId)
             .Select(p => p.ToModel())
@@ -49,7 +52,8 @@ public class ProjectService : IProjectService
     
     public async Task<Guid> GetDefaultProjectIdAsync()
     {
-        var defaultProject = await _sqlDbContext.Projects
+        await using var sqlDbContext = await _dbContextFactory.CreateDbContextAsync();
+        var defaultProject = await sqlDbContext.Projects
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.IsDefault);
         return defaultProject?.ProjectId ?? Guid.Empty;
@@ -57,7 +61,8 @@ public class ProjectService : IProjectService
     
     public async Task<bool> UpdateProjectAsync(Guid projectId, string? name, string? description, string? responseObject, string? defaultResponseText, bool? isDefault)
     {
-        var project = await _sqlDbContext.Projects
+        await using var sqlDbContext = await _dbContextFactory.CreateDbContextAsync();
+        var project = await sqlDbContext.Projects
             .FirstOrDefaultAsync(p => p.ProjectId == projectId);
         if (project is null)
             return false;
@@ -74,18 +79,19 @@ public class ProjectService : IProjectService
             project.IsDefault = isDefault.Value;
         
         if (project.IsDefault)
-            await _sqlDbContext.Projects
+            await sqlDbContext.Projects
                 .Where(p => p.IsDefault && p.ProjectId != projectId)
                 .ExecuteUpdateAsync(p => p.SetProperty(x => x.IsDefault, false));
         
-        _sqlDbContext.Projects.Update(project);
-        var affectedRows = await _sqlDbContext.SaveChangesAsync();
+        sqlDbContext.Projects.Update(project);
+        var affectedRows = await sqlDbContext.SaveChangesAsync();
         return affectedRows > 0;
     }
     
     public async Task<bool> UpdateProjectAsync(ProjectModel projectModel)
     {
-        var project = await _sqlDbContext.Projects
+        await using var sqlDbContext = await _dbContextFactory.CreateDbContextAsync();
+        var project = await sqlDbContext.Projects
             .FirstOrDefaultAsync(p => p.ProjectId == projectModel.ProjectId);
         if (project is null)
             return false;
@@ -97,18 +103,19 @@ public class ProjectService : IProjectService
         project.IsDefault = projectModel.IsDefault;
         
         if (project.IsDefault)
-            await _sqlDbContext.Projects
+            await sqlDbContext.Projects
                 .Where(p => p.IsDefault && p.ProjectId != projectModel.ProjectId)
                 .ExecuteUpdateAsync(p => p.SetProperty(x => x.IsDefault, false));
         
-        _sqlDbContext.Projects.Update(project);
-        var affectedRows = await _sqlDbContext.SaveChangesAsync();
+        sqlDbContext.Projects.Update(project);
+        var affectedRows = await sqlDbContext.SaveChangesAsync();
         return affectedRows > 0;
     }
     
     public async Task<bool> DeleteProjectAsync(Guid projectId)
     {
-        var project = await _sqlDbContext.Projects
+        await using var sqlDbContext = await _dbContextFactory.CreateDbContextAsync();
+        var project = await sqlDbContext.Projects
             .FirstOrDefaultAsync(p => p.ProjectId == projectId);
         
         if (project is null)
@@ -116,8 +123,8 @@ public class ProjectService : IProjectService
         if (project.IsDefault)
             return false;
         
-        _sqlDbContext.Projects.Remove(project);
-        var affectedRows = await _sqlDbContext.SaveChangesAsync();
+        sqlDbContext.Projects.Remove(project);
+        var affectedRows = await sqlDbContext.SaveChangesAsync();
         return affectedRows > 0;
     }
 }

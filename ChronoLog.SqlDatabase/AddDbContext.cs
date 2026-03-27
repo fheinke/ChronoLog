@@ -7,12 +7,15 @@ namespace ChronoLog.SqlDatabase;
 
 public static class AddDbContext
 {
-    public static void AddSqlServices(this IServiceCollection serviceCollection)
+    public static void AddSqlServices(this IServiceCollection services,
+        IConfiguration configuration)
     {
-        var config = serviceCollection.BuildServiceProvider()
-            .GetService<IConfiguration>();
-        serviceCollection.AddDbContext<SqlDbContext>(
-            x => x.UseMySQL(config!.GetConnectionString("SqlDatabase")!, y => y.CommandTimeout(120)),
-            ServiceLifetime.Transient);
+        services.AddDbContextFactory<SqlDbContext>(options =>
+            options.UseMySQL(
+                configuration.GetConnectionString("SqlDatabase")
+                ?? throw new InvalidOperationException("Connection string 'SqlDatabase' not found."),
+                mysqlOptions => mysqlOptions.CommandTimeout(120)
+            )
+        );
     }
 }

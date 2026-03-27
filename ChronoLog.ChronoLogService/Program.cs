@@ -99,7 +99,7 @@ builder.Services.AddRadzenCookieThemeService(options =>
 });
 
 // Database & Services
-builder.Services.AddSqlServices();
+builder.Services.AddSqlServices(builder.Configuration);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<UserServiceFactory>();
 builder.Services.AddScoped<IUserService>(sp =>
