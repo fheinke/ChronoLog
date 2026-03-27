@@ -15,7 +15,8 @@ public static class AddDbContext
                 configuration.GetConnectionString("SqlDatabase")
                 ?? throw new InvalidOperationException("Connection string 'SqlDatabase' not found."),
                 mysqlOptions => mysqlOptions.CommandTimeout(120)
-            )
+            ),
+            ServiceLifetime.Scoped
         );
     }
 }

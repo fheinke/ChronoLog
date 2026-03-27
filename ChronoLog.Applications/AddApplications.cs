@@ -6,12 +6,12 @@ namespace ChronoLog.Applications;
 
 public static class AddApplications
 {
-    public static void AddApplicationsToServiceCollection(this IServiceCollection serviceCollection)
+    public static void AddApplicationsToServiceCollection(this IServiceCollection services)
     {
-        serviceCollection.AddScoped<IEmployeeContextService, EmployeeContextService>();
-        serviceCollection.AddScoped<IProjectService, ProjectService>();
-        serviceCollection.AddScoped<ITimeEntryService, TimeEntryService>();
-        serviceCollection.AddScoped<IWorkdayService, WorkdayService>();
-        serviceCollection.AddScoped<IWorktimeService, WorktimeService>();
+        services.AddScoped<IEmployeeContextService, EmployeeContextService>();
+        services.AddScoped<IProjectService, ProjectService>();
+        services.AddScoped<ITimeEntryService, TimeEntryService>();
+        services.AddScoped<IWorkdayService, WorkdayService>();
+        services.AddScoped<IWorktimeService, WorktimeService>();
     }
 }
