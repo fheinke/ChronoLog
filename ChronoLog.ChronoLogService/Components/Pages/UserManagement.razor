@@ -1,5 +1,6 @@
 @page "/usermanagement"
 @using System.Globalization
+@using ChronoLog.Applications.Mappers
 @using ChronoLog.Core.Interfaces
 @using ChronoLog.Core.Models.DisplayObjects
 @using Microsoft.AspNetCore.Authorization
@@ -94,7 +95,7 @@ else
         var employee = await EmployeeContextService.GetOrCreateCurrentEmployeeAsync();
         _isAuthorized = employee.IsAdmin == true;
         if (!_isAuthorized) return;
-        _employees = await EmployeeContextService.GetAllEmployeesAsync();
+        _employees = (await EmployeeContextService.GetAllEmployeesAsync()).Select(e => e.ToModel()).ToList();
     }
 
     private void StartEdit(EmployeeModel employee)
@@ -113,7 +114,7 @@ else
     {
         try
         {
-            await EmployeeContextService.UpdateEmployeeAsync(employee);
+            await EmployeeContextService.UpdateEmployeeAsync(employee.ToDto());
             NotificationService.Notify(NotificationSeverity.Success, "User has been updated.");
         }
         catch (Exception)

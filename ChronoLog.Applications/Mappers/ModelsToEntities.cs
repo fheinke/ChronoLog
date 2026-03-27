@@ -41,33 +41,15 @@ public static class ModelsToEntities
         };
     }
     
-    public static ProjecttimeEntity ToEntity(this ProjecttimeModel model)
+    public static TimeEntryEntity ToEntity(this TimeEntryModel model)
     {
-        return new ProjecttimeEntity
+        return new TimeEntryEntity
         {
-            ProjecttimeId = model.ProjecttimeId,
+            TimeEntryId = model.TimeEntryId,
             WorkdayId = model.WorkdayId,
             ProjectId = model.ProjectId,
-            TimeSpent = model.TimeSpent,
+            Duration = model.Duration,
             ResponseText = model.ResponseText
-        };
-    }
-
-    public static EmployeeEntity ToEntity(this EmployeeModel model)
-    {
-        return new EmployeeEntity
-        {
-            EmployeeId = model.EmployeeId,
-            ObjectId = model.ObjectId,
-            Email = model.Email,
-            Name = model.Name,
-            Province = model.Province,
-            IsAdmin = model.IsAdmin,
-            IsProjectManager = model.IsProjectManager,
-            VacationDaysPerYear = model.VacationDaysPerYear,
-            DailyWorkingTimeInHours = model.DailyWorkingTimeInHours,
-            OvertimeCorrectionInHours = model.OvertimeCorrectionInHours,
-            LastSeen = model.LastSeen,
         };
     }
 }

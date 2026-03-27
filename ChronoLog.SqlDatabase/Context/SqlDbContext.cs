@@ -9,7 +9,7 @@ public class SqlDbContext(DbContextOptions<SqlDbContext> options) : DbContext(op
     public DbSet<EmployeeEntity> Employees { get; set; }
     public DbSet<WorkdayEntity> Workdays { get; set; }
     public DbSet<WorktimeEntity> Worktimes { get; set; }
-    public DbSet<ProjecttimeEntity> Projecttimes { get; set; }
+    public DbSet<TimeEntryEntity> TimeEntries { get; set; }
     public DbSet<ProjectEntity> Projects { get; set; }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -68,7 +68,7 @@ public class SqlDbContext(DbContextOptions<SqlDbContext> options) : DbContext(op
             .IsRequired(false)
             .OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<WorkdayEntity>()
-            .HasMany<ProjecttimeEntity>(x => x.Projecttimes)
+            .HasMany<TimeEntryEntity>(x => x.TimeEntries)
             .WithOne(x => x.Workday)
             .HasForeignKey(x => x.WorkdayId)
             .IsRequired(false)
@@ -85,14 +85,14 @@ public class SqlDbContext(DbContextOptions<SqlDbContext> options) : DbContext(op
             .HasKey(x => x.WorktimeId);
         
         // Projecttime
-        modelBuilder.Entity<ProjecttimeEntity>()
-            .HasKey(x => x.ProjecttimeId);
+        modelBuilder.Entity<TimeEntryEntity>()
+            .HasKey(x => x.TimeEntryId);
         
         // Project
         modelBuilder.Entity<ProjectEntity>()
             .HasKey(x => x.ProjectId);
         modelBuilder.Entity<ProjectEntity>()
-            .HasMany<ProjecttimeEntity>(x => x.Projecttimes)
+            .HasMany<TimeEntryEntity>(x => x.TimeEntries)
             .WithOne(x => x.Project)
             .HasForeignKey(x => x.ProjectId)
             .IsRequired(false)

@@ -14,12 +14,10 @@ namespace ChronoLog.ChronoLogService.Controllers;
 [Route("api/[controller]")]
 public class EmployeeController : ControllerBase
 {
-    private readonly ILogger<EmployeeController> _logger;
     private readonly IEmployeeContextService _employeeService;
 
-    public EmployeeController(ILogger<EmployeeController> logger, IEmployeeContextService employeeService)
+    public EmployeeController(IEmployeeContextService employeeService)
     {
-        _logger = logger;
         _employeeService = employeeService;
     }
     
@@ -111,12 +109,16 @@ public class EmployeeController : ControllerBase
     public async Task<ActionResult> PatchEmployeeSettings([FromBody] EmployeeUpdateRequest value)
     {
         var currentEmployee = await _employeeService.GetOrCreateCurrentEmployeeAsync();
-        currentEmployee.Province = value.Province ?? currentEmployee.Province;
-        currentEmployee.VacationDaysPerYear = value.VacationDaysPerYear ?? currentEmployee.VacationDaysPerYear;
-        currentEmployee.DailyWorkingTimeInHours = value.DailyWorkingTimeInHours ?? currentEmployee.DailyWorkingTimeInHours;
-        currentEmployee.OvertimeCorrectionInHours = value.OvertimeCorrectionInHours ?? currentEmployee.OvertimeCorrectionInHours;
+
+        var updated = currentEmployee with
+        {
+            Province = value.Province ?? currentEmployee.Province,
+            VacationDaysPerYear = value.VacationDaysPerYear ?? currentEmployee.VacationDaysPerYear,
+            DailyWorkingTimeInHours = value.DailyWorkingTimeInHours ?? currentEmployee.DailyWorkingTimeInHours,
+            OvertimeCorrectionInHours = value.OvertimeCorrectionInHours ?? currentEmployee.OvertimeCorrectionInHours
+        };
         
-        var result = await _employeeService.UpdateEmployeeAsync(currentEmployee);
+        var result = await _employeeService.UpdateEmployeeAsync(updated);
         if (result)
             return NoContent();
         return BadRequest("Failed to update employee settings.");

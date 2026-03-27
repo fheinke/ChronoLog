@@ -2,7 +2,7 @@ using System.Security.Claims;
 using ChronoLog.Core.Interfaces;
 using Microsoft.AspNetCore.Components.Authorization;
 
-namespace ChronoLog.Applications.Services;
+namespace ChronoLog.ChronoLogService.Services;
 
 public class UserService : IUserService
 {

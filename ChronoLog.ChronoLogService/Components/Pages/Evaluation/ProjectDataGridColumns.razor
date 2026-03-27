@@ -12,9 +12,9 @@
     </Template>
 </RadzenDataGridColumn>
 
-<RadzenDataGridColumn TItem="TItem" Property="TimeSpent" Title="Time Spent (h)">
+<RadzenDataGridColumn TItem="TItem" Property="Duration" Title="Duration (h)">
     <Template Context="item">
-        @TimeSpentTemplate(item)
+        @DurationTemplate(item)
     </Template>
     <FooterTemplate>
         Total: <strong>@FooterText</strong>
@@ -30,7 +30,7 @@
 @code {
     [Parameter] public RenderFragment<TItem> ProjectNameTemplate { get; set; } = null!;
     [Parameter] public RenderFragment<TItem> ResponseObjectTemplate { get; set; } = null!;
-    [Parameter] public RenderFragment<TItem> TimeSpentTemplate { get; set; } = null!;
+    [Parameter] public RenderFragment<TItem> DurationTemplate { get; set; } = null!;
     [Parameter] public RenderFragment<TItem> ResponseTextTemplate { get; set; } = null!;
     [Parameter] public string FooterText { get; set; } = string.Empty;
 }

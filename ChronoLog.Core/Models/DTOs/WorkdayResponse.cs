@@ -8,7 +8,7 @@ public record WorkdayResponse(
     DateTime Date,
     WorkdayType Type,
     List<WorktimeModel> Worktimes,
-    List<ProjecttimeModel> Projecttimes
+    List<TimeEntryModel> TimeEntries
 );
 
 public record WorkdaySummaryResponse(

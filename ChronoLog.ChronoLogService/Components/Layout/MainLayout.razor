@@ -1,5 +1,5 @@
-﻿@using ChronoLog.Core.Interfaces
-@using ChronoLog.Core.Models
+﻿@using ChronoLog.Applications.Mappers
+@using ChronoLog.Core.Interfaces
 @using ChronoLog.Core.Models.DisplayObjects
 @inherits LayoutComponentBase
 @inject IJSRuntime JsRuntime
@@ -101,7 +101,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _currentEmployee ??= await EmployeeContextService.GetOrCreateCurrentEmployeeAsync();
+        _currentEmployee ??= (await EmployeeContextService.GetOrCreateCurrentEmployeeAsync()).ToModel();
         _vacationDaysTaken = await EmployeeContextService.GetEmployeeVacationDaysCountAsync(_currentEmployee.EmployeeId, DateTime.UtcNow.Year);
     }
 
@@ -130,5 +130,4 @@
         var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         return parts.Length >= 2 ? $"{parts[0][0]}{parts[1][0]}".ToUpper() : parts[0][0].ToString().ToUpper();
     }
-
 }

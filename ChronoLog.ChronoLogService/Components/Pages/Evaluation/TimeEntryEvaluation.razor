@@ -1,5 +1,6 @@
 @page "/evaluation"
 @using System.Globalization
+@using ChronoLog.ChronoLogService.ViewModels
 @using ChronoLog.Core
 @using ChronoLog.Core.Interfaces
 @using ChronoLog.Core.Models.DisplayObjects
@@ -9,12 +10,12 @@
 @inject IWorkdayService WorkdayService
 @inject IWorktimeService WorktimeService
 @inject IProjectService ProjectService
-@inject IProjecttimeService ProjecttimeService
+@inject ITimeEntryService TimeEntryService
 
 <PageTitle>Evaluation</PageTitle>
 
 <RadzenStack Gap="1rem">
-    <RadzenText TextStyle="TextStyle.H4" TagName="TagName.H1">Project Time Evaluation</RadzenText>
+    <RadzenText TextStyle="TextStyle.H4" TagName="TagName.H1">Time Entry Evaluation</RadzenText>
 
     <!-- Week Selector Card -->
     <RadzenCard>
@@ -123,22 +124,22 @@
             <Tabs>
                 <RadzenTabsItem Text="Daily SAP">
                     <RadzenStack Gap="1rem" Style="padding: 1rem;">
-                        <RadzenText TextStyle="TextStyle.H6">Daily Project Times</RadzenText>
-                        @if (_projecttimes.Count > 0)
+                        <RadzenText TextStyle="TextStyle.H6">Daily Time Entries</RadzenText>
+                        @if (_timeEntries.Count > 0)
                         {
-                            <ProjectTimeDataGrid Data="@_projecttimes"
+                            <TimeEntryDataGrid Data="@_timeEntries"
                                                  ShowDateColumn="true"
                                                  DateColumnTemplate="@DateTemplate"
                                                  ProjectNameTemplate="@ProjectNameTemplate"
                                                  ResponseObjectTemplate="@ResponseObjectTemplate"
-                                                 TimeSpentTemplate="@TimeSpentTemplate"
+                                                 DurationTemplate="@DurationTemplate"
                                                  ResponseTextTemplate="@ResponseTextTemplate"
-                                                 TotalTimeSpent="@GetTotalTimeSpent()"/>
+                                                 TotalDuration="@GetTotalDuration()"/>
                         }
                         else
                         {
                             <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat">
-                                No project times recorded for this week.
+                                No time entries recorded for this week.
                             </RadzenAlert>
                         }
                     </RadzenStack>
@@ -146,21 +147,21 @@
 
                 <RadzenTabsItem Text="Weekly SAP" Selected="true">
                     <RadzenStack Gap="1rem" Style="padding: 1rem;">
-                        <RadzenText TextStyle="TextStyle.H6">Aggregated Project Times</RadzenText>
-                        @if (_projecttimes.Count > 0)
+                        <RadzenText TextStyle="TextStyle.H6">Aggregated Time Entries</RadzenText>
+                        @if (_timeEntries.Count > 0)
                         {
-                            <ProjectTimeDataGrid Data="@AggregateProjecttimes()"
+                            <TimeEntryDataGrid Data="@AggregateTimeEntries()"
                                                  ShowDateColumn="false"
                                                  ProjectNameTemplate="@ProjectNameTemplate"
                                                  ResponseObjectTemplate="@ResponseObjectTemplate"
-                                                 TimeSpentTemplate="@TimeSpentTemplate"
+                                                 DurationTemplate="@DurationTemplate"
                                                  ResponseTextTemplate="@ResponseTextTemplate"
-                                                 TotalTimeSpent="@GetAggregatedTotalTimeSpent()"/>
+                                                 TotalDuration="@GetAggregatedTotalDuration()"/>
                         }
                         else
                         {
                             <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat">
-                                No project times recorded for this week.
+                                No time entries recorded for this week.
                             </RadzenAlert>
                         }
                     </RadzenStack>
@@ -184,11 +185,11 @@
     private ProjectModel? _defaultProject;
     private List<ProjectModel> _projects = [];
     private Dictionary<Guid, ProjectModel> _projectLookup = [];
-    private List<WorkdayViewModel> _workdays = [];
-    private List<ProjecttimeModel> _projecttimes = [];
+    private List<WorkdaySummaryViewModel> _workdays = [];
+    private List<TimeEntryModel> _timeEntries = [];
     private List<DateTime> _missingWorktimeDates = [];
     
-    private RenderFragment<ProjecttimeModel> DateTemplate => item => __builder =>
+    private RenderFragment<TimeEntryModel> DateTemplate => item => __builder =>
     {
         var workday = _workdays.FirstOrDefault(w => w.WorkdayId == item.WorkdayId);
         if (workday is not null)
@@ -197,7 +198,7 @@
         }
     };
 
-    private RenderFragment<ProjecttimeModel> ProjectNameTemplate => item => __builder =>
+    private RenderFragment<TimeEntryModel> ProjectNameTemplate => item => __builder =>
     {
         <div
             @onclick="@(() => CopyToClipboard(_projectLookup.GetValueOrDefault(item.ProjectId)?.Name ?? string.Empty))"
@@ -207,7 +208,7 @@
         </div>
     };
 
-    private RenderFragment<ProjecttimeModel> ResponseObjectTemplate => item => __builder =>
+    private RenderFragment<TimeEntryModel> ResponseObjectTemplate => item => __builder =>
     {
         <div
             @onclick="@(() => CopyToClipboard(_projectLookup.GetValueOrDefault(item.ProjectId)?.ResponseObject ?? string.Empty))"
@@ -217,16 +218,16 @@
         </div>
     };
 
-    private RenderFragment<ProjecttimeModel> TimeSpentTemplate => item => __builder =>
+    private RenderFragment<TimeEntryModel> DurationTemplate => item => __builder =>
     {
-        <div @onclick="@(() => CopyToClipboard(item.TimeSpent.TotalHours.ToString("F2")))"
+        <div @onclick="@(() => CopyToClipboard(item.Duration.TotalHours.ToString("F2")))"
              style="cursor: pointer;"
              title="Click to copy">
-            @item.TimeSpent.TotalHours.ToString("F2")
+            @item.Duration.TotalHours.ToString("F2")
         </div>
     };
 
-    private RenderFragment<ProjecttimeModel> ResponseTextTemplate => item => __builder =>
+    private RenderFragment<TimeEntryModel> ResponseTextTemplate => item => __builder =>
     {
         @if (!string.IsNullOrEmpty(item.ResponseText))
         {
@@ -261,8 +262,9 @@
 
     private async Task UpdateWorkdayDataAsync()
     {
-        _workdays = await WorkdayService.GetWorkdaysAsync(_dateRangeStart, _dateRangeEnd);
-        _projecttimes = await ProjecttimeService.GetProjecttimesAsync(_dateRangeStart, _dateRangeEnd);
+        var responses = await WorkdayService.GetWorkdaysAsync(_dateRangeStart, _dateRangeEnd);
+        _workdays = responses.Select(WorkdaySummaryViewModel.FromResponse).ToList();
+        _timeEntries = await TimeEntryService.GetTimeEntriesAsync(_dateRangeStart, _dateRangeEnd);
         _officeDays = await WorkdayService.GetOfficeDaysCountAsync(_dateRangeStart, _dateRangeEnd);
         _missingWorktimeDates.Clear();
 
@@ -276,27 +278,27 @@
             if (actualWorktime == TimeSpan.Zero)
                 _missingWorktimeDates.Add(workday.Date);
 
-            var totalDailyProjecttime = _projecttimes
+            var totalDailyTimeEntryTime = _timeEntries
                 .Where(pt => pt.WorkdayId == workday.WorkdayId)
-                .Sum(pt => pt.TimeSpent.TotalHours);
+                .Sum(pt => pt.Duration.TotalHours);
 
-            if (totalDailyProjecttime >= actualWorktimeHours)
+            if (totalDailyTimeEntryTime >= actualWorktimeHours)
                 continue;
 
-            var defaultProjecttime = new ProjecttimeModel
+            var defaultTimeEntryTime = new TimeEntryModel
             {
                 WorkdayId = workday.WorkdayId,
                 ProjectId = _defaultProject?.ProjectId ?? Guid.Empty,
-                TimeSpent = TimeSpan.FromHours(actualWorktimeHours - totalDailyProjecttime)
+                Duration = TimeSpan.FromHours(actualWorktimeHours - totalDailyTimeEntryTime)
             };
-            _projecttimes.Add(defaultProjecttime);
+            _timeEntries.Add(defaultTimeEntryTime);
         }
 
         // Dictionary Lookups for better performance during sorting
         var workdayLookup = _workdays.ToDictionary(w => w.WorkdayId, w => w.Date);
         var projectLookup = _projects.ToDictionary(p => p.ProjectId, p => p.Name);
 
-        _projecttimes = _projecttimes
+        _timeEntries = _timeEntries
             .OrderBy(pt => workdayLookup.TryGetValue(pt.WorkdayId, out var date) ? date : DateTime.MaxValue)
             .ThenBy(pt => projectLookup.TryGetValue(pt.ProjectId, out var name) ? name : string.Empty)
             .ToList();
@@ -384,26 +386,25 @@
     {
         return $"/?date={date:yyyy-MM-dd}";
     }
-
-    // I want to aggregate the projecttimes by ProjectId and sum their TimeSpent if the ResponseText is the same or empty.
-    private List<ProjecttimeModel> AggregateProjecttimes()
+    
+    private List<TimeEntryModel> AggregateTimeEntries()
     {
-        var aggregated = new Dictionary<(Guid ProjectId, string ResponseText), ProjecttimeModel>();
+        var aggregated = new Dictionary<(Guid ProjectId, string ResponseText), TimeEntryModel>();
 
-        foreach (var pt in _projecttimes)
+        foreach (var te in _timeEntries)
         {
-            var key = (pt.ProjectId, pt.ResponseText ?? string.Empty);
+            var key = (te.ProjectId, te.ResponseText ?? string.Empty);
             if (aggregated.ContainsKey(key))
             {
-                aggregated[key].TimeSpent += pt.TimeSpent;
+                aggregated[key].Duration += te.Duration;
             }
             else
             {
-                aggregated[key] = new ProjecttimeModel
+                aggregated[key] = new TimeEntryModel
                 {
-                    ProjectId = pt.ProjectId,
-                    ResponseText = pt.ResponseText,
-                    TimeSpent = pt.TimeSpent
+                    ProjectId = te.ProjectId,
+                    ResponseText = te.ResponseText,
+                    Duration = te.Duration
                 };
             }
         }
@@ -420,14 +421,13 @@
         NotificationService.Notify(NotificationSeverity.Info, $"Copied to clipboard: {text}", duration: 3000);
     }
 
-    private double GetTotalTimeSpent()
+    private double GetTotalDuration()
     {
-        return _projecttimes.Sum(pt => pt.TimeSpent.TotalHours);
+        return _timeEntries.Sum(pt => pt.Duration.TotalHours);
     }
 
-    private double GetAggregatedTotalTimeSpent()
+    private double GetAggregatedTotalDuration()
     {
-        return AggregateProjecttimes().Sum(pt => pt.TimeSpent.TotalHours);
+        return AggregateTimeEntries().Sum(pt => pt.Duration.TotalHours);
     }
-
 }

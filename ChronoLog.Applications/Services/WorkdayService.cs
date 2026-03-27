@@ -1,5 +1,4 @@
 using ChronoLog.Applications.Mappers;
-using ChronoLog.Applications.Shared;
 using ChronoLog.Core;
 using ChronoLog.Core.Interfaces;
 using ChronoLog.Core.Models;
@@ -12,12 +11,12 @@ namespace ChronoLog.Applications.Services;
 
 public class WorkdayService : IWorkdayService
 {
-    private readonly SqlDbContext _sqlDbContext;
+    private readonly IDbContextFactory<SqlDbContext> _dbContextFactory;
     private readonly IEmployeeContextService _employeeContextService;
 
-    public WorkdayService(SqlDbContext sqlDbContext, IEmployeeContextService employeeContextService)
+    public WorkdayService(IDbContextFactory<SqlDbContext> dbContextFactory, IEmployeeContextService employeeContextService)
     {
-        _sqlDbContext = sqlDbContext;
+        _dbContextFactory = dbContextFactory;
         _employeeContextService = employeeContextService;
     }
 
@@ -26,25 +25,27 @@ public class WorkdayService : IWorkdayService
         var model = new WorkdayModel
         {
             WorkdayId = Guid.NewGuid(),
-            EmployeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService),
+            EmployeeId = (await _employeeContextService.GetOrCreateCurrentEmployeeAsync()).EmployeeId,
             Date = workday.Date,
             Type = workday.Type
         };
-        await _sqlDbContext.Workdays.AddAsync(model.ToEntity());
-        var affectedRows = await _sqlDbContext.SaveChangesAsync();
+        await using var sqlDbContext = await _dbContextFactory.CreateDbContextAsync();
+        await sqlDbContext.Workdays.AddAsync(model.ToEntity());
+        var affectedRows = await sqlDbContext.SaveChangesAsync();
         return affectedRows > 0 ? model.WorkdayId : Guid.Empty;
     }
 
-    public async Task<List<WorkdayViewModel>> GetWorkdaysAsync() =>
+    public async Task<List<WorkdayResponse>> GetWorkdaysAsync() =>
         await GetWorkdaysInternalAsync(null, null);
 
-    public async Task<List<WorkdayViewModel>> GetWorkdaysAsync(DateTime startDate, DateTime endDate) =>
+    public async Task<List<WorkdayResponse>> GetWorkdaysAsync(DateTime startDate, DateTime endDate) =>
         await GetWorkdaysInternalAsync(startDate, endDate);
 
-    private async Task<List<WorkdayViewModel>> GetWorkdaysInternalAsync(DateTime? startDate, DateTime? endDate)
+    private async Task<List<WorkdayResponse>> GetWorkdaysInternalAsync(DateTime? startDate, DateTime? endDate)
     {
-        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
-        var query = _sqlDbContext.Workdays
+        var employeeId = (await _employeeContextService.GetOrCreateCurrentEmployeeAsync()).EmployeeId;
+        await using var sqlDbContext = await _dbContextFactory.CreateDbContextAsync();
+        var query = sqlDbContext.Workdays
             .AsNoTracking()
             .Where(w => w.EmployeeId == employeeId);
 
@@ -54,64 +55,70 @@ public class WorkdayService : IWorkdayService
         var workdays = await query
             .OrderBy(w => w.Date)
             .Include(w => w.Worktimes.OrderBy(x => x.StartTime))
-            .Include(w => w.Projecttimes)
-            .Select(w => w.ToViewModel())
+            .Include(w => w.TimeEntries)
+            .Select(w => w.ToResponse())
             .ToListAsync();
 
-        foreach (var workday in workdays)
-            workday.Worktimes = workday.Worktimes.OrderBy(x => x.StartTime).ToList();
-
+        workdays = workdays
+            .Select(w => w with { Worktimes = w.Worktimes.OrderBy(x => x.StartTime).ToList() })
+            .ToList();
+        
         return workdays;
     }
 
-    public async Task<WorkdayViewModel?> GetWorkdayByIdAsync(Guid workdayId)
+    public async Task<WorkdayResponse?> GetWorkdayByIdAsync(Guid workdayId)
     {
-        var workday = await _sqlDbContext.Workdays
+        await using var sqlDbContext = await _dbContextFactory.CreateDbContextAsync();
+        var workday = await sqlDbContext.Workdays
             .AsNoTracking()
             .Where(w => w.WorkdayId == workdayId)
             .Include(w => w.Worktimes)
-            .Include(w => w.Projecttimes)
-            .Select(w => w.ToViewModel())
+            .Include(w => w.TimeEntries)
+            .Select(w => w.ToResponse())
             .FirstOrDefaultAsync();
 
-        workday?.Worktimes = workday.Worktimes.OrderBy(x => x.StartTime).ToList();
-
+        if (workday is not null)
+            workday = workday with { Worktimes = workday.Worktimes.OrderBy(x => x.StartTime).ToList() };
+        
         return workday ?? null;
     }
 
     public async Task<bool> UpdateWorkdayAsync(Guid workdayId, DateOnly date, WorkdayType type)
     {
-        var workday = await _sqlDbContext.Workdays
+        await using var sqlDbContext = await _dbContextFactory.CreateDbContextAsync();
+        var workday = await sqlDbContext.Workdays
             .FirstOrDefaultAsync(w => w.WorkdayId == workdayId);
         if (workday == null)
             return false;
 
         workday.Date = date.ToDateTime(new TimeOnly(0, 0));
         workday.Type = type;
-        _sqlDbContext.Workdays.Update(workday);
-        var affectedRows = await _sqlDbContext.SaveChangesAsync();
+        sqlDbContext.Workdays.Update(workday);
+        var affectedRows = await sqlDbContext.SaveChangesAsync();
         return affectedRows > 0;
     }
 
     public async Task<bool> DeleteWorkdayAsync(Guid workdayId)
     {
-        var workday = await _sqlDbContext.Workdays
+        await using var sqlDbContext = await _dbContextFactory.CreateDbContextAsync();
+        var workday = await sqlDbContext.Workdays
             .FirstOrDefaultAsync(w => w.WorkdayId == workdayId);
         if (workday == null)
             return false;
 
-        _sqlDbContext.Workdays.Remove(workday);
-        var affectedRows = await _sqlDbContext.SaveChangesAsync();
+        sqlDbContext.Workdays.Remove(workday);
+        var affectedRows = await sqlDbContext.SaveChangesAsync();
         return affectedRows > 0;
     }
 
     public async Task<TimeSpan> GetTotalWorktimeAsync(Guid workdayId)
     {
-        var workday = await _sqlDbContext.Workdays
+        await using var sqlDbContext = await _dbContextFactory.CreateDbContextAsync();
+        var workday = await sqlDbContext.Workdays
             .AsNoTracking()
             .Where(w => w.WorkdayId == workdayId)
             .Include(w => w.Worktimes)
-            .Select(w => w.ToViewModel())
+            .Select(w => w.ToResponse())
             .FirstOrDefaultAsync();
         if (workday == null || workday.Worktimes.Count == 0)
             return TimeSpan.Zero;
@@ -122,12 +129,13 @@ public class WorkdayService : IWorkdayService
 
     public async Task<double> GetTotalOvertimeAsync()
     {
-        var employee = await Helper.GetCurrentEmployeeAsync(_employeeContextService);
-        var workdays = await _sqlDbContext.Workdays
+        var employee = await _employeeContextService.GetOrCreateCurrentEmployeeAsync();
+        await using var sqlDbContext = await _dbContextFactory.CreateDbContextAsync();
+        var workdays = await sqlDbContext.Workdays
             .AsNoTracking()
             .Include(w => w.Worktimes)
             .Where(wd => wd.EmployeeId == employee.EmployeeId)
-            .Select(wd => wd.ToViewModel())
+            .Select(wd => wd.ToResponse())
             .ToListAsync();
 
         var totalOvertime = workdays.Sum(workday => CalculateDailyOvertime(workday, employee.DailyWorkingTimeInHours));
@@ -136,12 +144,13 @@ public class WorkdayService : IWorkdayService
 
     public async Task<List<WorkdaySummaryResponse>> GetWorkdaySummaryAsync(DateTime startDate, DateTime endDate)
     {
-        var employee = await Helper.GetCurrentEmployeeAsync(_employeeContextService);
-        var workdays = await _sqlDbContext.Workdays
+        var employee = await _employeeContextService.GetOrCreateCurrentEmployeeAsync();
+        await using var sqlDbContext = await _dbContextFactory.CreateDbContextAsync();
+        var workdays = await sqlDbContext.Workdays
             .AsNoTracking()
             .Include(w => w.Worktimes)
             .Where(wd => wd.EmployeeId == employee.EmployeeId && wd.Date >= startDate && wd.Date <= endDate)
-            .Select(wd => wd.ToViewModel())
+            .Select(wd => wd.ToResponse())
             .ToListAsync();
 
         var workdaySummaries = (from workday in workdays
@@ -156,8 +165,9 @@ public class WorkdayService : IWorkdayService
 
     public async Task<int> GetOfficeDaysCountAsync(int year)
     {
-        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
-        var officeDaysCount = await _sqlDbContext.Workdays
+        var employeeId = (await _employeeContextService.GetOrCreateCurrentEmployeeAsync()).EmployeeId;
+        await using var sqlDbContext = await _dbContextFactory.CreateDbContextAsync();
+        var officeDaysCount = await sqlDbContext.Workdays
             .AsNoTracking()
             .Where(w => w.EmployeeId == employeeId &&
                         w.Type == WorkdayType.Office &&
@@ -168,8 +178,9 @@ public class WorkdayService : IWorkdayService
 
     public async Task<int> GetOfficeDaysCountAsync(DateTime startDate, DateTime endDate)
     {
-        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
-        var officeDaysCount = await _sqlDbContext.Workdays
+        var employeeId = (await _employeeContextService.GetOrCreateCurrentEmployeeAsync()).EmployeeId;
+        await using var sqlDbContext = await _dbContextFactory.CreateDbContextAsync();
+        var officeDaysCount = await sqlDbContext.Workdays
             .AsNoTracking()
             .Where(w => w.EmployeeId == employeeId &&
                         w.Type == WorkdayType.Office &&
@@ -190,7 +201,7 @@ public class WorkdayService : IWorkdayService
         return await GetWorkdayTypeSummaryInternal(null, startDate, endDate);
     }
 
-    private static TimeSpan CalculateDailyWorktime(WorkdayViewModel workday)
+    private static TimeSpan CalculateDailyWorktime(WorkdayResponse workday)
     {
         var totalWorktime = TimeSpan.Zero;
 
@@ -206,7 +217,7 @@ public class WorkdayService : IWorkdayService
         return totalWorktime;
     }
 
-    private static double CalculateDailyOvertime(WorkdayViewModel workday, double dailyWorkingTimeInHours)
+    private static double CalculateDailyOvertime(WorkdayResponse workday, double dailyWorkingTimeInHours)
     {
         var totalOvertime = 0.0;
         if (workday.Type == WorkdayType.Gleitzeittag) return -dailyWorkingTimeInHours;
@@ -229,13 +240,14 @@ public class WorkdayService : IWorkdayService
     private async Task<List<Dictionary<WorkdayType, int>>> GetWorkdayTypeSummaryInternal(int? year, DateTime? startDate,
         DateTime? endDate)
     {
-        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
+        var employeeId = (await _employeeContextService.GetOrCreateCurrentEmployeeAsync()).EmployeeId;
         var workdayTypes = Enum.GetValues<WorkdayType>();
         var workdayTypeSummary = new List<Dictionary<WorkdayType, int>>();
-
+        await using var sqlDbContext = await _dbContextFactory.CreateDbContextAsync();
+        
         foreach (var workdayType in workdayTypes)
         {
-            var query = _sqlDbContext.Workdays
+            var query = sqlDbContext.Workdays
                 .AsNoTracking()
                 .Where(w => w.EmployeeId == employeeId && w.Type == workdayType);
 

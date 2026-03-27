@@ -17,32 +17,6 @@ public static class EntitiesToModels
             DefaultResponseText = entity.DefaultResponseText
         };
     }
-    
-    public static WorkdayModel ToModel(this WorkdayEntity entity)
-    {
-        return new WorkdayModel
-        {
-            WorkdayId = entity.WorkdayId,
-            EmployeeId =  entity.EmployeeId,
-            Date = entity.Date,
-            Type = entity.Type
-        };
-    }
-    
-    public static WorkdayViewModel ToViewModel(this WorkdayEntity entity)
-    {
-        ArgumentNullException.ThrowIfNull(entity);
-
-        return new WorkdayViewModel
-        {
-            WorkdayId = entity.WorkdayId,
-            EmployeeId =  entity.EmployeeId,
-            Date = entity.Date,
-            Type = entity.Type,
-            Worktimes = entity.Worktimes.Select(wt => wt.ToModel()).ToList(),
-            Projecttimes = entity.Projecttimes.Select(pt => pt.ToModel()).ToList()
-        };
-    }
 
     public static WorktimeModel ToModel(this WorktimeEntity entity)
     {
@@ -55,34 +29,16 @@ public static class EntitiesToModels
             BreakTime = entity.BreakTime
         };
     }
-    
-    public static ProjecttimeModel ToModel(this ProjecttimeEntity entity)
+
+    public static TimeEntryModel ToModel(this TimeEntryEntity entity)
     {
-        return new ProjecttimeModel
+        return new TimeEntryModel
         {
-            ProjecttimeId = entity.ProjecttimeId,
+            TimeEntryId = entity.TimeEntryId,
             WorkdayId = entity.WorkdayId,
             ProjectId = entity.ProjectId,
-            TimeSpent = entity.TimeSpent,
+            Duration = entity.Duration,
             ResponseText = entity.ResponseText
-        };
-    }
-    
-    public static EmployeeModel ToModel(this EmployeeEntity entity)
-    {
-        return new EmployeeModel
-        {
-            EmployeeId = entity.EmployeeId,
-            ObjectId = entity.ObjectId,
-            Email = entity.Email,
-            Name = entity.Name,
-            Province = entity.Province,
-            IsAdmin = entity.IsAdmin,
-            IsProjectManager = entity.IsProjectManager,
-            VacationDaysPerYear = entity.VacationDaysPerYear,
-            DailyWorkingTimeInHours = entity.DailyWorkingTimeInHours,
-            OvertimeCorrectionInHours = entity.OvertimeCorrectionInHours,
-            LastSeen = entity.LastSeen
         };
     }
 }

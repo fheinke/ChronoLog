@@ -1,0 +1,52 @@
+@using ChronoLog.Core.Models.DisplayObjects
+
+<RadzenDataGrid Data="@Data"
+                TItem="TimeEntryModel"
+                RowHover="true"
+                ShowPagingSummary="true"
+                PageSize="15"
+                AllowPaging="true"
+                AllowSorting="true"
+                AllowFiltering="true"
+                Style="width:100%;">
+    <Columns>
+        @if (ShowDateColumn)
+        {
+            <RadzenDataGridColumn TItem="TimeEntryModel" Title="Date" Sortable="false" Filterable="false">
+                <Template Context="item">
+                    @DateColumnTemplate(item)
+                </Template>
+            </RadzenDataGridColumn>
+        }
+
+        <RadzenDataGridColumn TItem="TimeEntryModel" Title="Project Name" Sortable="false" Filterable="false">
+            <Template Context="item">@ProjectNameTemplate(item)</Template>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn TItem="TimeEntryModel" Title="Response Object" Sortable="false" Filterable="false">
+            <Template Context="item">@ResponseObjectTemplate(item)</Template>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn TItem="TimeEntryModel" Property="Duration" Title="Duration (h)" Sortable="false" Filterable="false">
+            <Template Context="item">@DurationTemplate(item)</Template>
+            <FooterTemplate>
+                Total: <strong>@TotalDuration.ToString("F2") h</strong>
+            </FooterTemplate>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn TItem="TimeEntryModel" Title="Response Text" Sortable="false" Filterable="false">
+            <Template Context="item">@ResponseTextTemplate(item)</Template>
+        </RadzenDataGridColumn>
+    </Columns>
+</RadzenDataGrid>
+
+@code {
+    [Parameter] public List<TimeEntryModel> Data { get; set; } = [];
+    [Parameter] public bool ShowDateColumn { get; set; }
+    [Parameter] public RenderFragment<TimeEntryModel> DateColumnTemplate { get; set; } = null!;
+    [Parameter] public RenderFragment<TimeEntryModel> ProjectNameTemplate { get; set; } = null!;
+    [Parameter] public RenderFragment<TimeEntryModel> ResponseObjectTemplate { get; set; } = null!;
+    [Parameter] public RenderFragment<TimeEntryModel> DurationTemplate { get; set; } = null!;
+    [Parameter] public RenderFragment<TimeEntryModel> ResponseTextTemplate { get; set; } = null!;
+    [Parameter] public double TotalDuration { get; set; }
+}

@@ -1,6 +1,8 @@
 ﻿@page "/"
 @inject DialogService DialogService
 @inject NavigationManager NavigationManager
+@using ChronoLog.Applications.Mappers
+@using ChronoLog.ChronoLogService.ViewModels
 @using ChronoLog.Core.Interfaces
 @using ChronoLog.Core.Models
 @using ChronoLog.Core.Models.DisplayObjects
@@ -19,7 +21,7 @@
                          SlotRender="@OnSlotRender"
                          SelectedIndex="1"
                          Style="height: 600px;"
-                         TItem="WorkdayViewModel"
+                         TItem="WorkdaySummaryViewModel"
                          Data="@_workdays"
                          StartProperty="Start"
                          EndProperty="End"
@@ -66,8 +68,8 @@
 </RadzenStack>
 
 @code {
-    private RadzenScheduler<WorkdayViewModel>? _scheduler;
-    private List<WorkdayViewModel>? _workdays;
+    private RadzenScheduler<WorkdaySummaryViewModel>? _scheduler;
+    private List<WorkdaySummaryViewModel>? _workdays;
     private GermanPublicHoliday _holidays = new() { State = GermanPublicHoliday.States.ALL };
     private EmployeeModel _employee = new();
 
@@ -78,8 +80,9 @@
 
     private async Task LoadData()
     {
-        _workdays = (await WorkdayService.GetWorkdaysAsync()).ToList();
-        _employee = await EmployeeContextService.GetOrCreateCurrentEmployeeAsync();
+        var responses = await WorkdayService.GetWorkdaysAsync();
+        _workdays = responses.Select(WorkdaySummaryViewModel.FromResponse).ToList();
+        _employee = (await EmployeeContextService.GetOrCreateCurrentEmployeeAsync()).ToModel();
         _holidays = new GermanPublicHoliday { State = ParseProvinceToState(_employee.Province) };
         StateHasChanged();
     }
@@ -147,7 +150,7 @@
         }
     }
 
-    private static void OnAppointmentRender(SchedulerAppointmentRenderEventArgs<WorkdayViewModel> args)
+    private static void OnAppointmentRender(SchedulerAppointmentRenderEventArgs<WorkdaySummaryViewModel> args)
     {
         var (bg, fg) = args.Data.Type switch
         {
@@ -182,17 +185,17 @@
 
         if (args.Appointments.Any())
         {
-            var appointmentArgs = new SchedulerAppointmentSelectEventArgs<WorkdayViewModel>
+            var appointmentArgs = new SchedulerAppointmentSelectEventArgs<WorkdaySummaryViewModel>
             {
                 Start = args.Start,
                 End = args.End,
-                Data = (WorkdayViewModel)args.Appointments.First().Data
+                Data = (WorkdaySummaryViewModel)args.Appointments.First().Data
             };
             await OnAppointmentSelect(appointmentArgs);
             return;
         }
 
-        WorkdayViewModel data = await DialogService.OpenAsync<EditWorkdayDialog>(
+        WorkdaySummaryViewModel data = await DialogService.OpenAsync<EditWorkdayDialog>(
             $"Add Workday - {args.Start.Date.ToShortDateString()}",
             new Dictionary<string, object> { { "SelectedDate", args.Start.Date } },
             new DialogOptions
@@ -212,7 +215,7 @@
         await LoadData();
     }
 
-    private async Task OnAppointmentSelect(SchedulerAppointmentSelectEventArgs<WorkdayViewModel> args)
+    private async Task OnAppointmentSelect(SchedulerAppointmentSelectEventArgs<WorkdaySummaryViewModel> args)
     {
         var data = await DialogService.OpenAsync<EditWorkdayDialog>(
             $"Edit Workday - {args.Start.Date.ToShortDateString()}",
@@ -231,7 +234,7 @@
             args.Data.Date = data.Date;
             args.Data.Type = data.Type;
             args.Data.Worktimes = data.Worktimes;
-            args.Data.Projecttimes = data.Projecttimes;
+            args.Data.TimeEntries = data.TimeEntries;
         }
 
         await _scheduler?.Reload()!;
@@ -244,7 +247,7 @@
 
         if (workday != null)
         {
-            var appointmentArgs = new SchedulerAppointmentSelectEventArgs<WorkdayViewModel>
+            var appointmentArgs = new SchedulerAppointmentSelectEventArgs<WorkdaySummaryViewModel>
             {
                 Start = date,
                 End = date.AddDays(1),

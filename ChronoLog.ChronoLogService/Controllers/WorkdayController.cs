@@ -16,12 +16,10 @@ namespace ChronoLog.ChronoLogService.Controllers;
 [Route("api/[controller]")]
 public class WorkdayController : ControllerBase
 {
-    private readonly ILogger<WorkdayController> _logger;
     private readonly IWorkdayService _workdayService;
 
-    public WorkdayController(ILogger<WorkdayController> logger, IWorkdayService workdayService)
+    public WorkdayController(IWorkdayService workdayService)
     {
-        _logger = logger;
         _workdayService = workdayService;
     }
 
@@ -73,7 +71,7 @@ public class WorkdayController : ControllerBase
     {
         var workdays = await _workdayService.GetWorkdaysAsync();
         var response = workdays.Select(workday => new WorkdayResponse(workday.WorkdayId, workday.EmployeeId,
-            workday.Date, workday.Type, workday.Worktimes, workday.Projecttimes)).ToList();
+            workday.Date, workday.Type, workday.Worktimes, workday.TimeEntries)).ToList();
         return Ok(response);
     }
 
@@ -90,7 +88,7 @@ public class WorkdayController : ControllerBase
         var workdays = await _workdayService.GetWorkdaysAsync(startDate.ToDateTime(TimeOnly.MinValue),
             endDate.ToDateTime(TimeOnly.MaxValue));
         var response = workdays.Select(workday => new WorkdayResponse(workday.WorkdayId, workday.EmployeeId,
-            workday.Date, workday.Type, workday.Worktimes, workday.Projecttimes)).ToList();
+            workday.Date, workday.Type, workday.Worktimes, workday.TimeEntries)).ToList();
         return Ok(response);
     }
     
@@ -123,7 +121,7 @@ public class WorkdayController : ControllerBase
             return NotFound($"Workday with ID {workdayId} not found.");
 
         var response = new WorkdayResponse(workday.WorkdayId, workday.EmployeeId,
-            workday.Date, workday.Type, workday.Worktimes, workday.Projecttimes);
+            workday.Date, workday.Type, workday.Worktimes, workday.TimeEntries);
         return Ok(response);
     }
 

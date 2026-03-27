@@ -1,5 +1,4 @@
 using ChronoLog.Applications.Mappers;
-using ChronoLog.Applications.Shared;
 using ChronoLog.Core.Interfaces;
 using ChronoLog.Core.Models.DisplayObjects;
 using ChronoLog.SqlDatabase.Context;
@@ -9,12 +8,12 @@ namespace ChronoLog.Applications.Services;
 
 public class WorktimeService : IWorktimeService
 {
-    private readonly SqlDbContext _sqlDbContext;
+    private readonly IDbContextFactory<SqlDbContext> _dbContextFactory;
     private readonly IEmployeeContextService _employeeContextService;
     
-    public WorktimeService(SqlDbContext sqlDbContext, IEmployeeContextService employeeContextService)
+    public WorktimeService(IDbContextFactory<SqlDbContext> dbContextFactory, IEmployeeContextService employeeContextService)
     {
-        _sqlDbContext = sqlDbContext;
+        _dbContextFactory = dbContextFactory;
         _employeeContextService = employeeContextService;
     }
     
@@ -28,15 +27,17 @@ public class WorktimeService : IWorktimeService
             EndTime = worktime.EndTime ?? null,
             BreakTime =  worktime.BreakTime ?? null
         };
-        await _sqlDbContext.Worktimes.AddAsync(model.ToEntity());
-        var affectedRows = await _sqlDbContext.SaveChangesAsync();
+        await using var sqlDbContext = await _dbContextFactory.CreateDbContextAsync();
+        await sqlDbContext.Worktimes.AddAsync(model.ToEntity());
+        var affectedRows = await sqlDbContext.SaveChangesAsync();
         return affectedRows > 0 ? model.WorktimeId : Guid.Empty;
     }
     
     public async Task<List<WorktimeModel>> GetWorktimesAsync()
     {
-        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
-        var worktimes = await _sqlDbContext.Worktimes
+        var employeeId = (await _employeeContextService.GetOrCreateCurrentEmployeeAsync()).EmployeeId;
+        await using var sqlDbContext = await _dbContextFactory.CreateDbContextAsync();
+        var worktimes = await sqlDbContext.Worktimes
             .AsNoTracking()
             .Where(w => w.Workday.EmployeeId == employeeId)
             .Select(w => w.ToModel())
@@ -46,8 +47,9 @@ public class WorktimeService : IWorktimeService
     
     public async Task<List<WorktimeModel>> GetWorktimesAsync(DateTime startDate, DateTime endDate)
     {
-        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
-        var worktimes = await _sqlDbContext.Worktimes
+        var employeeId = (await _employeeContextService.GetOrCreateCurrentEmployeeAsync()).EmployeeId;
+        await using var sqlDbContext = await _dbContextFactory.CreateDbContextAsync();
+        var worktimes = await sqlDbContext.Worktimes
             .AsNoTracking()
             .Where(w => w.Workday.EmployeeId == employeeId)
             .Where(wt => wt.Workday.Date >= startDate && wt.Workday.Date <= endDate)
@@ -59,8 +61,9 @@ public class WorktimeService : IWorktimeService
     
     public async Task<WorktimeModel?> GetWorktimeAsync(Guid worktimeId)
     {
-        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
-        var worktime = await _sqlDbContext.Worktimes
+        var employeeId = (await _employeeContextService.GetOrCreateCurrentEmployeeAsync()).EmployeeId;
+        await using var sqlDbContext = await _dbContextFactory.CreateDbContextAsync();
+        var worktime = await sqlDbContext.Worktimes
             .AsNoTracking()
             .Where(w => w.Workday.EmployeeId == employeeId)
             .Where(w => w.WorktimeId == worktimeId)
@@ -71,7 +74,8 @@ public class WorktimeService : IWorktimeService
     
     public async Task<bool> UpdateWorktimeAsync(WorktimeModel worktime)
     {
-        var existingWorktime = await _sqlDbContext.Worktimes
+        await using var sqlDbContext = await _dbContextFactory.CreateDbContextAsync();
+        var existingWorktime = await sqlDbContext.Worktimes
             .FirstOrDefaultAsync(w => w.WorktimeId == worktime.WorktimeId);
         if (existingWorktime == null)
             return false;
@@ -81,27 +85,29 @@ public class WorktimeService : IWorktimeService
         existingWorktime.EndTime = worktime.EndTime ?? null;
         existingWorktime.BreakTime = worktime.BreakTime ?? null;
         
-        _sqlDbContext.Worktimes.Update(existingWorktime);
-        var affectedRows = await _sqlDbContext.SaveChangesAsync();
+        sqlDbContext.Worktimes.Update(existingWorktime);
+        var affectedRows = await sqlDbContext.SaveChangesAsync();
         return affectedRows > 0;
     }
     
     public async Task<bool> DeleteWorktimeAsync(Guid worktimeId)
     {
-        var worktime = await _sqlDbContext.Worktimes
+        await using var sqlDbContext = await _dbContextFactory.CreateDbContextAsync();
+        var worktime = await sqlDbContext.Worktimes
             .FirstOrDefaultAsync(w => w.WorktimeId == worktimeId);
         if (worktime == null)
             return false;
         
-        _sqlDbContext.Worktimes.Remove(worktime);
-        var affectedRows = await _sqlDbContext.SaveChangesAsync();
+        sqlDbContext.Worktimes.Remove(worktime);
+        var affectedRows = await sqlDbContext.SaveChangesAsync();
         return affectedRows > 0;
     }
     
     public async Task<TimeSpan?> GetTotalWorktimeAsync(DateTime startDate, DateTime endDate)
     {
-        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
-        var worktimes = await _sqlDbContext.Worktimes
+        await using var sqlDbContext = await _dbContextFactory.CreateDbContextAsync();
+        var employeeId = (await _employeeContextService.GetOrCreateCurrentEmployeeAsync()).EmployeeId;
+        var worktimes = await sqlDbContext.Worktimes
             .AsNoTracking()
             .Include(w => w.Workday)
             .Where(w => w.Workday.EmployeeId == employeeId)

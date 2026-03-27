@@ -2,16 +2,16 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ChronoLog.Core.Models.DTOs;
 
-public record ProjecttimeRequest(
+public record TimeEntryRequest(
     [Required] Guid WorkdayId,
     Guid? ProjectId,
-    [Required] TimeSpan TimeSpent,
+    [Required] TimeSpan Duration,
     string? ResponseText
 );
 
-public record ProjecttimeUpdateRequest(
+public record TimeEntryUpdateRequest(
     Guid? WorkdayId,
     Guid? ProjectId,
-    TimeSpan? TimeSpent,
+    TimeSpan? Duration,
     string? ResponseText
 );
