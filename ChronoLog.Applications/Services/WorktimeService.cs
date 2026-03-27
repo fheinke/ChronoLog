@@ -1,5 +1,4 @@
 using ChronoLog.Applications.Mappers;
-using ChronoLog.Applications.Shared;
 using ChronoLog.Core.Interfaces;
 using ChronoLog.Core.Models.DisplayObjects;
 using ChronoLog.SqlDatabase.Context;
@@ -35,7 +34,7 @@ public class WorktimeService : IWorktimeService
     
     public async Task<List<WorktimeModel>> GetWorktimesAsync()
     {
-        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
+        var employeeId = (await _employeeContextService.GetOrCreateCurrentEmployeeAsync()).EmployeeId;
         var worktimes = await _sqlDbContext.Worktimes
             .AsNoTracking()
             .Where(w => w.Workday.EmployeeId == employeeId)
@@ -46,7 +45,7 @@ public class WorktimeService : IWorktimeService
     
     public async Task<List<WorktimeModel>> GetWorktimesAsync(DateTime startDate, DateTime endDate)
     {
-        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
+        var employeeId = (await _employeeContextService.GetOrCreateCurrentEmployeeAsync()).EmployeeId;
         var worktimes = await _sqlDbContext.Worktimes
             .AsNoTracking()
             .Where(w => w.Workday.EmployeeId == employeeId)
@@ -59,7 +58,7 @@ public class WorktimeService : IWorktimeService
     
     public async Task<WorktimeModel?> GetWorktimeAsync(Guid worktimeId)
     {
-        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
+        var employeeId = (await _employeeContextService.GetOrCreateCurrentEmployeeAsync()).EmployeeId;
         var worktime = await _sqlDbContext.Worktimes
             .AsNoTracking()
             .Where(w => w.Workday.EmployeeId == employeeId)
@@ -100,7 +99,7 @@ public class WorktimeService : IWorktimeService
     
     public async Task<TimeSpan?> GetTotalWorktimeAsync(DateTime startDate, DateTime endDate)
     {
-        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
+        var employeeId = (await _employeeContextService.GetOrCreateCurrentEmployeeAsync()).EmployeeId;
         var worktimes = await _sqlDbContext.Worktimes
             .AsNoTracking()
             .Include(w => w.Workday)

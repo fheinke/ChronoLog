@@ -1,5 +1,4 @@
 using ChronoLog.Applications.Mappers;
-using ChronoLog.Applications.Shared;
 using ChronoLog.Core;
 using ChronoLog.Core.Interfaces;
 using ChronoLog.Core.Models;
@@ -26,7 +25,7 @@ public class WorkdayService : IWorkdayService
         var model = new WorkdayModel
         {
             WorkdayId = Guid.NewGuid(),
-            EmployeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService),
+            EmployeeId = (await _employeeContextService.GetOrCreateCurrentEmployeeAsync()).EmployeeId,
             Date = workday.Date,
             Type = workday.Type
         };
@@ -43,7 +42,7 @@ public class WorkdayService : IWorkdayService
 
     private async Task<List<WorkdayResponse>> GetWorkdaysInternalAsync(DateTime? startDate, DateTime? endDate)
     {
-        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
+        var employeeId = (await _employeeContextService.GetOrCreateCurrentEmployeeAsync()).EmployeeId;
         var query = _sqlDbContext.Workdays
             .AsNoTracking()
             .Where(w => w.EmployeeId == employeeId);
@@ -124,7 +123,7 @@ public class WorkdayService : IWorkdayService
 
     public async Task<double> GetTotalOvertimeAsync()
     {
-        var employee = await Helper.GetCurrentEmployeeAsync(_employeeContextService);
+        var employee = await _employeeContextService.GetOrCreateCurrentEmployeeAsync();
         var workdays = await _sqlDbContext.Workdays
             .AsNoTracking()
             .Include(w => w.Worktimes)
@@ -138,7 +137,7 @@ public class WorkdayService : IWorkdayService
 
     public async Task<List<WorkdaySummaryResponse>> GetWorkdaySummaryAsync(DateTime startDate, DateTime endDate)
     {
-        var employee = await Helper.GetCurrentEmployeeAsync(_employeeContextService);
+        var employee = await _employeeContextService.GetOrCreateCurrentEmployeeAsync();
         var workdays = await _sqlDbContext.Workdays
             .AsNoTracking()
             .Include(w => w.Worktimes)
@@ -158,7 +157,7 @@ public class WorkdayService : IWorkdayService
 
     public async Task<int> GetOfficeDaysCountAsync(int year)
     {
-        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
+        var employeeId = (await _employeeContextService.GetOrCreateCurrentEmployeeAsync()).EmployeeId;
         var officeDaysCount = await _sqlDbContext.Workdays
             .AsNoTracking()
             .Where(w => w.EmployeeId == employeeId &&
@@ -170,7 +169,7 @@ public class WorkdayService : IWorkdayService
 
     public async Task<int> GetOfficeDaysCountAsync(DateTime startDate, DateTime endDate)
     {
-        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
+        var employeeId = (await _employeeContextService.GetOrCreateCurrentEmployeeAsync()).EmployeeId;
         var officeDaysCount = await _sqlDbContext.Workdays
             .AsNoTracking()
             .Where(w => w.EmployeeId == employeeId &&
@@ -231,7 +230,7 @@ public class WorkdayService : IWorkdayService
     private async Task<List<Dictionary<WorkdayType, int>>> GetWorkdayTypeSummaryInternal(int? year, DateTime? startDate,
         DateTime? endDate)
     {
-        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
+        var employeeId = (await _employeeContextService.GetOrCreateCurrentEmployeeAsync()).EmployeeId;
         var workdayTypes = Enum.GetValues<WorkdayType>();
         var workdayTypeSummary = new List<Dictionary<WorkdayType, int>>();
 

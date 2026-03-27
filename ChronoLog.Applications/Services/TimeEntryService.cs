@@ -1,5 +1,4 @@
 using ChronoLog.Applications.Mappers;
-using ChronoLog.Applications.Shared;
 using ChronoLog.Core.Interfaces;
 using ChronoLog.Core.Models.DisplayObjects;
 using ChronoLog.SqlDatabase.Context;
@@ -35,7 +34,7 @@ public class TimeEntryService : ITimeEntryService
     
     public async Task<List<TimeEntryModel>> GetTimeEntriesAsync()
     {
-        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
+        var employeeId = (await _employeeContextService.GetOrCreateCurrentEmployeeAsync()).EmployeeId;
         var timeEntries = await _sqlDbContext.TimeEntries
             .AsNoTracking()
             .Where(p => p.Workday.EmployeeId == employeeId)
@@ -49,7 +48,7 @@ public class TimeEntryService : ITimeEntryService
         if (timeEntryIds.Count == 0)
             return [];
         
-        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
+        var employeeId = (await _employeeContextService.GetOrCreateCurrentEmployeeAsync()).EmployeeId;
         var timeEntries = await _sqlDbContext.TimeEntries
             .AsNoTracking()
             .Where(p => p.Workday.EmployeeId == employeeId)
@@ -61,7 +60,7 @@ public class TimeEntryService : ITimeEntryService
     
     public async Task<List<TimeEntryModel>> GetTimeEntriesAsync(DateTime startDate, DateTime endDate)
     {
-        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
+        var employeeId = (await _employeeContextService.GetOrCreateCurrentEmployeeAsync()).EmployeeId;
         var timeEntries = await _sqlDbContext.TimeEntries
             .AsNoTracking()
             .Where(p => p.Workday.EmployeeId == employeeId)
@@ -74,7 +73,7 @@ public class TimeEntryService : ITimeEntryService
     
     public async Task<TimeEntryModel?> GetTimeEntryAsync(Guid timeEntryId)
     {
-        var employeeId = await Helper.GetCurrentEmployeeIdAsync(_employeeContextService);
+        var employeeId = (await _employeeContextService.GetOrCreateCurrentEmployeeAsync()).EmployeeId;
         var timeEntry = await _sqlDbContext.TimeEntries
             .AsNoTracking()
             .Where(p => p.Workday.EmployeeId == employeeId)
