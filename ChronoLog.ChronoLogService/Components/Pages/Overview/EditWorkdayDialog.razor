@@ -185,8 +185,11 @@ else
                                                     <RadzenDropDown Data="@_projects"
                                                                     TextProperty="Name"
                                                                     ValueProperty="ProjectId"
+                                                                    Name="ProjectSelect"
                                                                     @bind-Value="timeEntry.ProjectId"
-                                                                    Name="ProjectSelect"/>
+                                                                    FilterOperator="StringFilterOperator.Contains"
+                                                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                                    AllowFiltering="true"/>
                                                     <RadzenRequiredValidator Component="ProjectSelect"
                                                                              Text="Project is mandatory."/>
                                                 </ChildContent>
@@ -256,7 +259,7 @@ else
                                     </EditTemplate>
                                 </RadzenDataGridColumn>
                             </Columns>
-                            
+
                             <FooterTemplate>
                                 <div class="rz-d-flex rz-justify-content-end rz-p-2">
                                     <strong>Total Project Time: </strong>&nbsp;
@@ -496,7 +499,7 @@ else
     private TimeSpan? CalculateTotalProjectTime()
     {
         IEnumerable<TimeEntryModel> timeEntrySource;
-        
+
         if (_timeEntries.Any())
             timeEntrySource = _timeEntries;
         else if (Workday is not null)
@@ -511,4 +514,5 @@ else
     {
         DialogService.Close(model);
     }
+
 }
