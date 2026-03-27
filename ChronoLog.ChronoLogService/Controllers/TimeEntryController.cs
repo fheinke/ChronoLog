@@ -42,9 +42,11 @@ public class TimeEntryController : ControllerBase
             ResponseText = value.ResponseText ?? string.Empty
         };
         var newTimeEntryId = await _timeEntryService.CreateTimeEntryAsync(timeEntry);
-        if (newTimeEntryId != Guid.Empty)
-            return CreatedAtAction(nameof(GetTimeEntry), new { TimeEntryId = newTimeEntryId }, timeEntry);
-        return BadRequest("Failed to create time entry.");
+        if (newTimeEntryId == Guid.Empty)
+            return BadRequest("Failed to create time entry.");
+        
+        timeEntry.TimeEntryId = newTimeEntryId;
+        return CreatedAtAction(nameof(GetTimeEntry), new { TimeEntryId = newTimeEntryId }, timeEntry);
     }
     
     /// <summary>

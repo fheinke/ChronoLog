@@ -721,7 +721,6 @@ Creates a new project time entry.
 **Request Body**:
 ```json
 {
-  "timeEntryId": "guid",
   "workdayId": "guid",
   "projectId": "guid (optional, defaults to default project)",
   "duration": "TimeSpan",

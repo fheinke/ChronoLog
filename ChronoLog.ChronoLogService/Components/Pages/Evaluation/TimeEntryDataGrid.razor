@@ -19,11 +19,11 @@
             </RadzenDataGridColumn>
         }
 
-        <RadzenDataGridColumn TItem="TimeEntryModel" Property="Name" Title="Project Name" Sortable="false" Filterable="false">
+        <RadzenDataGridColumn TItem="TimeEntryModel" Title="Project Name" Sortable="false" Filterable="false">
             <Template Context="item">@ProjectNameTemplate(item)</Template>
         </RadzenDataGridColumn>
 
-        <RadzenDataGridColumn TItem="TimeEntryModel" Property="Name" Title="Response Object" Sortable="false" Filterable="false">
+        <RadzenDataGridColumn TItem="TimeEntryModel" Title="Response Object" Sortable="false" Filterable="false">
             <Template Context="item">@ResponseObjectTemplate(item)</Template>
         </RadzenDataGridColumn>
 
