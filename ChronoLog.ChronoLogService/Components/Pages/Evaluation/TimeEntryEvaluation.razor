@@ -134,6 +134,7 @@
                                                  ResponseObjectTemplate="@ResponseObjectTemplate"
                                                  DurationTemplate="@DurationTemplate"
                                                  ResponseTextTemplate="@ResponseTextTemplate"
+                                                 SapCopyActionTemplate="@SapCopyDailyTemplate"
                                                  TotalDuration="@GetTotalDuration()"/>
                         }
                         else
@@ -156,6 +157,7 @@
                                                  ResponseObjectTemplate="@ResponseObjectTemplate"
                                                  DurationTemplate="@DurationTemplate"
                                                  ResponseTextTemplate="@ResponseTextTemplate"
+                                                 SapCopyActionTemplate="@SapCopyWeeklyTemplate"
                                                  TotalDuration="@GetAggregatedTotalDuration()"/>
                         }
                         else
@@ -249,6 +251,24 @@
             </div>
         }
     };
+    
+    private RenderFragment<TimeEntryModel> SapCopyDailyTemplate => item => __builder =>
+    {
+        <RadzenButton Icon="content_paste"
+                      ButtonStyle="ButtonStyle.Light"
+                      Size="ButtonSize.Small"
+                      Click="@(_ => CopySapEntryToClipboard(item, GetWorkdayDate(item), GetWorkdayDate(item)))"
+                      title="Copy SAP entry to clipboard"/>
+    };
+
+    private RenderFragment<TimeEntryModel> SapCopyWeeklyTemplate => item => __builder =>
+    {
+        <RadzenButton Icon="content_paste"
+                      ButtonStyle="ButtonStyle.Light"
+                      Size="ButtonSize.Small"
+                      Click="@(_ => CopySapEntryToClipboard(item, _dateRangeStart, _dateRangeEnd))"
+                      title="Copy SAP entry to clipboard"/>
+    };
 
     protected override async Task OnInitializedAsync()
     {
@@ -328,6 +348,11 @@
     {
         var diff = (7 + (date.DayOfWeek - DayOfWeek.Monday)) % 7;
         return date.Date.AddDays(-diff);
+    }
+    
+    private DateTime GetWorkdayDate(TimeEntryModel item)
+    {
+        return _workdays.FirstOrDefault(w => w.WorkdayId == item.WorkdayId)?.Date ?? _dateRangeStart;
     }
 
     private async Task PrevWeek()
@@ -419,6 +444,30 @@
 
         await JsRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
         NotificationService.Notify(NotificationSeverity.Info, $"Copied to clipboard: {text}", duration: 3000);
+    }
+    
+    private async Task CopySapEntryToClipboard(TimeEntryModel item, DateTime dateFrom, DateTime dateTo)
+    {
+        var sapCulture = CultureInfo.GetCultureInfo("de-DE");
+        var project = _projectLookup.GetValueOrDefault(item.ProjectId);
+
+        var responseObject = project?.ResponseObject ?? string.Empty;
+        var hours = item.Duration.TotalHours.ToString("F2", sapCulture);
+        var dateFromStr = dateFrom.ToString("dd.MM.yyyy");
+        var dateToStr = dateTo.ToString("dd.MM.yyyy");
+        var bookingDate = dateTo.AddDays(-2).ToString("dd.MM.yyyy"); // Same Week of Time entries but booked at Friday
+        var responseText = !string.IsNullOrEmpty(item.ResponseText)
+            ? item.ResponseText
+            : project?.DefaultResponseText ?? string.Empty;
+
+        // TAB-Separated Format for SAP-ZERT:
+        var sapText = $"{responseObject}\t{hours}\t{dateFromStr}\t{dateToStr}\t{bookingDate}\t{responseText}";
+
+        await JsRuntime.InvokeVoidAsync("navigator.clipboard.writeText", sapText);
+        NotificationService.Notify(
+            NotificationSeverity.Success,
+            $"SAP entry copied: {responseObject} – {hours} h",
+            duration: 3000);
     }
 
     private double GetTotalDuration()
