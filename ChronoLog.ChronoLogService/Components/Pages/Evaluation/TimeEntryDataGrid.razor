@@ -40,8 +40,11 @@
         
         @if (SapCopyActionTemplate is not null)
         {
-            <RadzenDataGridColumn TItem="TimeEntryModel" Title="SAP"
-                                  Sortable="false" Filterable="false" Width="70px">
+            <RadzenDataGridColumn TItem="TimeEntryModel"
+                                  Title="SAP"
+                                  Sortable="false"
+                                  Filterable="false"
+                                  Width="80px">
                 <Template Context="item">
                     @SapCopyActionTemplate(item)
                 </Template>

@@ -116,8 +116,7 @@
             </RadzenCard>
         </RadzenColumn>
     </RadzenRow>
-
-
+    
     <!-- Tabs -->
     <RadzenCard Style="padding: 0;">
         <RadzenTabs>
@@ -128,14 +127,14 @@
                         @if (_timeEntries.Count > 0)
                         {
                             <TimeEntryDataGrid Data="@_timeEntries"
-                                                 ShowDateColumn="true"
-                                                 DateColumnTemplate="@DateTemplate"
-                                                 ProjectNameTemplate="@ProjectNameTemplate"
-                                                 ResponseObjectTemplate="@ResponseObjectTemplate"
-                                                 DurationTemplate="@DurationTemplate"
-                                                 ResponseTextTemplate="@ResponseTextTemplate"
-                                                 SapCopyActionTemplate="@SapCopyDailyTemplate"
-                                                 TotalDuration="@GetTotalDuration()"/>
+                                               ShowDateColumn="true"
+                                               DateColumnTemplate="@DateTemplate"
+                                               ProjectNameTemplate="@ProjectNameTemplate"
+                                               ResponseObjectTemplate="@ResponseObjectTemplate"
+                                               DurationTemplate="@DurationTemplate"
+                                               ResponseTextTemplate="@ResponseTextTemplate"
+                                               SapCopyActionTemplate="@SapCopyDailyTemplate"
+                                               TotalDuration="@GetTotalDuration()"/>
                         }
                         else
                         {
@@ -151,14 +150,19 @@
                         <RadzenText TextStyle="TextStyle.H6">Aggregated Time Entries</RadzenText>
                         @if (_timeEntries.Count > 0)
                         {
+                            <RadzenButton Icon="content_copy"
+                                          Text="Copy All Entries for SAP"
+                                          Click="@CopyAllSapWeeklyToClipboard"
+                                          Style="margin-bottom: 1rem;"/>
+                            
                             <TimeEntryDataGrid Data="@AggregateTimeEntries()"
-                                                 ShowDateColumn="false"
-                                                 ProjectNameTemplate="@ProjectNameTemplate"
-                                                 ResponseObjectTemplate="@ResponseObjectTemplate"
-                                                 DurationTemplate="@DurationTemplate"
-                                                 ResponseTextTemplate="@ResponseTextTemplate"
-                                                 SapCopyActionTemplate="@SapCopyWeeklyTemplate"
-                                                 TotalDuration="@GetAggregatedTotalDuration()"/>
+                                               ShowDateColumn="false"
+                                               ProjectNameTemplate="@ProjectNameTemplate"
+                                               ResponseObjectTemplate="@ResponseObjectTemplate"
+                                               DurationTemplate="@DurationTemplate"
+                                               ResponseTextTemplate="@ResponseTextTemplate"
+                                               SapCopyActionTemplate="@SapCopyWeeklyTemplate"
+                                               TotalDuration="@GetAggregatedTotalDuration()"/>
                         }
                         else
                         {
@@ -190,7 +194,7 @@
     private List<WorkdaySummaryViewModel> _workdays = [];
     private List<TimeEntryModel> _timeEntries = [];
     private List<DateTime> _missingWorktimeDates = [];
-    
+
     private RenderFragment<TimeEntryModel> DateTemplate => item => __builder =>
     {
         var workday = _workdays.FirstOrDefault(w => w.WorkdayId == item.WorkdayId);
@@ -251,10 +255,10 @@
             </div>
         }
     };
-    
+
     private RenderFragment<TimeEntryModel> SapCopyDailyTemplate => item => __builder =>
     {
-        <RadzenButton Icon="content_paste"
+        <RadzenButton Icon="content_copy"
                       ButtonStyle="ButtonStyle.Light"
                       Size="ButtonSize.Small"
                       Click="@(_ => CopySapEntryToClipboard(item, GetWorkdayDate(item), GetWorkdayDate(item)))"
@@ -263,7 +267,7 @@
 
     private RenderFragment<TimeEntryModel> SapCopyWeeklyTemplate => item => __builder =>
     {
-        <RadzenButton Icon="content_paste"
+        <RadzenButton Icon="content_copy"
                       ButtonStyle="ButtonStyle.Light"
                       Size="ButtonSize.Small"
                       Click="@(_ => CopySapEntryToClipboard(item, _dateRangeStart, _dateRangeEnd))"
@@ -314,7 +318,6 @@
             _timeEntries.Add(defaultTimeEntryTime);
         }
 
-        // Dictionary Lookups for better performance during sorting
         var workdayLookup = _workdays.ToDictionary(w => w.WorkdayId, w => w.Date);
         var projectLookup = _projects.ToDictionary(p => p.ProjectId, p => p.Name);
 
@@ -349,7 +352,7 @@
         var diff = (7 + (date.DayOfWeek - DayOfWeek.Monday)) % 7;
         return date.Date.AddDays(-diff);
     }
-    
+
     private DateTime GetWorkdayDate(TimeEntryModel item)
     {
         return _workdays.FirstOrDefault(w => w.WorkdayId == item.WorkdayId)?.Date ?? _dateRangeStart;
@@ -411,7 +414,7 @@
     {
         return $"/?date={date:yyyy-MM-dd}";
     }
-    
+
     private List<TimeEntryModel> AggregateTimeEntries()
     {
         var aggregated = new Dictionary<(Guid ProjectId, string ResponseText), TimeEntryModel>();
@@ -445,29 +448,61 @@
         await JsRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
         NotificationService.Notify(NotificationSeverity.Info, $"Copied to clipboard: {text}", duration: 3000);
     }
-    
+
     private async Task CopySapEntryToClipboard(TimeEntryModel item, DateTime dateFrom, DateTime dateTo)
     {
         var sapCulture = CultureInfo.GetCultureInfo("de-DE");
         var project = _projectLookup.GetValueOrDefault(item.ProjectId);
 
         var responseObject = project?.ResponseObject ?? string.Empty;
-        var hours = item.Duration.TotalHours.ToString("F2", sapCulture);
+        var hours = FormatHoursForSap(item.Duration, sapCulture);
         var dateFromStr = dateFrom.ToString("dd.MM.yyyy");
         var dateToStr = dateTo.ToString("dd.MM.yyyy");
-        var bookingDate = dateTo.AddDays(-2).ToString("dd.MM.yyyy"); // Same Week of Time entries but booked at Friday
         var responseText = !string.IsNullOrEmpty(item.ResponseText)
             ? item.ResponseText
             : project?.DefaultResponseText ?? string.Empty;
 
-        // TAB-Separated Format for SAP-ZERT:
-        var sapText = $"{responseObject}\t{hours}\t{dateFromStr}\t{dateToStr}\t{bookingDate}\t{responseText}";
+        var sapText = $"{responseObject}\t{hours}\t\t\t{responseText}\t{dateFromStr}\t{dateToStr}";
 
         await JsRuntime.InvokeVoidAsync("navigator.clipboard.writeText", sapText);
         NotificationService.Notify(
             NotificationSeverity.Success,
             $"SAP entry copied: {responseObject} – {hours} h",
             duration: 3000);
+    }
+
+    private async Task CopyAllSapWeeklyToClipboard()
+    {
+        var sapCulture = CultureInfo.GetCultureInfo("de-DE");
+        var entries = AggregateTimeEntries();
+        var lines = entries.Select(item =>
+        {
+            var project = _projectLookup.GetValueOrDefault(item.ProjectId);
+            var responseObject = project?.ResponseObject ?? string.Empty;
+            var hours = FormatHoursForSap(item.Duration, sapCulture);
+            var dateFromStr = _dateRangeStart.ToString("dd.MM.yyyy");
+            var dateToStr = _dateRangeEnd.ToString("dd.MM.yyyy");
+            var responseText = !string.IsNullOrEmpty(item.ResponseText)
+                ? item.ResponseText
+                : project?.DefaultResponseText ?? string.Empty;
+            
+            return $"{responseObject}\t{hours}\t\t\t{responseText}\t{dateFromStr}\t{dateToStr}";
+        });
+
+        var sapText = string.Join("\n", lines);
+        await JsRuntime.InvokeVoidAsync("navigator.clipboard.writeText", sapText);
+        NotificationService.Notify(
+            NotificationSeverity.Success,
+            $"All {entries.Count} SAP entries copied!",
+            duration: 3000);
+    }
+    
+    private static string FormatHoursForSap(TimeSpan duration, CultureInfo culture)
+    {
+        var totalMinutes = (int)Math.Round(duration.TotalMinutes);
+        var hours = totalMinutes / 60;
+        var minutes = totalMinutes % 60;
+        return $"{hours},{minutes:D2}";
     }
 
     private double GetTotalDuration()
@@ -479,4 +514,5 @@
     {
         return AggregateTimeEntries().Sum(pt => pt.Duration.TotalHours);
     }
+
 }
