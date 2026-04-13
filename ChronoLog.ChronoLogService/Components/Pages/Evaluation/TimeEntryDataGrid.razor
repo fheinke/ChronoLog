@@ -37,6 +37,19 @@
         <RadzenDataGridColumn TItem="TimeEntryModel" Title="Response Text" Sortable="false" Filterable="false">
             <Template Context="item">@ResponseTextTemplate(item)</Template>
         </RadzenDataGridColumn>
+        
+        @if (SapCopyActionTemplate is not null)
+        {
+            <RadzenDataGridColumn TItem="TimeEntryModel"
+                                  Title="SAP"
+                                  Sortable="false"
+                                  Filterable="false"
+                                  Width="80px">
+                <Template Context="item">
+                    @SapCopyActionTemplate(item)
+                </Template>
+            </RadzenDataGridColumn>
+        }
     </Columns>
 </RadzenDataGrid>
 
@@ -48,5 +61,6 @@
     [Parameter] public RenderFragment<TimeEntryModel> ResponseObjectTemplate { get; set; } = null!;
     [Parameter] public RenderFragment<TimeEntryModel> DurationTemplate { get; set; } = null!;
     [Parameter] public RenderFragment<TimeEntryModel> ResponseTextTemplate { get; set; } = null!;
+    [Parameter] public RenderFragment<TimeEntryModel>? SapCopyActionTemplate { get; set; }
     [Parameter] public double TotalDuration { get; set; }
 }
