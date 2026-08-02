@@ -9,15 +9,19 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using ChronoLog.SqlDatabase;
 using ChronoLog.SqlDatabase.Context;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
+using Microsoft.Net.Http.Headers;
 using Radzen;
 using static System.Int32;
 using ApiUserService = ChronoLog.ChronoLogService.Authorization.ApiUserService;
+using SameSiteMode = Microsoft.AspNetCore.Http.SameSiteMode;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,32 +31,79 @@ CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
 CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 
 // Authentication & Authorization
-builder.Services.AddAuthentication(options =>
+var authProvider = (builder.Configuration.GetValue<string>("AuthProvider") ?? builder.Configuration.GetValue<string>("AUTH_PROVIDER") ?? "AzureAd").Trim();
+
+var authBuilder = builder.Services.AddAuthentication(options =>
+{
+    if (authProvider == "Keycloak")
+    {
+        options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
+        options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    }
+    else
     {
         options.DefaultScheme = "JWT_OR_COOKIE";
         options.DefaultChallengeScheme = "JWT_OR_COOKIE";
-    })
-    .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"))
-    .EnableTokenAcquisitionToCallDownstreamApi()
-    .AddInMemoryTokenCaches();
+    }
+});
 
-builder.Services.AddAuthentication()
-    .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"));
-
-builder.Services.AddAuthentication()
-    .AddPolicyScheme("JWT_OR_COOKIE", "JWT_OR_COOKIE", options =>
-    {
-        options.ForwardDefaultSelector = context =>
+if (authProvider == "Keycloak")
+{
+    authBuilder
+        .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme)
+        .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, options =>
         {
-            string authorization = context.Request.Headers[Microsoft.Net.Http.Headers.HeaderNames.Authorization]!;
-            if (!string.IsNullOrEmpty(authorization) && authorization.StartsWith("Bearer "))
+            builder.Configuration.GetSection("Keycloak").Bind(options);
+            options.ResponseType = "code";
+            options.SaveTokens = true;
+            options.GetClaimsFromUserInfoEndpoint = true;
+            options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+            
+            // Activate Frontchannel Logout
+            options.RemoteSignOutPath = "/signout-callback-oidc";
+    
+            // Change sid-validation for Keycloak
+            options.Events.OnRemoteSignOut = async ctx =>
             {
-                return "Bearer";
-            }
+                await ctx.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                ctx.Response.Redirect("/");
+                ctx.HandleResponse();
+            };
+        })
+        .AddJwtBearer("Bearer", options =>
+        {
+            options.Authority = builder.Configuration["Keycloak:Authority"];
+            options.Audience = builder.Configuration["Keycloak:ClientId"];
+        });
+}
+else if  (authProvider == "AzureAd")
+{
+    authBuilder
+        .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"))
+        .EnableTokenAcquisitionToCallDownstreamApi()
+        .AddInMemoryTokenCaches();
+    
+    builder.Services.AddAuthentication()
+        .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"));
+}
+else
+{
+    throw new InvalidOperationException($"Unsupported AuthProvider: {authProvider}");
+}
 
-            return OpenIdConnectDefaults.AuthenticationScheme;
-        };
-    });
+// PolicyScheme only for API-Requests
+authBuilder.AddPolicyScheme("JWT_OR_COOKIE", "JWT_OR_COOKIE", options =>
+{
+    options.ForwardDefaultSelector = context =>
+    {
+        string authorization = context.Request.Headers[HeaderNames.Authorization]!;
+        return !string.IsNullOrEmpty(authorization) && authorization.StartsWith("Bearer ")
+            ? "Bearer"
+            : OpenIdConnectDefaults.AuthenticationScheme;
+    };
+});
 
 builder.Services.Configure<CookiePolicyOptions>(options =>
 {
@@ -73,8 +124,7 @@ builder.Services.AddAuthorization(options =>
 });
 
 // MVC & Razor
-builder.Services.AddControllersWithViews()
-    .AddMicrosoftIdentityUI()
+var mvcBuilder = builder.Services.AddControllersWithViews()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
@@ -82,13 +132,17 @@ builder.Services.AddControllersWithViews()
         options.JsonSerializerOptions.Converters.Add(new ChronoLog.Applications.Converters.DateOnlyJsonConverter());
     })
     .ConfigureApiBehaviorOptions(options => { options.SuppressModelStateInvalidFilter = false; });
+if (authProvider == "AzureAd")
+    mvcBuilder.AddMicrosoftIdentityUI();
+
 builder.Services.AddRazorPages();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 // Blazor
-builder.Services.AddServerSideBlazor()
-    .AddMicrosoftIdentityConsentHandler();
+var blazorBuilder = builder.Services.AddServerSideBlazor();
+if (authProvider == "AzureAd")
+        blazorBuilder.AddMicrosoftIdentityConsentHandler();
 
 // Radzen
 builder.Services.AddRadzenComponents();
@@ -279,5 +333,14 @@ app.MapStaticAssets();
 app.MapControllers();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+    
+app.MapGet("/signout-oidc", async (HttpContext ctx) =>
+{
+    await ctx.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+    await ctx.SignOutAsync(OpenIdConnectDefaults.AuthenticationScheme, new AuthenticationProperties
+    {
+        RedirectUri = "/"
+    });
+}).AllowAnonymous();
 
 app.Run();

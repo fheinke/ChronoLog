@@ -56,7 +56,8 @@ public class SqlDbContext(DbContextOptions<SqlDbContext> options) : DbContext(op
         
         // Employee
         modelBuilder.Entity<EmployeeEntity>()
-            .HasKey(x => x.EmployeeId);
+            .HasIndex(e => e.ObjectId)
+            .IsUnique();
         
         // Workday
         modelBuilder.Entity<WorkdayEntity>()

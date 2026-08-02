@@ -5,7 +5,9 @@ This guide covers all available configuration options for ChronoLog, including e
 ## Table of Contents
 
 - [Environment Variables](#environment-variables)
-- [Azure AD Configuration](#azure-ad-configuration)
+- [Authentication Provider](#authentication-provider)
+  - [Azure AD (Microsoft Entra ID)](#azure-ad-microsoft-entra-id)
+  - [Keycloak](#keycloak)
 - [Database Configuration](#database-configuration)
 - [Reverse Proxy Setup](#reverse-proxy-setup)
 - [Production Deployment](#production-deployment)
@@ -22,12 +24,24 @@ ChronoLog is configured entirely through environment variables defined in the `.
 
 ```bash
 # ============================================
-# Azure AD Authentication
+# Authentication Provider
+# ============================================
+AUTH_PROVIDER="AzureAd"          # "AzureAd" or "Keycloak"
+
+# ============================================
+# Azure AD Authentication (if AUTH_PROVIDER=AzureAd)
 # ============================================
 AZURE_AD_DOMAIN="yourdomain.onmicrosoft.com"
 AZURE_AD_TENANT_ID="your-tenant-id"
 AZURE_AD_CLIENT_ID="your-client-id"
 AZURE_AD_CLIENT_SECRET="your-client-secret"
+
+# ============================================
+# Keycloak Authentication (if AUTH_PROVIDER=Keycloak)
+# ============================================
+KEYCLOAK_AUTHORITY="https://keycloak.yourdomain.com/realms/your-realm"
+KEYCLOAK_CLIENT_ID="chronolog-app"
+KEYCLOAK_CLIENT_SECRET="your-client-secret"
 
 # ============================================
 # Database Configuration
@@ -48,56 +62,57 @@ REVERSE_PROXY_KNOWN_PROXIES="172.16.0.0/12"
 
 ### Environment Variable Details
 
-| Variable | Required | Default | Description                                            |
-|----------|----------|-------|--------------------------------------------------------|
-| `AZURE_AD_DOMAIN` | ✅ Yes | - | Your Azure AD domain (e.g., `contoso.onmicrosoft.com`) |
-| `AZURE_AD_TENANT_ID` | ✅ Yes | - | Azure AD Tenant ID (GUID)                              |
-| `AZURE_AD_CLIENT_ID` | ✅ Yes | - | Azure AD Application (Client) ID                       |
-| `AZURE_AD_CLIENT_SECRET` | ✅ Yes | - | Azure AD Application Client Secret                     |
-| `MYSQL_USER` | ✅ Yes | - | MySQL database user                                    |
-| `MYSQL_PASSWORD` | ✅ Yes | - | MySQL user password (min 8 chars recommended)          |
-| `MYSQL_ROOT_PASSWORD` | ✅ Yes | - | MySQL root password                                    |
-| `MYSQL_DATABASE` | ✅ Yes | `ChronoLog` | Database name                                          |
-| `MYSQL_HOST` | ✅ Yes | `chronoLogDatabase` | Database host (container name in Docker)               |
-| `REVERSE_PROXY_ENABLED` | ❌ No | `false` | Enable reverse proxy support                           |
-| `REVERSE_PROXY_BASE_URL` | ❌ No | - | Full base URL when behind reverse proxy                |
-| `REVERSE_PROXY_KNOWN_PROXIES` | ❌ No | - | CIDR ranges of known reverse proxies comma separated   |
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `AUTH_PROVIDER` | ❌ No | `AzureAd` | Active authentication provider (`AzureAd` or `Keycloak`) |
+| `AZURE_AD_DOMAIN` | ✅ (AzureAd) | - | Your Azure AD domain (e.g., `contoso.onmicrosoft.com`) |
+| `AZURE_AD_TENANT_ID` | ✅ (AzureAd) | - | Azure AD Tenant ID (GUID) |
+| `AZURE_AD_CLIENT_ID` | ✅ (AzureAd) | - | Azure AD Application (Client) ID |
+| `AZURE_AD_CLIENT_SECRET` | ✅ (AzureAd) | - | Azure AD Application Client Secret |
+| `KEYCLOAK_AUTHORITY` | ✅ (Keycloak) | - | Keycloak realm URL (e.g., `https://keycloak.example.com/realms/myrealm`) |
+| `KEYCLOAK_CLIENT_ID` | ✅ (Keycloak) | - | Keycloak Client ID |
+| `KEYCLOAK_CLIENT_SECRET` | ✅ (Keycloak) | - | Keycloak Client Secret |
+| `MYSQL_USER` | ✅ Yes | - | MySQL database user |
+| `MYSQL_PASSWORD` | ✅ Yes | - | MySQL user password (min 8 chars recommended) |
+| `MYSQL_ROOT_PASSWORD` | ✅ Yes | - | MySQL root password |
+| `MYSQL_DATABASE` | ✅ Yes | `ChronoLog` | Database name |
+| `MYSQL_HOST` | ✅ Yes | `chronoLogDatabase` | Database host (container name in Docker) |
+| `REVERSE_PROXY_ENABLED` | ❌ No | `false` | Enable reverse proxy support |
+| `REVERSE_PROXY_BASE_URL` | ❌ No | - | Full base URL when behind reverse proxy |
+| `REVERSE_PROXY_KNOWN_PROXIES` | ❌ No | - | CIDR ranges of known reverse proxies, comma separated |
 
-## Azure AD Configuration
+## Authentication Provider
+
+ChronoLog supports two authentication providers. Exactly **one** provider is active at a time, controlled by the `AUTH_PROVIDER` variable. Switching providers requires only a configuration change — no code changes needed.
+
+| Provider | Best for |
+|---|---|
+| `AzureAd` | Microsoft 365 / Entra ID organizations |
+| `Keycloak` | Self-hosted / open-source identity management |
+
+---
+
+## Azure AD (Microsoft Entra ID)
 
 ### Basic Setup
 
-Azure AD (Microsoft Entra ID) provides enterprise-grade authentication for ChronoLog.
-
 **Required Configuration:**
 
-1. **Domain**: Your organization's Azure AD domain
-   ```bash
-   AZURE_AD_DOMAIN="contoso.onmicrosoft.com"
-   ```
-
-2. **Tenant ID**: Found in Azure Portal → Azure AD → Overview
-   ```bash
-   AZURE_AD_TENANT_ID="12345678-1234-1234-1234-123456789012"
-   ```
-
-3. **Client ID**: From your App Registration → Overview
-   ```bash
-   AZURE_AD_CLIENT_ID="87654321-4321-4321-4321-210987654321"
-   ```
-   
-4. **Client Secret**: Create a new client secret in App Registration → Certificates & secrets
-   ```bash
-   AZURE_AD_CLIENT_SECRET="your-client-secret"
-   ```
+```bash
+AUTH_PROVIDER="AzureAd"
+AZURE_AD_DOMAIN="contoso.onmicrosoft.com"
+AZURE_AD_TENANT_ID="12345678-1234-1234-1234-123456789012"
+AZURE_AD_CLIENT_ID="87654321-4321-4321-4321-210987654321"
+AZURE_AD_CLIENT_SECRET="your-client-secret"
+```
 
 ### Redirect URIs
 
 Configure these in Azure Portal → App Registration → Authentication:
 
 **For Development:**
-- `http://localhost:5001/signin-oidc`
-- `http://localhost:5001/signout-callback-oidc`
+- `https://localhost:5001/signin-oidc`
+- `https://localhost:5001/signout-callback-oidc`
 
 **For Production:**
 - `https://your-domain.com/signin-oidc`
@@ -116,11 +131,8 @@ Required Microsoft Graph permissions:
 **Single-Tenant (Recommended):**
 - Only users from your organization can sign in
 - More secure for internal applications
-- Easier to manage
 
 **Multi-Tenant:**
-- Users from any Azure AD organization can sign in
-- Requires additional consent flow
 - Not recommended for ChronoLog's typical use case
 
 ### Token Configuration
@@ -128,6 +140,73 @@ Required Microsoft Graph permissions:
 ChronoLog uses **ID tokens** for authentication:
 - Enable in Azure Portal → App Registration → Authentication → Settings
 - Check **ID tokens**
+
+---
+
+## Keycloak
+
+### Basic Setup
+
+**Required Configuration:**
+
+```bash
+AUTH_PROVIDER="Keycloak"
+KEYCLOAK_AUTHORITY="https://keycloak.yourdomain.com/realms/chronolog"
+KEYCLOAK_CLIENT_ID="chronolog-app"
+KEYCLOAK_CLIENT_SECRET="your-client-secret"
+```
+
+### Keycloak Client Configuration
+
+In the Keycloak Admin Console → **Clients** → your client:
+
+#### Settings Tab
+
+| Setting | Value |
+|---|---|
+| **Client authentication** | `ON` |
+| **Authorization** | `OFF` |
+| **Valid redirect URIs** | `https://your-domain.com/signin-oidc` |
+| **Valid post logout redirect URIs** | `https://your-domain.com/signout-callback-oidc` |
+| **Web origins** | `https://your-domain.com` |
+
+For local development, also add:
+- `https://localhost:5001/signin-oidc`
+- `https://localhost:5001/signout-callback-oidc`
+
+#### Logout Settings (Advanced Tab)
+
+| Setting | Value |
+|---|---|
+| **Front channel logout** | `ON` |
+| **Front-Channel Logout URL** | `https://your-domain.com/signout-callback-oidc` |
+| **Backchannel logout session required** | `ON` |
+
+### Client Scopes
+
+Ensure the following scopes are assigned to the client:
+
+| Scope | Purpose |
+|---|---|
+| `openid` | Required for OIDC |
+| `profile` | Provides `name` claim |
+| `email` | Provides `email` claim |
+
+### User Identity
+
+ChronoLog uses the `sub` claim from Keycloak as the unique user identifier. This maps automatically to `ClaimTypes.NameIdentifier` in ASP.NET Core.
+
+> **Note:** The `sub` value is a Keycloak-internal UUID and never changes, even if the user's email or name is updated.
+
+### Realm Configuration
+
+Recommended Keycloak realm settings:
+
+- **User registration**: `OFF` (unless desired)
+- **Email as username**: `ON` (optional but recommended)
+- **Login with email**: `ON`
+
+---
 
 ## Database Configuration
 
@@ -309,7 +388,7 @@ services:
 - Check logs: `docker compose logs chronolog`
 
 **Issue: Authentication redirects to HTTP instead of HTTPS**
-- Update redirect URIs in Azure AD to use HTTPS
+- Update redirect URIs in your auth provider (Azure AD or Keycloak) to use HTTPS
 - Verify `REVERSE_PROXY_BASE_URL` uses `https://`
 - Check nginx/apache is sending `X-Forwarded-Proto: https`
 
@@ -318,7 +397,8 @@ services:
 ### Pre-Deployment Checklist
 
 - [ ] Strong passwords set for all accounts
-- [ ] Azure AD redirect URIs updated with production URLs
+- [ ] `AUTH_PROVIDER` set correctly (`AzureAd` or `Keycloak`)
+- [ ] Auth provider redirect URIs updated with production URLs
 - [ ] SSL/TLS certificate obtained and configured
 - [ ] Reverse proxy properly configured
 - [ ] `.env` file configured with production values
@@ -593,7 +673,7 @@ https://chronolog.yourdomain.com/.well-known/readiness
 
 - `Database migration completed` - Successful startup
 - `An error occurred while applying database migrations` - Migration failure
-- `Authentication failed` - Azure AD issues
+- `Authentication failed` - Auth provider issues
 - `Unable to connect to any of the specified MySQL hosts` - Database connectivity
 
 ### Alerting
@@ -626,6 +706,28 @@ docker compose up -d
 - Verify redirect URIs in Azure Portal exactly match your domain
 - Include `/signin-oidc` path
 - Check for HTTP vs HTTPS mismatch
+
+### Keycloak Configuration Errors
+
+**Symptom:** Redirect loop / `Scheme already exists` on startup
+
+**Solution:**
+- Ensure `AUTH_PROVIDER="Keycloak"` is set correctly in `.env`
+- Verify the Keycloak realm is reachable: `curl https://keycloak.yourdomain.com/realms/chronolog/.well-known/openid-configuration`
+
+**Symptom:** User created multiple times in database
+
+**Solution:**
+- Check that the `sub` claim in Keycloak tokens is consistent
+- Verify the Keycloak client has `email` and `profile` scopes assigned
+- Each user must have a unique, stable `sub` (UUID) — do not change user IDs in Keycloak
+
+**Symptom:** "The remote signout request was ignored because the 'sid' parameter was missing"
+
+**Solution:**
+- Enable **Front channel logout** in Keycloak client → Advanced → Logout Settings
+- Set **Front-Channel Logout URL** to `https://your-domain.com/signout-callback-oidc`
+- Enable **Backchannel logout session required**
 
 ### Database Connection Errors
 

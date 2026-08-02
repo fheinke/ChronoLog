@@ -3,7 +3,6 @@
 @using ChronoLog.Core.Interfaces
 @using ChronoLog.Core.Models
 @using ChronoLog.Core.Models.DisplayObjects
-@using Radzen.Blazor.Rendering
 @inject DialogService DialogService
 @inject NotificationService NotificationService
 @inject IWorkdayService WorkdayService
@@ -276,7 +275,7 @@ else
     </RadzenTemplateForm>
 }
 
-<Popup @ref="_projectInfoPopup" Lazy="true" class="projectInfo-popup"
+<RadzenPopup @ref="_projectInfoPopup" Lazy="true" class="projectInfo-popup"
        style="position:absolute; top:100%; left:0; z-index:1000; display:block;">
     <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
         @if (_selectedProject is not null)
@@ -309,7 +308,7 @@ else
             <div class="rz-text-muted">No project selected.</div>
         }
     </RadzenStack>
-</Popup>
+</RadzenPopup>
 
 @code {
     [Parameter] public WorkdaySummaryViewModel? Workday { get; set; }
@@ -319,7 +318,7 @@ else
     private WorkdayType? _originalWorkdayType;
 
     private List<ProjectModel> _projects = [];
-    private Popup? _projectInfoPopup;
+    private RadzenPopup? _projectInfoPopup;
     private RadzenButton? _projectInfoButton;
     private ProjectModel? _selectedProject;
 

@@ -6,16 +6,37 @@ The ChronoLog API provides RESTful endpoints for managing time tracking, workday
 
 **Base URL**: `/api`
 
-**Authentication**: All endpoints require authentication via Azure AD OAuth 2.0. Include the Bearer token in the Authorization header:
+**Authentication**: All endpoints require authentication via OAuth 2.0 Bearer token. ChronoLog supports two authentication providers — Azure AD (Microsoft Entra ID) and Keycloak. Include the Bearer token in the Authorization header:
 ```
 Authorization: Bearer {token}
 ```
 
-If you want to obtain a token, you can use the `azure-cli` or any OAuth 2.0 compatible library to authenticate against your Azure AD tenant.
+#### Obtaining a Token — Azure AD
+
 ```bash
 az login
 az account get-access-token --resource "api://{YOUR_CLIENT_ID}"
 ```
+
+Or via OAuth 2.0 client credentials flow:
+```bash
+curl -X POST "https://login.microsoftonline.com/{TENANT_ID}/oauth2/v2.0/token" \
+  -d "grant_type=client_credentials" \
+  -d "client_id={CLIENT_ID}" \
+  -d "client_secret={CLIENT_SECRET}" \
+  -d "scope=api://{CLIENT_ID}/.default"
+```
+
+#### Obtaining a Token — Keycloak
+
+```bash
+curl -X POST "https://keycloak.yourdomain.com/realms/{REALM}/protocol/openid-connect/token" \
+  -d "grant_type=client_credentials" \
+  -d "client_id={CLIENT_ID}" \
+  -d "client_secret={CLIENT_SECRET}"
+```
+
+The response contains an `access_token` which can be used as the Bearer token.
 
 ---
 
@@ -1003,5 +1024,5 @@ curl -X PATCH https://chronolog.example.com/api/employee \
 - All timestamps are returned in UTC
 - GUIDs are represented as strings in the format `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`
 - Optional fields in request bodies can be omitted or set to `null`
-- The API uses Azure AD for authentication - obtain a token from the configured Azure AD tenant
+- The API supports Azure AD and Keycloak for authentication — obtain a Bearer token from whichever provider is configured (see [Authentication Provider](configuration.md#authentication-provider))
 - Project management endpoints require the user to have `IsAdmin` or `IsProjectManager` set to `true` in their employee profile
