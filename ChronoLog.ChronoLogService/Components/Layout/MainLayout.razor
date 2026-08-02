@@ -3,6 +3,7 @@
 @using ChronoLog.Core.Models.DisplayObjects
 @inherits LayoutComponentBase
 @inject IJSRuntime JsRuntime
+@inject IConfiguration Configuration
 @inject ThemeService ThemeService
 @inject IEmployeeContextService EmployeeContextService
 
@@ -47,7 +48,7 @@
 
                         <RadzenProfileMenuItem Text="Personal Settings" Icon="manage_accounts" Path="personalsettings"/>
                         <RadzenProfileMenuItem Text="Logout" Icon="logout"
-                                               Path="MicrosoftIdentity/Account/SignOut?returnUrl=/"/>
+                                               Path="@LogoutPath"/>
                     </ChildContent>
                 </RadzenProfileMenu>
             </RadzenStack>
@@ -99,6 +100,11 @@
 
     private string ThemeIcon => ThemeService.Theme == "material" ? "dark_mode" : "light_mode";
 
+    private string LogoutPath =>
+        Configuration.GetValue<string>("AuthProvider") == "Keycloak"
+            ? "/signout-oidc"
+            : "MicrosoftIdentity/Account/SignOut?returnUrl=/";
+    
     protected override async Task OnInitializedAsync()
     {
         _currentEmployee ??= (await EmployeeContextService.GetOrCreateCurrentEmployeeAsync()).ToModel();
