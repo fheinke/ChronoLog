@@ -31,7 +31,7 @@ CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
 CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 
 // Authentication & Authorization
-var authProvider = builder.Configuration.GetValue<string>("AuthProvider") ?? "AzureAd";
+var authProvider = (builder.Configuration.GetValue<string>("AuthProvider") ?? builder.Configuration.GetValue<string>("AUTH_PROVIDER") ?? "AzureAd").Trim();
 
 var authBuilder = builder.Services.AddAuthentication(options =>
 {

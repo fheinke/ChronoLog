@@ -53,10 +53,21 @@ public class EmployeeContextService : IEmployeeContextService
                 DailyWorkingTimeInHours = 8.0,
                 LastSeen = DateTime.UtcNow,
             };
-
+            
             await using var sqlDbContext = await _dbContextFactory.CreateDbContextAsync();
             await sqlDbContext.Employees.AddAsync(newEmployee);
-            await sqlDbContext.SaveChangesAsync();
+            try
+            {
+                await sqlDbContext.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                // Another request created the employee concurrently; re-fetch instead of failing.
+                var existing = await FetchAndUpdateEmployeeAsync();
+                if (existing is null) throw;
+                _cachedEmployee = existing;
+                return _cachedEmployee;
+            }
 
             _cachedEmployee = newEmployee.ToDto();
             return _cachedEmployee;

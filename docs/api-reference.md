@@ -31,11 +31,9 @@ curl -X POST "https://login.microsoftonline.com/{TENANT_ID}/oauth2/v2.0/token" \
 
 ```bash
 curl -X POST "https://keycloak.yourdomain.com/realms/{REALM}/protocol/openid-connect/token" \
-  -d "grant_type=password" \
+  -d "grant_type=client_credentials" \
   -d "client_id={CLIENT_ID}" \
-  -d "client_secret={CLIENT_SECRET}" \
-  -d "username={USERNAME}" \
-  -d "password={PASSWORD}"
+  -d "client_secret={CLIENT_SECRET}"
 ```
 
 The response contains an `access_token` which can be used as the Bearer token.

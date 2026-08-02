@@ -100,10 +100,16 @@
 
     private string ThemeIcon => ThemeService.Theme == "material" ? "dark_mode" : "light_mode";
 
-    private string LogoutPath =>
-        Configuration.GetValue<string>("AuthProvider") == "Keycloak"
-            ? "/signout-oidc"
-            : "MicrosoftIdentity/Account/SignOut?returnUrl=/";
+    private string LogoutPath
+    {
+        get
+        {
+            var provider = Configuration.GetValue<string>("AuthProvider") ?? Configuration.GetValue<string>("AUTH_PROVIDER");
+            return string.Equals(provider, "Keycloak", StringComparison.OrdinalIgnoreCase)
+                ? "/signout-oidc"
+                : "MicrosoftIdentity/Account/SignOut?returnUrl=/";
+        }
+    }
     
     protected override async Task OnInitializedAsync()
     {

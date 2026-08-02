@@ -192,6 +192,7 @@ KEYCLOAK_AUTHORITY="https://keycloak.yourdomain.com/realms/chronolog"
 KEYCLOAK_CLIENT_ID="chronolog-app"
 KEYCLOAK_CLIENT_SECRET="YourKeycloakClientSecret"
 ```
+> **Docker Compose note:** The provided `compose.yaml` must pass these values into the ChronoLog container environment/configuration (e.g., `AuthProvider`, `Keycloak__Authority`, `Keycloak__ClientId`, `Keycloak__ClientSecret`). If you don't add those mappings, ChronoLog will default to `AzureAd`.
 
 #### Database Configuration
 
