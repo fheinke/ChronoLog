@@ -15,6 +15,7 @@ public class EmployeeContextService : IEmployeeContextService
     private readonly IUserService _userService;
     private readonly IDbContextFactory<SqlDbContext> _dbContextFactory;
     private EmployeeDto? _cachedEmployee;
+    private readonly SemaphoreSlim _semaphore = new(1, 1);
 
     public EmployeeContextService(IUserService userService, IDbContextFactory<SqlDbContext> dbContextFactory)
     {
@@ -22,41 +23,48 @@ public class EmployeeContextService : IEmployeeContextService
         _dbContextFactory = dbContextFactory;
     }
 
-    private async Task<EmployeeDto?> GetCurrentEmployeeAsync()
+    public async Task<EmployeeDto> GetOrCreateCurrentEmployeeAsync()
     {
         if (_cachedEmployee is not null)
             return _cachedEmployee;
 
-        _cachedEmployee = await FetchAndUpdateEmployeeAsync();
-        return _cachedEmployee;
-    }
-
-    public async Task<EmployeeDto> GetOrCreateCurrentEmployeeAsync()
-    {
-        var employee = await GetCurrentEmployeeAsync();
-        if (employee is not null)
-            return employee;
-
-        var userId = await _userService.GetUserIdAsync();
-
-        var newEmployee = new EmployeeEntity
+        await _semaphore.WaitAsync();
+        try
         {
-            EmployeeId = Guid.NewGuid(),
-            ObjectId = userId!,
-            Email = await _userService.GetUserEmailAsync() ?? "",
-            Name = await _userService.GetUserNameAsync() ?? "",
-            Province = GermanProvince.ALL,
-            VacationDaysPerYear = 30,
-            DailyWorkingTimeInHours = 8.0,
-            LastSeen = DateTime.UtcNow,
-        };
+            if (_cachedEmployee is not null)
+                return _cachedEmployee;
 
-        await using var sqlDbContext = await _dbContextFactory.CreateDbContextAsync();
-        await sqlDbContext.Employees.AddAsync(newEmployee);
-        await sqlDbContext.SaveChangesAsync();
+            var employee = await FetchAndUpdateEmployeeAsync();
+            if (employee is not null)
+            {
+                _cachedEmployee = employee;
+                return _cachedEmployee;
+            }
 
-        _cachedEmployee = newEmployee.ToDto();
-        return _cachedEmployee;
+            var userId = await _userService.GetUserIdAsync();
+            var newEmployee = new EmployeeEntity
+            {
+                EmployeeId = Guid.NewGuid(),
+                ObjectId = userId!,
+                Email = await _userService.GetUserEmailAsync() ?? "",
+                Name = await _userService.GetUserNameAsync() ?? "",
+                Province = GermanProvince.ALL,
+                VacationDaysPerYear = 30,
+                DailyWorkingTimeInHours = 8.0,
+                LastSeen = DateTime.UtcNow,
+            };
+
+            await using var sqlDbContext = await _dbContextFactory.CreateDbContextAsync();
+            await sqlDbContext.Employees.AddAsync(newEmployee);
+            await sqlDbContext.SaveChangesAsync();
+
+            _cachedEmployee = newEmployee.ToDto();
+            return _cachedEmployee;
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
     }
 
     public async Task<List<EmployeeDto>> GetAllEmployeesAsync()
