@@ -170,7 +170,10 @@ public class EmployeeContextService : IEmployeeContextService
         existingEmployee.OvertimeCorrectionInHours = employee.OvertimeCorrectionInHours;
         existingEmployee.WorkingDays = Extensions.SerializeWorkingDays(employee.WorkingDays);
 
-        return await sqlDbContext.SaveChangesAsync() > 0;
+        var saved = await sqlDbContext.SaveChangesAsync() > 0;
+        if (saved && _cachedEmployee?.EmployeeId == existingEmployee.EmployeeId)
+            _cachedEmployee = existingEmployee.ToDto();
+        return saved;
     }
 
     private async Task<EmployeeDto?> FetchAndUpdateEmployeeAsync()
