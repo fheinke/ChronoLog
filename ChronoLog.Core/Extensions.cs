@@ -8,7 +8,7 @@ public static class Extensions
 
     public static List<DayOfWeek> ParseWorkingDays(string? value)
     {
-        var days = (string.IsNullOrWhiteSpace(value) ? DefaultWorkingDays : value)
+        var days = (value ?? DefaultWorkingDays)
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Select(s => int.TryParse(s, out var d) && d is >= 0 and <= 6 ? (DayOfWeek?)d : null)
             .Where(d => d.HasValue)
