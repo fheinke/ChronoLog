@@ -19,6 +19,7 @@ public static class DtosToModels
             VacationDaysPerYear = dto.VacationDaysPerYear,
             DailyWorkingTimeInHours = dto.DailyWorkingTimeInHours,
             OvertimeCorrectionInHours = dto.OvertimeCorrectionInHours,
+            WorkingDays = dto.WorkingDays.ToList(),
             LastSeen = dto.LastSeen
         };
     }

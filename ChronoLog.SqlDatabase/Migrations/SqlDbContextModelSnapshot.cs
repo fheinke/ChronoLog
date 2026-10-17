@@ -60,6 +60,11 @@ namespace ChronoLog.SqlDatabase.Migrations
                     b.Property<int>("VacationDaysPerYear")
                         .HasColumnType("int");
 
+                    b.Property<string>("WorkingDays")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("varchar(32)");
+
                     b.HasKey("EmployeeId");
 
                     b.HasIndex("ObjectId")

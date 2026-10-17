@@ -18,6 +18,7 @@ public static class ModelsToDtos
             model.VacationDaysPerYear,
             model.DailyWorkingTimeInHours,
             model.OvertimeCorrectionInHours,
+            model.WorkingDays.ToList(),
             model.LastSeen
         );
     }

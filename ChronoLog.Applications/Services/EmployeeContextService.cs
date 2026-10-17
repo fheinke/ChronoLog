@@ -168,6 +168,7 @@ public class EmployeeContextService : IEmployeeContextService
         existingEmployee.VacationDaysPerYear = employee.VacationDaysPerYear;
         existingEmployee.DailyWorkingTimeInHours = employee.DailyWorkingTimeInHours;
         existingEmployee.OvertimeCorrectionInHours = employee.OvertimeCorrectionInHours;
+        existingEmployee.WorkingDays = Extensions.SerializeWorkingDays(employee.WorkingDays);
 
         return await sqlDbContext.SaveChangesAsync() > 0;
     }

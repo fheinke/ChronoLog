@@ -183,6 +183,7 @@
     private DateTime _dateRangeEnd;
 
     private double _dailyWorkingHours;
+    private List<DayOfWeek> _regularWorkingDays = [];
     private TimeSpan _totalWorkingHoursThisWeek;
     private TimeSpan _weeklyOvertimeBalance;
     private TimeSpan _monthlyOvertimeBalance;
@@ -280,7 +281,9 @@
         _projects = await ProjectService.GetProjectsAsync();
         _projectLookup = _projects.ToDictionary(p => p.ProjectId);
         _defaultProject = _projects.FirstOrDefault(p => p.IsDefault);
-        _dailyWorkingHours = (await EmployeeContextService.GetOrCreateCurrentEmployeeAsync()).DailyWorkingTimeInHours;
+        var employee = await EmployeeContextService.GetOrCreateCurrentEmployeeAsync();
+        _dailyWorkingHours = employee.DailyWorkingTimeInHours;
+        _regularWorkingDays = employee.WorkingDays;
         await UpdateWorkdayDataAsync();
     }
 
@@ -298,6 +301,9 @@
                 continue;
 
             var actualWorktime = await WorkdayService.GetTotalWorktimeAsync(workday.WorkdayId);
+            if (actualWorktime == TimeSpan.Zero && !IsRegularWorkingDay(workday.Date))
+                continue;
+
             var actualWorktimeHours = actualWorktime.TotalHours == 0 ? _dailyWorkingHours : actualWorktime.TotalHours;
             if (actualWorktime == TimeSpan.Zero)
                 _missingWorktimeDates.Add(workday.Date);
@@ -382,6 +388,7 @@
     {
         var expectedHours = _workdays.Count(w =>
             w.Type.IsWorkingDay() &&
+            IsRegularWorkingDay(w.Date) &&
             w.Worktimes.Count > 0) * _dailyWorkingHours;
         var actualHours = _totalWorkingHoursThisWeek.TotalHours;
         return TimeSpan.FromHours(actualHours - expectedHours);
@@ -395,6 +402,7 @@
         var monthWorkdays = await WorkdayService.GetWorkdaysAsync(monthStart, monthEnd);
         var expectedHours = monthWorkdays.Count(w =>
             w.Type.IsWorkingDay() &&
+            IsRegularWorkingDay(w.Date) &&
             w.Worktimes.Count > 0) * _dailyWorkingHours;
 
         var actualHours = await WorktimeService.GetTotalWorktimeAsync(monthStart, monthEnd);
@@ -402,6 +410,8 @@
             ? TimeSpan.FromHours(actualHours.Value.TotalHours - expectedHours)
             : TimeSpan.Zero;
     }
+
+    private bool IsRegularWorkingDay(DateTime date) => _regularWorkingDays.Contains(date.DayOfWeek);
 
     private string GetOvertimeColor(TimeSpan overtime)
     {
@@ -514,5 +524,4 @@
     {
         return AggregateTimeEntries().Sum(pt => pt.Duration.TotalHours);
     }
-
 }

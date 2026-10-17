@@ -18,6 +18,7 @@ public static class EntitiesToDtos
             entity.VacationDaysPerYear,
             entity.DailyWorkingTimeInHours,
             entity.OvertimeCorrectionInHours,
+            Core.Extensions.ParseWorkingDays(entity.WorkingDays),
             entity.LastSeen
         );
     }

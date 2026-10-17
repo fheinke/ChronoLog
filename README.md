@@ -13,6 +13,7 @@ ChronoLog is a modern, efficient worktime tracking application built with **ASP.
 - **📊 Project Management**: Organize work by projects with detailed time allocation
 - **📈 Reporting & Analytics**: Generate comprehensive reports with copy-to-clipboard functionality for SAP integration
 - **🎯 Personal Dashboard**: View overtime balance, vacation days, and time statistics at a glance
+- **📅 Configurable Working Days**: Choose your regular working days in the personal settings (default Mon–Fri); work on any other day counts fully as overtime
 - **🔒 Flexible Authentication**: Secure login via **Microsoft Entra ID (Azure AD)** or **Keycloak** — configurable per deployment
 - **👥 User Management**: Admin interface for managing permissions of employees
 - **🏢 Multi-Province Support**: Configure workday types and holidays per region

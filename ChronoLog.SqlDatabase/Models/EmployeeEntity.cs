@@ -24,6 +24,9 @@ public class EmployeeEntity
     [Required] [Range(0.0, 24.0)] public double DailyWorkingTimeInHours { get; set; }
     public double OvertimeCorrectionInHours { get; set; }
 
+    /// <summary>Comma separated list of <see cref="DayOfWeek"/> values (0 = Sunday) that are regular working days.</summary>
+    [Required] [MaxLength(32)] public string WorkingDays { get; set; } = "1,2,3,4,5";
+
     [Required] public DateTime LastSeen { get; set; }
 
     public virtual ICollection<WorkdayEntity> Workdays { get; set; } = new List<WorkdayEntity>();
