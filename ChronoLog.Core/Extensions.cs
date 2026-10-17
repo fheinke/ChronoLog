@@ -4,6 +4,24 @@ namespace ChronoLog.Core;
 
 public static class Extensions
 {
+    private const string DefaultWorkingDays = "1,2,3,4,5";
+
+    public static List<DayOfWeek> ParseWorkingDays(string? value)
+    {
+        var days = (value ?? DefaultWorkingDays)
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(s => int.TryParse(s, out var d) && d is >= 0 and <= 6 ? (DayOfWeek?)d : null)
+            .Where(d => d.HasValue)
+            .Select(d => d!.Value)
+            .Distinct()
+            .OrderBy(d => d == DayOfWeek.Sunday ? 7 : (int)d)
+            .ToList();
+        return days;
+    }
+
+    public static string SerializeWorkingDays(IEnumerable<DayOfWeek>? days) =>
+        days is null ? DefaultWorkingDays : string.Join(',', days.Distinct().Select(d => (int)d));
+
     public static List<T> GetAll<T>() where T : struct, Enum
     {
         return Enum.GetValues<T>().ToList();

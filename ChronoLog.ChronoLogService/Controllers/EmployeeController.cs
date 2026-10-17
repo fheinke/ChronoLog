@@ -40,6 +40,7 @@ public class EmployeeController : ControllerBase
             currentEmployee.VacationDaysPerYear,
             currentEmployee.DailyWorkingTimeInHours,
             currentEmployee.OvertimeCorrectionInHours,
+            currentEmployee.WorkingDays,
             currentEmployee.LastSeen
         );
         return Ok(result);
@@ -108,6 +109,9 @@ public class EmployeeController : ControllerBase
     [ProducesResponseType(400)]
     public async Task<ActionResult> PatchEmployeeSettings([FromBody] EmployeeUpdateRequest value)
     {
+        if (value.WorkingDays is not null && value.WorkingDays.Any(d => !Enum.IsDefined(d)))
+            return BadRequest("WorkingDays contains invalid values. Allowed values are 0 to 6.");
+
         var currentEmployee = await _employeeService.GetOrCreateCurrentEmployeeAsync();
 
         var updated = currentEmployee with
@@ -115,7 +119,8 @@ public class EmployeeController : ControllerBase
             Province = value.Province ?? currentEmployee.Province,
             VacationDaysPerYear = value.VacationDaysPerYear ?? currentEmployee.VacationDaysPerYear,
             DailyWorkingTimeInHours = value.DailyWorkingTimeInHours ?? currentEmployee.DailyWorkingTimeInHours,
-            OvertimeCorrectionInHours = value.OvertimeCorrectionInHours ?? currentEmployee.OvertimeCorrectionInHours
+            OvertimeCorrectionInHours = value.OvertimeCorrectionInHours ?? currentEmployee.OvertimeCorrectionInHours,
+            WorkingDays = value.WorkingDays ?? currentEmployee.WorkingDays
         };
         
         var result = await _employeeService.UpdateEmployeeAsync(updated);

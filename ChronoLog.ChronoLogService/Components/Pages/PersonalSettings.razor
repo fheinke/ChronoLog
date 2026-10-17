@@ -90,6 +90,28 @@
                 </RadzenColumn>
             </RadzenRow>
 
+            <RadzenRow>
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenFormField Text="Regular Working Days" Variant="Variant.Outlined" Style="width: 100%;">
+                        <ChildContent>
+                            <RadzenDropDown @bind-Value="@_selectedWorkingDays"
+                                            Data="@_weekDays"
+                                            TextProperty="Name"
+                                            ValueProperty="Value"
+                                            Multiple="true"
+                                            Chips="true"
+                                            SelectAllText="Select All"
+                                            Style="width: 100%;"/>
+                        </ChildContent>
+                        <Helper>
+                            <RadzenText TextStyle="TextStyle.Caption">
+                                Select your regular working days. On all other days every worked hour counts as overtime
+                            </RadzenText>
+                        </Helper>
+                    </RadzenFormField>
+                </RadzenColumn>
+            </RadzenRow>
+
             <RadzenRow Style="margin-top: 1rem;">
                 <RadzenColumn>
                     <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" JustifyContent="JustifyContent.End">
@@ -114,7 +136,25 @@
     private int _originalVacationDaysPerYear;
     private double _originalDailyWorkingTimeInHours;
     private double _originalOvertimeCorrectionInHours;
-    
+    private IEnumerable<DayOfWeek> _selectedWorkingDays = [];
+    private List<DayOfWeek> _originalWorkingDays = [];
+
+    private readonly List<WeekDayItem> _weekDays =
+    [
+        new("Montag", DayOfWeek.Monday),
+        new("Dienstag", DayOfWeek.Tuesday),
+        new("Mittwoch", DayOfWeek.Wednesday),
+        new("Donnerstag", DayOfWeek.Thursday),
+        new("Freitag", DayOfWeek.Friday),
+        new("Samstag", DayOfWeek.Saturday),
+        new("Sonntag", DayOfWeek.Sunday)
+    ];
+
+    private sealed record WeekDayItem(string Name, DayOfWeek Value);
+
+    private static List<DayOfWeek> Normalize(IEnumerable<DayOfWeek>? days) =>
+        (days ?? []).Distinct().OrderBy(d => d == DayOfWeek.Sunday ? 7 : (int)d).ToList();
+
     private readonly List<ProvinceItemModel> _provinces =
     [
         new() { Name = "National", Value = GermanProvince.ALL },
@@ -140,7 +180,8 @@
         _originalProvince != _selectedProvince ||
         _originalVacationDaysPerYear != _employee.VacationDaysPerYear ||
         Math.Abs(_originalDailyWorkingTimeInHours - _employee.DailyWorkingTimeInHours) > 0.01 ||
-        Math.Abs(_originalOvertimeCorrectionInHours - _employee.OvertimeCorrectionInHours) > 0.01;
+        Math.Abs(_originalOvertimeCorrectionInHours - _employee.OvertimeCorrectionInHours) > 0.01 ||
+        !_originalWorkingDays.SequenceEqual(Normalize(_selectedWorkingDays));
 
     protected override async Task OnInitializedAsync()
     {
@@ -150,13 +191,17 @@
         _originalDailyWorkingTimeInHours = _employee.DailyWorkingTimeInHours;
         _originalOvertimeCorrectionInHours = _employee.OvertimeCorrectionInHours;
         _selectedProvince = _employee.Province;
+        _originalWorkingDays = Normalize(_employee.WorkingDays);
+        _selectedWorkingDays = _originalWorkingDays.ToList();
     }
 
     private async Task SaveChanges()
     {
         _employee.Province = _selectedProvince;
+        _employee.WorkingDays = Normalize(_selectedWorkingDays);
         if (await EmployeeContextService.UpdateEmployeeAsync(_employee.ToDto()))
         {
+            _originalWorkingDays = _employee.WorkingDays.ToList();
             _originalProvince = _employee.Province;
             _originalVacationDaysPerYear = _employee.VacationDaysPerYear;
             _originalDailyWorkingTimeInHours = _employee.DailyWorkingTimeInHours;

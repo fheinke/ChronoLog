@@ -10,5 +10,6 @@ public record EmployeeResponse(
     int VacationDaysPerYear,
     double DailyWorkingTimeInHours,
     double OvertimeCorrectionInHours,
+    List<DayOfWeek> WorkingDays,
     DateTime LastSeen
 );

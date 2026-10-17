@@ -4,5 +4,6 @@ public record EmployeeUpdateRequest(
     GermanProvince? Province,
     int? VacationDaysPerYear,
     double? DailyWorkingTimeInHours,
-    double? OvertimeCorrectionInHours
+    double? OvertimeCorrectionInHours,
+    List<DayOfWeek>? WorkingDays = null
 );

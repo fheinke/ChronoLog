@@ -138,7 +138,7 @@ public class WorkdayService : IWorkdayService
             .Select(wd => wd.ToResponse())
             .ToListAsync();
 
-        var totalOvertime = workdays.Sum(workday => CalculateDailyOvertime(workday, employee.DailyWorkingTimeInHours));
+        var totalOvertime = workdays.Sum(workday => CalculateDailyOvertime(workday, employee.DailyWorkingTimeInHours, employee.WorkingDays));
         return totalOvertime + employee.OvertimeCorrectionInHours;
     }
 
@@ -154,7 +154,7 @@ public class WorkdayService : IWorkdayService
             .ToListAsync();
 
         var workdaySummaries = (from workday in workdays
-            let dailyOvertime = CalculateDailyOvertime(workday, employee.DailyWorkingTimeInHours)
+            let dailyOvertime = CalculateDailyOvertime(workday, employee.DailyWorkingTimeInHours, employee.WorkingDays)
             let totalWorktime = CalculateDailyWorktime(workday)
             select new WorkdaySummaryResponse(workday.WorkdayId, DateOnly.FromDateTime(workday.Date), totalWorktime,
                 workday.Type, dailyOvertime)).ToList();
@@ -217,9 +217,13 @@ public class WorkdayService : IWorkdayService
         return totalWorktime;
     }
 
-    private static double CalculateDailyOvertime(WorkdayResponse workday, double dailyWorkingTimeInHours)
+    private static double CalculateDailyOvertime(WorkdayResponse workday, double dailyWorkingTimeInHours,
+        ICollection<DayOfWeek> regularWorkingDays)
     {
         var totalOvertime = 0.0;
+        var isRegularWorkingDay = regularWorkingDays.Contains(workday.Date.DayOfWeek);
+        if (!isRegularWorkingDay) dailyWorkingTimeInHours = 0;
+
         if (workday.Type == WorkdayType.Gleitzeittag) return -dailyWorkingTimeInHours;
         if (workday.Worktimes.Count == 0) return totalOvertime;
 

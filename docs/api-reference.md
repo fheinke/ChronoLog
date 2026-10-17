@@ -76,6 +76,7 @@ Returns the current authenticated employee data.
   "vacationDaysPerYear": "int",
   "dailyWorkingTimeInHours": "double",
   "overtimeCorrectionInHours": "double",
+  "workingDays": ["DayOfWeek (0 = Sunday ... 6 = Saturday)"],
   "lastSeen": "datetime"
 }
 ```
@@ -164,9 +165,13 @@ Updates the current employee settings.
   "province": "Province enum (optional)",
   "vacationDaysPerYear": "int (optional)",
   "dailyWorkingTimeInHours": "double (optional)",
-  "overtimeCorrectionInHours": "double (optional)"
+  "overtimeCorrectionInHours": "double (optional)",
+  "workingDays": ["DayOfWeek (optional, 0 = Sunday ... 6 = Saturday; default Monday-Friday = 1-5)"]
 }
 ```
+
+`workingDays` defines the regular working days. Overtime is calculated accordingly: on days that are not
+regular working days, every worked hour counts as overtime (no daily target time is deducted).
 
 **Response**: `204 No Content` on success
 
@@ -1013,7 +1018,8 @@ curl -X PATCH https://chronolog.example.com/api/employee \
   -d '{
     "province": "BW",
     "vacationDaysPerYear": 30,
-    "dailyWorkingTimeInHours": 8.0
+    "dailyWorkingTimeInHours": 8.0,
+    "workingDays": [1, 2, 3, 4, 5]
   }'
 ```
 
