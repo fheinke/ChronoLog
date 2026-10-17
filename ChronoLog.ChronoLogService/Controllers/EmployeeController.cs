@@ -109,6 +109,9 @@ public class EmployeeController : ControllerBase
     [ProducesResponseType(400)]
     public async Task<ActionResult> PatchEmployeeSettings([FromBody] EmployeeUpdateRequest value)
     {
+        if (value.WorkingDays is not null && value.WorkingDays.Any(d => !Enum.IsDefined(d)))
+            return BadRequest("WorkingDays contains invalid values. Allowed values are 0 to 6.");
+
         var currentEmployee = await _employeeService.GetOrCreateCurrentEmployeeAsync();
 
         var updated = currentEmployee with
