@@ -2,6 +2,7 @@
 @using System.Globalization
 @using ChronoLog.ChronoLogService.ViewModels
 @using ChronoLog.Core
+@using ChronoLog.Core.Models
 @using ChronoLog.Core.Interfaces
 @using ChronoLog.Core.Models.DisplayObjects
 @inject IJSRuntime JsRuntime
@@ -117,6 +118,16 @@
         </RadzenColumn>
     </RadzenRow>
     
+    <!-- Project Type Filter -->
+    <RadzenCard>
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+            <RadzenLabel Text="Project Type" Component="ProjectTypeFilter"/>
+            <RadzenDropDown Name="ProjectTypeFilter" TValue="ProjectType?" @bind-Value="@_projectTypeFilter"
+                            Data="@ProjectTypeOptions" TextProperty="Text" ValueProperty="Value"
+                            AllowClear="true" Placeholder="All" Style="width: 250px;"/>
+        </RadzenStack>
+    </RadzenCard>
+
     <!-- Tabs -->
     <RadzenCard Style="padding: 0;">
         <RadzenTabs>
@@ -124,9 +135,9 @@
                 <RadzenTabsItem Text="Daily SAP">
                     <RadzenStack Gap="1rem" Style="padding: 1rem;">
                         <RadzenText TextStyle="TextStyle.H6">Daily Time Entries</RadzenText>
-                        @if (_timeEntries.Count > 0)
+                        @if (FilteredTimeEntries.Count > 0)
                         {
-                            <TimeEntryDataGrid Data="@_timeEntries"
+                            <TimeEntryDataGrid Data="@FilteredTimeEntries"
                                                ShowDateColumn="true"
                                                DateColumnTemplate="@DateTemplate"
                                                ProjectNameTemplate="@ProjectNameTemplate"
@@ -148,7 +159,7 @@
                 <RadzenTabsItem Text="Weekly SAP" Selected="true">
                     <RadzenStack Gap="1rem" Style="padding: 1rem;">
                         <RadzenText TextStyle="TextStyle.H6">Aggregated Time Entries</RadzenText>
-                        @if (_timeEntries.Count > 0)
+                        @if (FilteredTimeEntries.Count > 0)
                         {
                             <RadzenButton Icon="content_copy"
                                           Text="Copy All Entries for SAP"
@@ -195,6 +206,19 @@
     private List<WorkdaySummaryViewModel> _workdays = [];
     private List<TimeEntryModel> _timeEntries = [];
     private List<DateTime> _missingWorktimeDates = [];
+    private ProjectType? _projectTypeFilter;
+
+    private static readonly object[] ProjectTypeOptions =
+    [
+        new { Text = "Internal", Value = (ProjectType?)ProjectType.Internal },
+        new { Text = "Service Contract (billable)", Value = (ProjectType?)ProjectType.ServiceContract }
+    ];
+
+    private List<TimeEntryModel> FilteredTimeEntries =>
+        _projectTypeFilter is null
+            ? _timeEntries
+            : _timeEntries.Where(te =>
+                (_projectLookup.GetValueOrDefault(te.ProjectId)?.ProjectType ?? ProjectType.Internal) == _projectTypeFilter).ToList();
 
     private RenderFragment<TimeEntryModel> DateTemplate => item => __builder =>
     {
@@ -429,7 +453,7 @@
     {
         var aggregated = new Dictionary<(Guid ProjectId, string ResponseText), TimeEntryModel>();
 
-        foreach (var te in _timeEntries)
+        foreach (var te in FilteredTimeEntries)
         {
             var key = (te.ProjectId, te.ResponseText ?? string.Empty);
             if (aggregated.ContainsKey(key))
@@ -492,14 +516,15 @@
             var hours = FormatHoursForSap(item.Duration, sapCulture);
             var dateFromStr = _dateRangeStart.ToString("dd.MM.yyyy");
             var dateToStr = _dateRangeEnd.ToString("dd.MM.yyyy");
-            var responseText = !string.IsNullOrEmpty(item.ResponseText)
+            var responseText = (!string.IsNullOrEmpty(item.ResponseText)
                 ? item.ResponseText
-                : project?.DefaultResponseText ?? string.Empty;
+                : project?.DefaultResponseText ?? string.Empty)
+                .ReplaceLineEndings(" ").Replace('\t', ' ');
             
             return $"{responseObject}\t{hours}\t\t\t{responseText}\t{dateFromStr}\t{dateToStr}";
         });
 
-        var sapText = string.Join("\n", lines);
+        var sapText = string.Join("\r\n", lines);
         await JsRuntime.InvokeVoidAsync("navigator.clipboard.writeText", sapText);
         NotificationService.Notify(
             NotificationSeverity.Success,
@@ -517,7 +542,7 @@
 
     private double GetTotalDuration()
     {
-        return _timeEntries.Sum(pt => pt.Duration.TotalHours);
+        return FilteredTimeEntries.Sum(pt => pt.Duration.TotalHours);
     }
 
     private double GetAggregatedTotalDuration()

@@ -59,7 +59,7 @@ else
                                 FilterPopupRenderMode="PopupRenderMode.OnDemand">
                     <Columns>
                         <RadzenDataGridColumn Property="@nameof(ProjectModel.IsDefault)" Title="Default"
-                                              Filterable="false" Sortable="false" Resizable="false" Width="30px"
+                                              Filterable="false" Sortable="false" Resizable="false" Width="40px"
                                               TextAlign="TextAlign.Center">
                             <Template Context="item">
                                 @if (item.IsDefault)
@@ -73,6 +73,11 @@ else
                                 @item.Name
                             </Template>
                         </RadzenDataGridColumn>
+                        <RadzenDataGridColumn Property="@nameof(ProjectModel.ProjectType)" Title="Type" Width="110px">
+                            <Template Context="item">
+                                @item.ProjectType
+                            </Template>
+                        </RadzenDataGridColumn>
                         <RadzenDataGridColumn Property="@nameof(ProjectModel.ResponseObject)" Title="Response Object">
                             <Template Context="item">
                                 @item.ResponseObject
@@ -83,7 +88,7 @@ else
                                 @item.DefaultResponseText
                             </Template>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn Filterable="false" Sortable="false" Resizable="false" Width="40px"
+                        <RadzenDataGridColumn Filterable="false" Sortable="false" Resizable="false" Width="60px"
                                               TextAlign="TextAlign.Center">
                             <Template Context="item">
                                 <RadzenButton Icon="edit"

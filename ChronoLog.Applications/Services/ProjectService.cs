@@ -1,5 +1,6 @@
 using ChronoLog.Applications.Mappers;
 using ChronoLog.Core.Interfaces;
+using ChronoLog.Core.Models;
 using ChronoLog.Core.Models.DisplayObjects;
 using ChronoLog.SqlDatabase.Context;
 using Microsoft.EntityFrameworkCore;
@@ -59,7 +60,7 @@ public class ProjectService : IProjectService
         return defaultProject?.ProjectId ?? Guid.Empty;
     }
     
-    public async Task<bool> UpdateProjectAsync(Guid projectId, string? name, string? description, string? responseObject, string? defaultResponseText, bool? isDefault)
+    public async Task<bool> UpdateProjectAsync(Guid projectId, string? name, string? description, string? responseObject, string? defaultResponseText, bool? isDefault, ProjectType? projectType = null)
     {
         await using var sqlDbContext = await _dbContextFactory.CreateDbContextAsync();
         var project = await sqlDbContext.Projects
@@ -77,6 +78,8 @@ public class ProjectService : IProjectService
             project.DefaultResponseText = defaultResponseText;
         if (isDefault is not null)
             project.IsDefault = isDefault.Value;
+        if (projectType is not null)
+            project.ProjectType = projectType.Value;
         
         if (project.IsDefault)
             await sqlDbContext.Projects
@@ -101,6 +104,7 @@ public class ProjectService : IProjectService
         project.ResponseObject = projectModel.ResponseObject;
         project.DefaultResponseText = projectModel.DefaultResponseText;
         project.IsDefault = projectModel.IsDefault;
+        project.ProjectType = projectModel.ProjectType;
         
         if (project.IsDefault)
             await sqlDbContext.Projects
