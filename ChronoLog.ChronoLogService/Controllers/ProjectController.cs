@@ -1,4 +1,5 @@
 using ChronoLog.Core.Interfaces;
+using ChronoLog.Core.Models;
 using ChronoLog.Core.Models.DisplayObjects;
 using ChronoLog.Core.Models.DTOs;
 using Microsoft.AspNetCore.Authorization;
@@ -38,7 +39,8 @@ public class ProjectController : ControllerBase
             Description = value.Description ?? string.Empty,
             ResponseObject = value.ResponseObject,
             DefaultResponseText = value.DefaultResponseText ?? string.Empty,
-            IsDefault = value.IsDefault ?? false
+            IsDefault = value.IsDefault ?? false,
+            ProjectType = value.ProjectType ?? ProjectType.Internal
         };
         var result = await _projectService.CreateProjectAsync(project);
         if (result)
@@ -95,7 +97,8 @@ public class ProjectController : ControllerBase
             value.Description,
             value.ResponseObject,
             value.DefaultResponseText,
-            value.IsDefault);
+            value.IsDefault,
+            value.ProjectType);
         
         if (result)
             return NoContent();

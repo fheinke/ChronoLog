@@ -1,4 +1,5 @@
 @using ChronoLog.Core.Interfaces
+@using ChronoLog.Core.Models
 @using ChronoLog.Core.Models.DisplayObjects
 @inject DialogService DialogService
 @inject NotificationService NotificationService
@@ -37,6 +38,13 @@
         </RadzenStack>
 
         <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+            <RadzenFormField Text="Project Type" Style="width: 100%;">
+                <RadzenDropDown @bind-Value="@Project.ProjectType" Data="@ProjectTypeOptions"
+                                TextProperty="Text" ValueProperty="Value"/>
+            </RadzenFormField>
+        </RadzenStack>
+
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
             <RadzenFormField Text="Description" Style="width: 100%;">
                 <ChildContent>
                     <RadzenTextArea @bind-Value="@Project.Description"/>
@@ -67,6 +75,12 @@
     private ProjectModel _originalProjectModel = new();
     private bool _isInvalid;
 
+    private static readonly object[] ProjectTypeOptions =
+    [
+        new { Text = "Internal", Value = ProjectType.Internal },
+        new { Text = "Service Contract (billable)", Value = ProjectType.ServiceContract }
+    ];
+
     protected override void OnInitialized()
     {
         _originalProjectModel = new ProjectModel
@@ -75,7 +89,8 @@
             DefaultResponseText = Project.DefaultResponseText,
             ResponseObject = Project.ResponseObject,
             Description = Project.Description,
-            IsDefault = Project.IsDefault
+            IsDefault = Project.IsDefault,
+            ProjectType = Project.ProjectType
         };
     }
 
@@ -85,7 +100,8 @@
                _originalProjectModel.DefaultResponseText != Project.DefaultResponseText ||
                _originalProjectModel.ResponseObject != Project.ResponseObject ||
                _originalProjectModel.Description != Project.Description ||
-               _originalProjectModel.IsDefault != Project.IsDefault;
+               _originalProjectModel.IsDefault != Project.IsDefault ||
+               _originalProjectModel.ProjectType != Project.ProjectType;
     }
 
     private async Task OnSubmit()

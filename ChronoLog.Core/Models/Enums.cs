@@ -15,6 +15,13 @@ public enum WorkdayType
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
+public enum ProjectType
+{
+    Internal,
+    ServiceContract
+}
+
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum GermanProvince
 {
     ALL, // National

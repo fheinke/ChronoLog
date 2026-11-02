@@ -7,7 +7,8 @@ public record ProjectRequest(
     [MaxLength(1024)] string? Description,
     [Required] [MaxLength(256)] string ResponseObject,
     [MaxLength(1024)] string? DefaultResponseText,
-    bool? IsDefault
+    bool? IsDefault,
+    ProjectType? ProjectType
 );
 
 public record ProjectUpdateRequest(
@@ -15,5 +16,6 @@ public record ProjectUpdateRequest(
     [MaxLength(1024)] string? Description,
     [MaxLength(256)] string? ResponseObject,
     [MaxLength(1024)] string? DefaultResponseText,
-    bool? IsDefault
+    bool? IsDefault,
+    ProjectType? ProjectType
 );

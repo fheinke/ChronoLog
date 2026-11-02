@@ -11,6 +11,7 @@ public static class EntitiesToModels
         {
             ProjectId = entity.ProjectId,
             IsDefault = entity.IsDefault,
+            ProjectType = entity.ProjectType,
             Name = entity.Name,
             Description = entity.Description,
             ResponseObject = entity.ResponseObject,

@@ -16,7 +16,7 @@ namespace ChronoLog.SqlDatabase.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.10")
+                .HasAnnotation("ProductVersion", "10.0.13")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             modelBuilder.Entity("ChronoLog.SqlDatabase.Models.EmployeeEntity", b =>
@@ -94,6 +94,9 @@ namespace ChronoLog.SqlDatabase.Migrations
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("varchar(256)");
+
+                    b.Property<int>("ProjectType")
+                        .HasColumnType("int");
 
                     b.Property<string>("ResponseObject")
                         .IsRequired()

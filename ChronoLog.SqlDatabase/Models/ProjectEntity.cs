@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using ChronoLog.Core.Models;
 
 namespace ChronoLog.SqlDatabase.Models;
 
@@ -11,6 +12,9 @@ public class ProjectEntity
     
     [Required]
     public bool IsDefault { get; set; }
+    
+    [Required]
+    public ProjectType ProjectType { get; set; } = ProjectType.Internal;
     
     [Required]
     [MaxLength(256)]

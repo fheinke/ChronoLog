@@ -1,3 +1,4 @@
+using ChronoLog.Core.Models;
 using ChronoLog.Core.Models.DisplayObjects;
 
 namespace ChronoLog.Core.Interfaces;
@@ -10,7 +11,7 @@ public interface IProjectService
     Task<Guid> GetDefaultProjectIdAsync();
 
     Task<bool> UpdateProjectAsync(Guid projectId, string? name, string? description, string? responseObject,
-        string? defaultResponseText, bool? isDefault);
+        string? defaultResponseText, bool? isDefault, ProjectType? projectType = null);
 
     Task<bool> UpdateProjectAsync(ProjectModel projectModel);
     Task<bool> DeleteProjectAsync(Guid projectId);
